@@ -1,6 +1,7 @@
 package me.ore.sq.generic
 
 import me.ore.sq.SqByteArray
+import me.ore.sq.SqDetailedType
 import me.ore.sq.SqType
 import me.ore.sq.toSqArray
 import java.math.BigDecimal
@@ -23,7 +24,9 @@ private fun prepareStringValueForComment(value: String): String {
 }
 
 
-abstract class SqGenericJCastingType<JAVA: Any>: SqType<JAVA>() {
+abstract class SqGenericJCastingType<JAVA: Any>: SqDetailedType<JAVA>() {
+    abstract val valueClass: Class<JAVA>
+
     override fun readImpl(source: ResultSet, columnIndex: Int): JAVA? = source.getObject(columnIndex, this.valueClass)
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: JAVA) { target.setObject(parameterIndex, value, this.sqlType) }
 }
@@ -31,10 +34,7 @@ abstract class SqGenericJCastingType<JAVA: Any>: SqType<JAVA>() {
 
 
 // region Boolean - BIT, BOOLEAN
-abstract class SqGenericJBooleanTypeBase: SqType<Boolean>() {
-    override val valueClass: Class<Boolean>
-        get() = Boolean::class.java
-
+abstract class SqGenericJBooleanTypeBase: SqDetailedType<Boolean>() {
     override fun readImpl(source: ResultSet, columnIndex: Int): Boolean = source.getBoolean(columnIndex)
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Boolean) { target.setBoolean(parameterIndex, value) }
 }
@@ -61,10 +61,7 @@ open class SqGenericBooleanType: SqGenericJBooleanTypeBase() {
 // endregion
 
 // region ByteArray - BINARY, VARBINARY, LONGVARBINARY
-abstract class SqGenericJByteArrayTypeBase: SqType<SqByteArray>() {
-    override val valueClass: Class<SqByteArray>
-        get() = SqByteArray::class.java
-
+abstract class SqGenericJByteArrayTypeBase: SqDetailedType<SqByteArray>() {
     override fun readImpl(source: ResultSet, columnIndex: Int): SqByteArray? = source.getBytes(columnIndex)?.toSqArray()
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: SqByteArray) { target.setBytes(parameterIndex, value.value) }
 
@@ -90,15 +87,12 @@ open class SqGenericLongVarBinaryType: SqGenericJByteArrayTypeBase() {
 // endregion
 
 // region Number - DOUBLE, FLOAT, REAL, BIGINT, INTEGER, DECIMAL, NUMERIC
-abstract class SqGenericJNumberTypeBase<JAVA: Number>: SqType<JAVA>() {
+abstract class SqGenericJNumberTypeBase<JAVA: Number>: SqDetailedType<JAVA>() {
     override fun prepareNotNullValueForComment(value: JAVA): String = value.toString()
 }
 
 
 abstract class SqGenericJDoubleTypeBase: SqGenericJNumberTypeBase<Double>() {
-    override val valueClass: Class<Double>
-        get() = Double::class.java
-
     override fun readImpl(source: ResultSet, columnIndex: Int): Double = source.getDouble(columnIndex)
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Double) { target.setDouble(parameterIndex, value) }
 }
@@ -114,8 +108,6 @@ open class SqGenericFloatType: SqGenericJDoubleTypeBase() {
 }
 
 open class SqGenericRealType: SqGenericJNumberTypeBase<Float>() {
-    override val valueClass: Class<Float>
-        get() = Float::class.java
     override val sqlType: JDBCType
         get() = JDBCType.REAL
 
@@ -124,8 +116,6 @@ open class SqGenericRealType: SqGenericJNumberTypeBase<Float>() {
 }
 
 open class SqGenericBigIntType: SqGenericJNumberTypeBase<Long>() {
-    override val valueClass: Class<Long>
-        get() = Long::class.java
     override val sqlType: JDBCType
         get() = JDBCType.BIGINT
 
@@ -134,8 +124,6 @@ open class SqGenericBigIntType: SqGenericJNumberTypeBase<Long>() {
 }
 
 open class SqGenericIntegerType: SqGenericJNumberTypeBase<Int>() {
-    override val valueClass: Class<Int>
-        get() = Int::class.java
     override val sqlType: JDBCType
         get() = JDBCType.INTEGER
 
@@ -144,8 +132,6 @@ open class SqGenericIntegerType: SqGenericJNumberTypeBase<Int>() {
 }
 
 open class SqGenericSmallIntType: SqGenericJNumberTypeBase<Short>() {
-    override val valueClass: Class<Short>
-        get() = Short::class.java
     override val sqlType: JDBCType
         get() = JDBCType.SMALLINT
 
@@ -154,8 +140,6 @@ open class SqGenericSmallIntType: SqGenericJNumberTypeBase<Short>() {
 }
 
 open class SqGenericTinyIntType: SqGenericJNumberTypeBase<Byte>() {
-    override val valueClass: Class<Byte>
-        get() = Byte::class.java
     override val sqlType: JDBCType
         get() = JDBCType.TINYINT
 
@@ -165,9 +149,6 @@ open class SqGenericTinyIntType: SqGenericJNumberTypeBase<Byte>() {
 
 
 abstract class SqGenericJBigDecimalType: SqGenericJNumberTypeBase<BigDecimal>() {
-    override val valueClass: Class<BigDecimal>
-        get() = BigDecimal::class.java
-
     override fun readImpl(source: ResultSet, columnIndex: Int): BigDecimal? = source.getBigDecimal(columnIndex)
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: BigDecimal) { target.setBigDecimal(parameterIndex, value) }
     override fun prepareNotNullValueForComment(value: BigDecimal): String = value.toPlainString()
@@ -185,10 +166,7 @@ open class SqGenericNumericType: SqGenericJBigDecimalType() {
 // endregion
 
 // region String - CHAR, VARCHAR, LONGVARCHAR, NCHAR, NVARCHAR, LONGNVARCHAR
-abstract class SqGenericJStringType: SqType<String>() {
-    override val valueClass: Class<String>
-        get() = String::class.java
-
+abstract class SqGenericJStringType: SqDetailedType<String>() {
     override fun readImpl(source: ResultSet, columnIndex: Int): String? = source.getString(columnIndex)
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: String) { target.setString(parameterIndex, value) }
     override fun prepareNotNullValueForComment(value: String): String = prepareStringValueForComment(value)
@@ -232,9 +210,7 @@ open class SqGenericLongNVarCharType: SqGenericJStringNType() {
 // endregion
 
 // region Temporal - TIME, DATE, TIMESTAMP
-open class SqGenericTimeType: SqType<Time>() {
-    override val valueClass: Class<Time>
-        get() = Time::class.java
+open class SqGenericTimeType: SqDetailedType<Time>() {
     override val sqlType: JDBCType
         get() = JDBCType.TIME
 
@@ -243,9 +219,7 @@ open class SqGenericTimeType: SqType<Time>() {
     override fun prepareNotNullValueForComment(value: Time): String = value.toString()
 }
 
-open class SqGenericDateType: SqType<Date>() {
-    override val valueClass: Class<Date>
-        get() = Date::class.java
+open class SqGenericDateType: SqDetailedType<Date>() {
     override val sqlType: JDBCType
         get() = JDBCType.DATE
 
@@ -254,9 +228,7 @@ open class SqGenericDateType: SqType<Date>() {
     override fun prepareNotNullValueForComment(value: Date): String = value.toString()
 }
 
-open class SqGenericTimestampType: SqType<Timestamp>() {
-    override val valueClass: Class<Timestamp>
-        get() = Timestamp::class.java
+open class SqGenericTimestampType: SqDetailedType<Timestamp>() {
     override val sqlType: JDBCType
         get() = JDBCType.TIMESTAMP
 
@@ -313,9 +285,7 @@ abstract class SqGenericJOffsetDateTimeType: SqGenericJCastingType<OffsetDateTim
 // endregion
 
 // region Large objects - BLOB, CLOB, NCLOB
-open class SqGenericBlobType: SqType<Blob>() {
-    override val valueClass: Class<Blob>
-        get() = Blob::class.java
+open class SqGenericBlobType: SqDetailedType<Blob>() {
     override val sqlType: JDBCType
         get() = JDBCType.BLOB
 
@@ -327,9 +297,7 @@ open class SqGenericBlobType: SqType<Blob>() {
     }
 }
 
-open class SqGenericClobType: SqType<Clob>() {
-    override val valueClass: Class<Clob>
-        get() = Clob::class.java
+open class SqGenericClobType: SqDetailedType<Clob>() {
     override val sqlType: JDBCType
         get() = JDBCType.CLOB
 
@@ -341,9 +309,7 @@ open class SqGenericClobType: SqType<Clob>() {
     }
 }
 
-open class SqGenericNClobType: SqType<NClob>() {
-    override val valueClass: Class<NClob>
-        get() = NClob::class.java
+open class SqGenericNClobType: SqDetailedType<NClob>() {
     override val sqlType: JDBCType
         get() = JDBCType.NCLOB
 
@@ -357,9 +323,7 @@ open class SqGenericNClobType: SqType<NClob>() {
 // endregion
 
 // region Various - DATALINK, REF, ROWID, SQLXML, MATH_OP_NUMBER
-open class SqGenericDataLinkType: SqType<URL>() {
-    override val valueClass: Class<URL>
-        get() = URL::class.java
+open class SqGenericDataLinkType: SqDetailedType<URL>() {
     override val sqlType: JDBCType
         get() = JDBCType.DATALINK
 
@@ -369,9 +333,7 @@ open class SqGenericDataLinkType: SqType<URL>() {
     override fun prepareNotNullValueForComment(value: URL): String = prepareStringValueForComment(value.toString())
 }
 
-open class SqGenericRefType: SqType<Ref>() {
-    override val valueClass: Class<Ref>
-        get() = Ref::class.java
+open class SqGenericRefType: SqDetailedType<Ref>() {
     override val sqlType: JDBCType
         get() = JDBCType.REF
 
@@ -381,9 +343,7 @@ open class SqGenericRefType: SqType<Ref>() {
     override fun prepareNotNullValueForComment(value: Ref): String = "Ref to instance of \"${value.baseTypeName}\""
 }
 
-open class SqGenericRowIdType: SqType<RowId>() {
-    override val valueClass: Class<RowId>
-        get() = RowId::class.java
+open class SqGenericRowIdType: SqDetailedType<RowId>() {
     override val sqlType: JDBCType
         get() = JDBCType.ROWID
 
@@ -393,9 +353,7 @@ open class SqGenericRowIdType: SqType<RowId>() {
     override fun prepareNotNullValueForComment(value: RowId): String = "<ROWID>"
 }
 
-open class SqGenericSqlXmlType: SqType<SQLXML>() {
-    override val valueClass: Class<SQLXML>
-        get() = SQLXML::class.java
+open class SqGenericSqlXmlType: SqDetailedType<SQLXML>() {
     override val sqlType: JDBCType
         get() = JDBCType.SQLXML
 
@@ -405,9 +363,7 @@ open class SqGenericSqlXmlType: SqType<SQLXML>() {
     override fun prepareNotNullValueForComment(value: SQLXML): String = "<SQLXML>"
 }
 
-open class SqGenericJNumberType: SqType<Number>() {
-    override val valueClass: Class<Number>
-        get() = Number::class.java
+open class SqGenericJNumberType: SqDetailedType<Number>() {
     override val sqlType: SQLType
         get() = JDBCType.DOUBLE
 
