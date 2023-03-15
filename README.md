@@ -78,3 +78,31 @@ Col 1: 307.5
 Col 2: value: [java.lang.Double] 307.5
 Col 3: 444
 ```
+
+###### Snapshots
+
+Snapshots can be found here -
+https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/o-r-e/ .
+
+Use snapshots in `build.gradle.kts`:
+
+```kotlin
+repositories {
+    //...
+    maven {
+        url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots")
+        mavenContent {
+            snapshotsOnly()
+        }
+    }
+    //...
+}
+
+dependencies {
+    //...
+    val sqVersion = "0.1-SNAPSHOT"
+    implementation("io.github.o-r-e:sq-core:$sqVersion")
+    implementation("io.github.o-r-e:sq-postgresql:$sqVersion")
+    //...
+}
+```
