@@ -23,6 +23,10 @@ kotlin {
     jvmToolchain(property("java.version")!!.toString().toInt())
 }
 
+tasks.compileKotlin {
+    this.compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
+}
+
 tasks.jar {
     manifest {
         attributes(mapOf(
@@ -30,8 +34,4 @@ tasks.jar {
             "Implementation-Version" to project.version,
         ))
     }
-}
-
-tasks.compileKotlin {
-    this.compilerOptions.freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
 }

@@ -8,7 +8,8 @@
  */
 
 plugins {
-    id("sq.conventions")
+    id("sq.compile")
+    id("sq.publish")
 }
 
 dependencies {
