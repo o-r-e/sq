@@ -3,7 +3,7 @@ package me.ore.sq.generic
 import me.ore.sq.*
 
 
-open class SqGenericValueMapping<T: SqTable>(
+open class SqGenericColumnValueMapping<T: SqTable>(
     override val statement: SqTableWriteStatement<T>,
     override val map: MutableMap<SqColumn<*, *>, SqExpression<*, *>> = LinkedHashMap(),
-): SqValueMapping<T>
+): SqColumnValueMapping<T>

@@ -16,7 +16,7 @@ interface SqWriter {
     fun dot(): SqWriter = this.add(".", spaced = false)
 }
 
-interface SqValueMapping<T: SqTable> {
+interface SqColumnValueMapping<T: SqTable> {
     val statement: SqTableWriteStatement<T>
     val context: SqContext
         get() = this.statement.context
@@ -24,11 +24,11 @@ interface SqValueMapping<T: SqTable> {
         get() = this.statement.table
     val map: MutableMap<SqColumn<*, *>, SqExpression<*, *>>
 
-    operator fun <DB: Any> set(column: SqColumn<*, DB>, value: SqExpression<*, DB>): SqValueMapping<T> = this.apply {
+    operator fun <DB: Any> set(column: SqColumn<*, DB>, value: SqExpression<*, DB>): SqColumnValueMapping<T> = this.apply {
         this.map[column] = value
     }
 
-    operator fun <JAVA: Any?, DB: Any> set(column: SqColumn<JAVA, DB>, value: JAVA): SqValueMapping<T> = this.apply {
+    operator fun <JAVA: Any?, DB: Any> set(column: SqColumn<JAVA, DB>, value: JAVA): SqColumnValueMapping<T> = this.apply {
         val param = this.context.param<JAVA?, DB>(column.type.sqCast(), (value == null), value)
         this[column] = param
     }
@@ -190,8 +190,8 @@ interface SqTableModificationStatement<T: SqTable>: SqStatement {
 }
 
 interface SqTableWriteStatement<T: SqTable>: SqTableModificationStatement<T> {
-    fun createValueMapping(): SqValueMapping<T>
-    fun applyValueMapping(mapping: SqValueMapping<T>): SqTableWriteStatement<T>
+    fun createValueMapping(): SqColumnValueMapping<T>
+    fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqTableWriteStatement<T>
 }
 
 interface SqConnStatement: SqStatement {
@@ -733,7 +733,7 @@ interface SqInsert<T: SqTable>: SqTableWriteStatement<T> {
     fun select(select: SqReadStatement?): SqInsert<T>
 
 
-    override fun applyValueMapping(mapping: SqValueMapping<T>): SqInsert<T> {
+    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqInsert<T> {
         return this
             .columns(mapping.map.keys)
             .values(mapping.map.values)
@@ -762,7 +762,7 @@ interface SqConnInsert<T: SqTable>: SqInsert<T>, SqConnTableWriteStatement<T> {
     override fun select(select: SqReadStatement?): SqConnInsert<T>
 
 
-    override fun applyValueMapping(mapping: SqValueMapping<T>): SqConnInsert<T> = this.apply { super.applyValueMapping(mapping) }
+    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqConnInsert<T> = this.apply { super.applyValueMapping(mapping) }
 
 
     fun prepareStatement(returnGeneratedKeys: Boolean): PreparedStatement = this.prepareStatement(this.connection, returnGeneratedKeys)
@@ -778,7 +778,7 @@ interface SqUpdate<T: SqTable>: SqTableWriteStatement<T> {
     fun where(condition: SqExpression<*, Boolean>?): SqUpdate<T>
 
 
-    override fun applyValueMapping(mapping: SqValueMapping<T>): SqUpdate<T> = this.set(mapping.map)
+    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqUpdate<T> = this.set(mapping.map)
 }
 
 interface SqConnUpdate<T: SqTable>: SqUpdate<T>, SqConnTableWriteStatement<T> {
@@ -788,7 +788,7 @@ interface SqConnUpdate<T: SqTable>: SqUpdate<T>, SqConnTableWriteStatement<T> {
     override fun where(condition: SqExpression<*, Boolean>?): SqConnUpdate<T>
 
 
-    override fun applyValueMapping(mapping: SqValueMapping<T>): SqConnUpdate<T> = this.set(mapping.map)
+    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqConnUpdate<T> = this.set(mapping.map)
 }
 
 

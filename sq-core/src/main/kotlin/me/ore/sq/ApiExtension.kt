@@ -195,7 +195,7 @@ inline fun <S: SqConnReadStatement> S.scanAll(block: S.(resultSet: SqResultSet) 
 
 
 // region Statements - modification
-inline fun <T: SqTable, S: SqTableWriteStatement<T>> S.set(block: SqValueMapping<T>.(table: T) -> Unit): S {
+inline fun <T: SqTable, S: SqTableWriteStatement<T>> S.set(block: SqColumnValueMapping<T>.(table: T) -> Unit): S {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
 
     val mapping = this.createValueMapping()

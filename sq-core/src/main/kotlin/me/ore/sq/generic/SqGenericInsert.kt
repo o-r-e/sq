@@ -85,7 +85,7 @@ open class SqGenericInsert<T: SqTable>(
     // endregion
 
 
-    override fun createValueMapping(): SqValueMapping<T> = SqGenericValueMapping(this)
+    override fun createValueMapping(): SqColumnValueMapping<T> = SqGenericColumnValueMapping(this)
 
 
     override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {

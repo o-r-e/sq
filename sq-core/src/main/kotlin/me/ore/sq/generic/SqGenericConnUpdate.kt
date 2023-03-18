@@ -9,5 +9,5 @@ open class SqGenericConnUpdate<T: SqTable>(override val context: SqConnectedCont
     override fun where(condition: SqExpression<*, Boolean>?): SqGenericConnUpdate<T> = this.apply { super.where(condition) }
 
 
-    override fun applyValueMapping(mapping: SqValueMapping<T>): SqGenericConnUpdate<T> = this.apply { super<SqGenericUpdate>.applyValueMapping(mapping) }
+    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqGenericConnUpdate<T> = this.apply { super<SqGenericUpdate>.applyValueMapping(mapping) }
 }
