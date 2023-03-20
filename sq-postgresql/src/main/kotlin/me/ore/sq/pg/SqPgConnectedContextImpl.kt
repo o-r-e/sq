@@ -11,9 +11,9 @@ open class SqPgConnectedContextImpl(override val connection: Connection): SqPgCo
     override fun <JAVA: Any?, DB: Any> select(distinct: Boolean, column: SqColumn<JAVA, DB>): SqPgConnSingleColSelect<JAVA, DB> =
         SqPgConnSingleColSelectImpl(this, distinct, column)
 
-    override fun union(unionAll: Boolean, selects: Iterable<SqSelect>): SqConnMultiColUnion = SqGenericConnMultiColUnion(this, unionAll, selects)
-    override fun <JAVA: Any?, DB: Any> union(unionAll: Boolean, selects: Iterable<SqSingleColSelect<JAVA, DB>>): SqConnSingleColUnion<JAVA, DB> =
-        SqGenericConnSingleColUnion(this, unionAll, selects)
+    override fun union(unionAll: Boolean, selects: Iterable<SqSelect>): SqPgConnMultiColUnion = SqPgConnMultiColUnionImpl(this, unionAll, selects.toList())
+    override fun <JAVA: Any?, DB: Any> union(unionAll: Boolean, selects: Iterable<SqSingleColSelect<JAVA, DB>>): SqPgConnSingleColUnion<JAVA, DB> =
+        SqPgConnSingleColUnionImpl(this, unionAll, selects.toList())
     // endregion
 
 

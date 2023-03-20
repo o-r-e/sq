@@ -29,61 +29,9 @@ interface SqColumnValueMapping<T: SqTable> {
     }
 
     operator fun <JAVA: Any?, DB: Any> set(column: SqColumn<JAVA, DB>, value: JAVA): SqColumnValueMapping<T> = this.apply {
-        val param = this.context.param<JAVA?, DB>(column.type.sqCast(), (value == null), value)
+        val param = this.context.param<JAVA?, DB>(column.type.sqCast(), value)
         this[column] = param
     }
-}
-
-abstract class SqType<JAVA: Any> {
-    // region Reading
-    open fun readNotNull(source: ResultSet, columnIndex: Int): JAVA {
-        return this.readNullable(source, columnIndex)
-            ?: error("Got NULL value for NOT-NULL column with index #$columnIndex")
-    }
-
-    open fun readNullable(source: ResultSet, columnIndex: Int): JAVA? {
-        val result = this.readNullableImpl(source, columnIndex)
-        return if (source.wasNull()) {
-            null
-        } else {
-            result
-        }
-    }
-
-    protected abstract fun readNullableImpl(source: ResultSet, columnIndex: Int): JAVA?
-    // endregion
-
-
-    // region Writing
-    open fun write(target: PreparedStatement, parameterIndex: Int, value: JAVA?) {
-        if (value == null) {
-            this.writeNull(target, parameterIndex)
-        } else {
-            this.writeNotNull(target, parameterIndex, value)
-        }
-    }
-
-    protected open fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: JAVA) { target.setObject(parameterIndex, value) }
-
-    protected abstract fun writeNull(target: PreparedStatement, parameterIndex: Int)
-    // endregion
-
-
-    // region Preparing value for comment
-    open fun prepareValueForComment(value: JAVA?): String {
-        return if (value == null) {
-            "<NULL>"
-        } else {
-            this.prepareNotNullValueForComment(value)
-        }
-    }
-
-    protected open fun prepareNotNullValueForComment(value: JAVA): String = value.toString()
-    // endregion
-
-
-    @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
-    inline fun <OPT: JAVA?> sqCast(): SqType<OPT & Any> = this as SqType<OPT & Any>
 }
 // endregion
 
@@ -146,19 +94,6 @@ interface SqExpression<JAVA: Any?, DB: Any>: SqItem {
     }
 }
 
-interface SqNull<JAVA: Any, DB: Any>: SqExpression<JAVA?, DB> {
-    override val nullable: Boolean
-        get() = true
-
-    override fun nullable(): SqNull<JAVA, DB> = this
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        target.add("NULL", spaced = spaceAllowed)
-    }
-
-    override fun parameters(): List<SqParameter<*, *>>? = null
-}
-
 
 interface SqColumn<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
     val columnName: String
@@ -214,36 +149,26 @@ interface SqSingleColSet<JAVA: Any?, DB: Any>: SqColSet, SqExpression<JAVA, DB> 
 }
 
 
-interface SqParameter<JAVA: Any?, DB: Any>: SqExpression<JAVA?, DB> {
-    val value: JAVA
-    override val nullable: Boolean
-        get() = (this.value == null)
-
-    fun prepareValueForComment(): String = this.type.prepareValueForComment(this.value)
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        target.add("?", spaced = spaceAllowed)
-
-        if (this.context.printParameterValues) {
-            target.add("/*", spaced = true)
-            target.add(this.prepareValueForComment(), spaced = true)
-            target.add("*/", spaced = true)
-        }
-    }
-
-    override fun parameters(): List<SqParameter<*, *>> = listOf(this)
-
-    override fun nullable(): SqParameter<JAVA?, DB> = SqUtil.uncheckedCast(this)
-
-    fun write(target: PreparedStatement, index: Int) { this.type.write(target, index, this.value) }
-}
-
-
 interface SqStatement: SqItem
 
 interface SqReadStatement: SqStatement, SqColSet {
     fun <T: Any?> cancelReading(): SqReadResult.CancelReading<T> = SqReadResult.CancelReading()
     fun <T: Any?> result(value: T): SqReadResult.Result<T> = SqReadResult.Result(value)
+
+
+    val firstResultIndex: SqParameter<Long, Number>?
+    fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqReadStatement
+    fun firstResultIndex(firstResultIndex: Long?): SqReadStatement
+
+
+    val resultCount: SqParameter<Long, Number>?
+    fun resultCount(resultCount: SqParameter<Long, Number>?): SqReadStatement
+    fun resultCount(resultCount: Long?): SqReadStatement
+
+    fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>? = null): SqReadStatement =
+        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
+    fun limit(resultCount: Long, firstResultIndex: Long? = null): SqReadStatement =
+        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
 }
 
 interface SqMultiColReadStatement: SqReadStatement, SqMultiColSet
@@ -547,22 +472,6 @@ interface SqSelect: SqReadStatement {
     fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqSelect = this.orderBy(listOf(first, *more))
 
 
-    val firstResultIndex: SqParameter<Int, Number>?
-    fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqSelect
-    fun firstResultIndex(firstResultIndex: Int?): SqSelect =
-        this.firstResultIndex(firstResultIndex?.let { this.context.integerParam(nullable = false, firstResultIndex) })
-
-    val resultCount: SqParameter<Int, Number>?
-    fun resultCount(resultCount: SqParameter<Int, Number>?): SqSelect
-    fun resultCount(resultCount: Int?): SqSelect =
-        this.resultCount(resultCount?.let { this.context.integerParam(nullable = false, resultCount) })
-
-    fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>? = null): SqSelect =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    fun limit(resultCount: Int, firstResultIndex: Int? = null): SqSelect =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-
-
     override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) { SqUtil.appendSelect(this, target, asTextPart, spaceAllowed) }
 }
 
@@ -585,14 +494,14 @@ interface SqMultiColSelect: SqSelect, SqMultiColReadStatement {
     override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqMultiColSelect = this.orderBy(listOf(first, *more))
 
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqMultiColSelect
-    override fun firstResultIndex(firstResultIndex: Int?): SqMultiColSelect = this.apply { super.firstResultIndex(firstResultIndex) }
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqMultiColSelect
-    override fun resultCount(resultCount: Int?): SqMultiColSelect = this.apply { super.resultCount(resultCount) }
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqMultiColSelect
+    override fun firstResultIndex(firstResultIndex: Long?): SqMultiColSelect
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqMultiColSelect
+    override fun resultCount(resultCount: Long?): SqMultiColSelect
 
-    override fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>?): SqMultiColSelect =
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqMultiColSelect =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqMultiColSelect =
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqMultiColSelect =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
 }
 
@@ -617,14 +526,14 @@ interface SqSingleColSelect<JAVA: Any?, DB: Any>: SqSelect, SqSingleColReadState
     override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqSingleColSelect<JAVA, DB> = this.orderBy(listOf(first, *more))
 
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqSingleColSelect<JAVA, DB>
-    override fun firstResultIndex(firstResultIndex: Int?): SqSingleColSelect<JAVA, DB> = this.apply { super.firstResultIndex(firstResultIndex) }
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqSingleColSelect<JAVA, DB>
-    override fun resultCount(resultCount: Int?): SqSingleColSelect<JAVA, DB> = this.apply { super.resultCount(resultCount) }
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqSingleColSelect<JAVA, DB>
+    override fun firstResultIndex(firstResultIndex: Long?): SqSingleColSelect<JAVA, DB>
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqSingleColSelect<JAVA, DB>
+    override fun resultCount(resultCount: Long?): SqSingleColSelect<JAVA, DB>
 
-    override fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>?): SqSingleColSelect<JAVA, DB> =
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqSingleColSelect<JAVA, DB> =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqSingleColSelect<JAVA, DB> =
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqSingleColSelect<JAVA, DB> =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
 }
 
@@ -643,14 +552,14 @@ interface SqConnSelect: SqSelect, SqConnReadStatement {
     override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqConnSelect = this.orderBy(listOf(first, *more))
 
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqConnSelect
-    override fun firstResultIndex(firstResultIndex: Int?): SqConnSelect = this.apply { super.firstResultIndex(firstResultIndex) }
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqConnSelect
-    override fun resultCount(resultCount: Int?): SqConnSelect = this.apply { super.resultCount(resultCount) }
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnSelect
+    override fun firstResultIndex(firstResultIndex: Long?): SqConnSelect
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnSelect
+    override fun resultCount(resultCount: Long?): SqConnSelect
 
-    override fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>?): SqConnSelect =
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnSelect =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqConnSelect =
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnSelect =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
 }
 
@@ -669,14 +578,14 @@ interface SqConnMultiColSelect: SqMultiColSelect, SqConnSelect, SqConnMultiColRe
     override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqConnMultiColSelect = this.orderBy(listOf(first, *more))
 
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqConnMultiColSelect
-    override fun firstResultIndex(firstResultIndex: Int?): SqConnMultiColSelect = this.apply { super<SqConnSelect>.firstResultIndex(firstResultIndex) }
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqConnMultiColSelect
-    override fun resultCount(resultCount: Int?): SqConnMultiColSelect = this.apply { super<SqConnSelect>.resultCount(resultCount) }
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnMultiColSelect
+    override fun firstResultIndex(firstResultIndex: Long?): SqConnMultiColSelect
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnMultiColSelect
+    override fun resultCount(resultCount: Long?): SqConnMultiColSelect
 
-    override fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>?): SqConnMultiColSelect =
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnMultiColSelect =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqConnMultiColSelect =
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnMultiColSelect =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
 }
 
@@ -695,14 +604,14 @@ interface SqConnSingleColSelect<JAVA: Any?, DB: Any>: SqSingleColSelect<JAVA, DB
     override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqConnSingleColSelect<JAVA, DB> = this.orderBy(listOf(first, *more))
 
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqConnSingleColSelect<JAVA, DB>
-    override fun firstResultIndex(firstResultIndex: Int?): SqConnSingleColSelect<JAVA, DB> = this.apply { super<SqConnSelect>.firstResultIndex(firstResultIndex) }
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqConnSingleColSelect<JAVA, DB>
-    override fun resultCount(resultCount: Int?): SqConnSingleColSelect<JAVA, DB> = this.apply { super<SqConnSelect>.resultCount(resultCount) }
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnSingleColSelect<JAVA, DB>
+    override fun firstResultIndex(firstResultIndex: Long?): SqConnSingleColSelect<JAVA, DB>
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnSingleColSelect<JAVA, DB>
+    override fun resultCount(resultCount: Long?): SqConnSingleColSelect<JAVA, DB>
 
-    override fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>?): SqConnSingleColSelect<JAVA, DB> =
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnSingleColSelect<JAVA, DB> =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqConnSingleColSelect<JAVA, DB> =
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnSingleColSelect<JAVA, DB> =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)
 }
 
@@ -751,12 +660,26 @@ interface SqUnion: SqReadStatement {
 
     override val columns: List<SqColumn<*, *>>
         get() = this.firstSelect.columns
+
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqUnion
+    override fun firstResultIndex(firstResultIndex: Long?): SqUnion
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqUnion
+    override fun resultCount(resultCount: Long?): SqUnion
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqUnion
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqUnion
 }
 
 interface SqMultiColUnion: SqUnion, SqMultiColReadStatement {
     override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
         return IllegalArgumentException("Cannot find column $column in \"union\" statement $this")
     }
+
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqMultiColUnion
+    override fun firstResultIndex(firstResultIndex: Long?): SqMultiColUnion
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqMultiColUnion
+    override fun resultCount(resultCount: Long?): SqMultiColUnion
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqMultiColUnion
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqMultiColUnion
 }
 
 interface SqSingleColUnion<JAVA: Any?, DB: Any>: SqUnion, SqSingleColReadStatement<JAVA, DB> {
@@ -776,13 +699,41 @@ interface SqSingleColUnion<JAVA: Any?, DB: Any>: SqUnion, SqSingleColReadStateme
     }
 
     override fun nullable(): SqSingleColUnion<JAVA?, DB>
+
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqSingleColUnion<JAVA, DB>
+    override fun firstResultIndex(firstResultIndex: Long?): SqSingleColUnion<JAVA, DB>
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqSingleColUnion<JAVA, DB>
+    override fun resultCount(resultCount: Long?): SqSingleColUnion<JAVA, DB>
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqSingleColUnion<JAVA, DB>
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqSingleColUnion<JAVA, DB>
 }
 
-interface SqConnUnion: SqUnion, SqConnReadStatement
+interface SqConnUnion: SqUnion, SqConnReadStatement {
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnUnion
+    override fun firstResultIndex(firstResultIndex: Long?): SqConnUnion
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnUnion
+    override fun resultCount(resultCount: Long?): SqConnUnion
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnUnion
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnUnion
+}
 
-interface SqConnMultiColUnion: SqMultiColUnion, SqConnMultiColReadStatement
+interface SqConnMultiColUnion: SqMultiColUnion, SqConnMultiColReadStatement {
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnMultiColUnion
+    override fun firstResultIndex(firstResultIndex: Long?): SqConnMultiColUnion
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnMultiColUnion
+    override fun resultCount(resultCount: Long?): SqConnMultiColUnion
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnMultiColUnion
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnMultiColUnion
+}
 
-interface SqConnSingleColUnion<JAVA: Any?, DB: Any>: SqSingleColUnion<JAVA, DB>, SqConnUnion, SqConnSingleColReadStatement<JAVA, DB>
+interface SqConnSingleColUnion<JAVA: Any?, DB: Any>: SqSingleColUnion<JAVA, DB>, SqConnUnion, SqConnSingleColReadStatement<JAVA, DB> {
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnSingleColUnion<JAVA, DB>
+    override fun firstResultIndex(firstResultIndex: Long?): SqConnSingleColUnion<JAVA, DB>
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnSingleColUnion<JAVA, DB>
+    override fun resultCount(resultCount: Long?): SqConnSingleColUnion<JAVA, DB>
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnSingleColUnion<JAVA, DB>
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnSingleColUnion<JAVA, DB>
+}
 // endregion
 
 

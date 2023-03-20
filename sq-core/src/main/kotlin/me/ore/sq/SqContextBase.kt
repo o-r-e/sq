@@ -43,12 +43,4 @@ abstract class SqContextBase: SqContext {
 
     protected open fun clearPrintParameterValuesByThread() { this.printParameterValuesByThreadHolder.remove() }
     // endregion
-
-
-    // region Base items
-    protected abstract fun <JAVA: Any?, DB: Any> rawParameter(type: SqType<JAVA & Any>, nullable: Boolean, value: JAVA): SqParameter<JAVA, DB>
-    override fun <JAVA: Any?, DB: Any> param(type: SqType<JAVA & Any>, nullable: Boolean, value: JAVA): SqParameter<JAVA, DB> {
-        return this.rawParameter(SqUtil.uncheckedCast(type), nullable, value)
-    }
-    // endregion
 }

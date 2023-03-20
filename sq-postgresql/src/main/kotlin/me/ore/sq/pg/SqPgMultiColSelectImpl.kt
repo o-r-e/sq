@@ -17,16 +17,16 @@ open class SqPgMultiColSelectImpl(
     override fun orderBy(items: Iterable<SqOrderBy>): SqPgMultiColSelectImpl = this.apply { super.orderBy(items) }
     override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqPgMultiColSelectImpl = this.apply { super.orderBy(first, *more) }
 
-    override fun firstResultIndex(firstResultIndex: Int?): SqPgMultiColSelectImpl = this.apply { super.firstResultIndex(firstResultIndex) }
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqPgMultiColSelectImpl = this.apply { super.firstResultIndex(firstResultIndex) }
+    override fun firstResultIndex(firstResultIndex: Long?): SqPgMultiColSelectImpl = this.apply { super.firstResultIndex(firstResultIndex) }
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqPgMultiColSelectImpl = this.apply { super.firstResultIndex(firstResultIndex) }
 
-    override fun resultCount(resultCount: Int?): SqPgMultiColSelectImpl = this.apply { super.resultCount(resultCount) }
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqPgMultiColSelectImpl = this.apply { super.resultCount(resultCount) }
+    override fun resultCount(resultCount: Long?): SqPgMultiColSelectImpl = this.apply { super.resultCount(resultCount) }
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqPgMultiColSelectImpl = this.apply { super.resultCount(resultCount) }
 
-    override fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>?): SqPgMultiColSelectImpl =
-        this.apply { super<SqPgSelectBase>.limit(resultCount, firstResultIndex) }
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqPgMultiColSelectImpl =
-        this.apply { super<SqPgSelectBase>.limit(resultCount, firstResultIndex) }
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqPgMultiColSelectImpl =
+        this.apply { super.limit(resultCount, firstResultIndex) }
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqPgMultiColSelectImpl =
+        this.apply { super.limit(resultCount, firstResultIndex) }
 
     override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception = super<SqPgSelectBase>.createColumnNotFoundException(column)
 }

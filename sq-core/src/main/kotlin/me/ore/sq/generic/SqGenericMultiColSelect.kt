@@ -3,7 +3,9 @@ package me.ore.sq.generic
 import me.ore.sq.*
 
 
-open class SqGenericMultiColSelect(context: SqContext, distinct: Boolean, columns: Iterable<SqColumn<*, *>>): SqGenericSelectBase(context, distinct, columns), SqMultiColSelect {
+open class SqGenericMultiColSelect(
+    context: SqContext, distinct: Boolean, columns: Iterable<SqColumn<*, *>>,
+): SqGenericSelectBase(context, distinct, columns), SqGenericReadStatement, SqMultiColSelect {
     override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
         return super<SqGenericSelectBase>.createColumnNotFoundException(column)
     }
@@ -15,21 +17,16 @@ open class SqGenericMultiColSelect(context: SqContext, distinct: Boolean, column
     override fun orderBy(items: Iterable<SqOrderBy>): SqGenericMultiColSelect = this.apply { super<SqGenericSelectBase>.orderBy(items) }
 
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqGenericMultiColSelect = this.apply {
-        super<SqGenericSelectBase>.firstResultIndex(firstResultIndex)
+    // region Limiting results - first result index, result count
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqGenericMultiColSelect = this.apply { super.firstResultIndex(firstResultIndex) }
+    override fun firstResultIndex(firstResultIndex: Long?): SqGenericMultiColSelect = this.apply { super.firstResultIndex(firstResultIndex) }
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqGenericMultiColSelect = this.apply { super.resultCount(resultCount) }
+    override fun resultCount(resultCount: Long?): SqGenericMultiColSelect = this.apply { super.resultCount(resultCount) }
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqGenericMultiColSelect = this.apply {
+        super<SqGenericReadStatement>.limit(resultCount, firstResultIndex)
     }
-    override fun firstResultIndex(firstResultIndex: Int?): SqGenericMultiColSelect = this.apply {
-        super<SqGenericSelectBase>.firstResultIndex(firstResultIndex)
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqGenericMultiColSelect = this.apply {
+        super<SqGenericReadStatement>.limit(resultCount, firstResultIndex)
     }
-
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqGenericMultiColSelect = this.apply {
-        super<SqGenericSelectBase>.resultCount(resultCount)
-    }
-    override fun resultCount(resultCount: Int?): SqGenericMultiColSelect = this.apply {
-        super<SqGenericSelectBase>.resultCount(resultCount)
-    }
-
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqGenericMultiColSelect = this.apply {
-        super<SqGenericSelectBase>.limit(resultCount, firstResultIndex)
-    }
+    // endregion
 }

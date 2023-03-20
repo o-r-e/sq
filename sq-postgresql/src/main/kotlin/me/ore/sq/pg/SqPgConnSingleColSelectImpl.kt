@@ -19,14 +19,14 @@ open class SqPgConnSingleColSelectImpl<JAVA: Any?, DB: Any>(
     override fun orderBy(items: Iterable<SqOrderBy>): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.orderBy(items) }
     override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.orderBy(first, *more) }
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.firstResultIndex(firstResultIndex) }
-    override fun firstResultIndex(firstResultIndex: Int?): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.firstResultIndex(firstResultIndex) }
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.firstResultIndex(firstResultIndex) }
+    override fun firstResultIndex(firstResultIndex: Long?): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.firstResultIndex(firstResultIndex) }
 
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.resultCount(resultCount) }
-    override fun resultCount(resultCount: Int?): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.resultCount(resultCount) }
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.resultCount(resultCount) }
+    override fun resultCount(resultCount: Long?): SqPgConnSingleColSelectImpl<JAVA, DB> = this.apply { super.resultCount(resultCount) }
 
-    override fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>?): SqPgConnSingleColSelectImpl<JAVA, DB> =
-        this.apply { super<SqPgSingleColSelectImpl>.limit(resultCount, firstResultIndex) }
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqPgConnSingleColSelectImpl<JAVA, DB> =
-        this.apply { super<SqPgSingleColSelectImpl>.limit(resultCount, firstResultIndex) }
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqPgConnSingleColSelectImpl<JAVA, DB> =
+        this.apply { super.limit(resultCount, firstResultIndex) }
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqPgConnSingleColSelectImpl<JAVA, DB> =
+        this.apply { super.limit(resultCount, firstResultIndex) }
 }

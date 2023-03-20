@@ -1,16 +1,13 @@
 package me.ore.sq.generic
 
-import me.ore.sq.SqContext
-import me.ore.sq.SqSingleColSelect
-import me.ore.sq.SqSingleColUnion
-import me.ore.sq.SqUtil
+import me.ore.sq.*
 
 
 open class SqGenericSingleColUnion<JAVA: Any?, DB: Any>(
     override val context: SqContext,
     override val unionAll: Boolean,
     selects: Iterable<SqSingleColSelect<JAVA, DB>>,
-): SqSingleColUnion<JAVA, DB> {
+): SqSingleColUnion<JAVA, DB>, SqGenericReadStatement {
     override val selects: List<SqSingleColSelect<JAVA, DB>> = selects.toList()
 
 
@@ -26,4 +23,24 @@ open class SqGenericSingleColUnion<JAVA: Any?, DB: Any>(
         return SqUtil.uncheckedCast(this)
     }
     // endregion
+
+
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqGenericSingleColUnion<JAVA, DB> = this.apply {
+        super.firstResultIndex(firstResultIndex)
+    }
+    override fun firstResultIndex(firstResultIndex: Long?): SqGenericSingleColUnion<JAVA, DB> = this.apply {
+        super.firstResultIndex(firstResultIndex)
+    }
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqGenericSingleColUnion<JAVA, DB> = this.apply {
+        super.resultCount(resultCount)
+    }
+    override fun resultCount(resultCount: Long?): SqGenericSingleColUnion<JAVA, DB> = this.apply {
+        super.resultCount(resultCount)
+    }
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqGenericSingleColUnion<JAVA, DB> = this.apply {
+        super.limit(resultCount, firstResultIndex)
+    }
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqGenericSingleColUnion<JAVA, DB> = this.apply {
+        super.limit(resultCount, firstResultIndex)
+    }
 }

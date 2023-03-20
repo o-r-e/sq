@@ -12,21 +12,22 @@ open class SqGenericConnSingleColSelect<JAVA: Any?, DB: Any>(
     override fun having(condition: SqExpression<*, Boolean>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply { super.having(condition) }
     override fun orderBy(items: Iterable<SqOrderBy>): SqGenericConnSingleColSelect<JAVA, DB> = this.apply { super<SqGenericSingleColSelect>.orderBy(items) }
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super<SqGenericSingleColSelect>.firstResultIndex(firstResultIndex)
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
+        super.firstResultIndex(firstResultIndex)
     }
-    override fun firstResultIndex(firstResultIndex: Int?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super<SqGenericSingleColSelect>.firstResultIndex(firstResultIndex)
+    override fun firstResultIndex(firstResultIndex: Long?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
+        super.firstResultIndex(firstResultIndex)
     }
-
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super<SqGenericSingleColSelect>.resultCount(resultCount)
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
+        super.resultCount(resultCount)
     }
-    override fun resultCount(resultCount: Int?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super<SqGenericSingleColSelect>.resultCount(resultCount)
+    override fun resultCount(resultCount: Long?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
+        super.resultCount(resultCount)
     }
-
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
+        super<SqGenericSingleColSelect>.limit(resultCount, firstResultIndex)
+    }
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
         super<SqGenericSingleColSelect>.limit(resultCount, firstResultIndex)
     }
 }

@@ -1,9 +1,6 @@
 package me.ore.sq.generic
 
-import me.ore.sq.SqByteArray
-import me.ore.sq.SqType
-import me.ore.sq.SqTypeBase
-import me.ore.sq.SqUtil
+import me.ore.sq.*
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.net.URL
@@ -466,3 +463,6 @@ object SqGenericTypes {
     val SQL_XML: SqType<SQLXML> = otherType(JDBCType.SQLXML)
     // endregion
 }
+
+
+fun <JAVA: Int?> integerParam(value: JAVA): SqParameter<JAVA, Number> = SqGenericTypes.INTEGER.createParam(value)

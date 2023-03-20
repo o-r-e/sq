@@ -4,7 +4,7 @@ import me.ore.sq.*
 import java.util.Collections
 
 
-open class SqGenericSelectBase(
+abstract class SqGenericSelectBase(
     override val context: SqContext,
     override val distinct: Boolean,
     columns: Iterable<SqColumn<*, *>>,
@@ -109,26 +109,6 @@ open class SqGenericSelectBase(
 
         tmpOrderBy.addAll(items)
     }
-    // endregion
-
-
-    // region Limiting results - first result index, result count
-    @Suppress("MemberVisibilityCanBePrivate")
-    protected fun throwResultLimitError(): Nothing = throw IllegalStateException("First result index and result count are not supported in \"generic\" select statement")
-
-    override val firstResultIndex: SqParameter<Int, Number>?
-        get() = this.throwResultLimitError()
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqGenericSelectBase = this.throwResultLimitError()
-    override fun firstResultIndex(firstResultIndex: Int?): SqGenericSelectBase = this.apply { super.firstResultIndex(firstResultIndex) }
-
-    override val resultCount: SqParameter<Int, Number>?
-        get() = this.throwResultLimitError()
-
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqGenericSelectBase = this.throwResultLimitError()
-    override fun resultCount(resultCount: Int?): SqGenericSelectBase = this.apply { super.resultCount(resultCount) }
-
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqGenericSelectBase = this.apply { super.limit(resultCount, firstResultIndex) }
     // endregion
 
 

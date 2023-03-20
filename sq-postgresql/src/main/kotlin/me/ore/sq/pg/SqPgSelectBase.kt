@@ -21,30 +21,45 @@ open class SqPgSelectBase(
 
     // region Limiting results - first result index, result count
     @Suppress("MemberVisibilityCanBePrivate", "PropertyName")
-    protected var _firstResultIndex: SqParameter<Int, Number>? = null
-    override val firstResultIndex: SqParameter<Int, Number>?
+    protected var _firstResultIndex: SqParameter<Long, Number>? = null
+    override val firstResultIndex: SqParameter<Long, Number>?
         get() = this._firstResultIndex
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqPgSelectBase = this.apply { this._firstResultIndex = firstResultIndex }
-    override fun firstResultIndex(firstResultIndex: Int?): SqPgSelectBase = this.apply { super.firstResultIndex(firstResultIndex) }
+    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqPgSelectBase = this.apply { this._firstResultIndex = firstResultIndex }
+    override fun firstResultIndex(firstResultIndex: Long?): SqPgSelectBase {
+        val param = if (firstResultIndex == null) {
+            null
+        } else {
+            SqParameter<Long, Number>(SqPgTypes.BIG_INT, firstResultIndex)
+        }
+        return this.firstResultIndex(param)
+    }
 
 
     @Suppress("MemberVisibilityCanBePrivate", "PropertyName")
-    protected var _resultCount: SqParameter<Int, Number>? = null
-    override val resultCount: SqParameter<Int, Number>?
+    protected var _resultCount: SqParameter<Long, Number>? = null
+    override val resultCount: SqParameter<Long, Number>?
         get() = this._resultCount
 
-    override fun resultCount(resultCount: SqParameter<Int, Number>?): SqPgSelectBase = this.apply { this._resultCount = resultCount }
-    override fun resultCount(resultCount: Int?): SqPgSelectBase = this.apply { super.resultCount(resultCount) }
+    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqPgSelectBase = this.apply { this._resultCount = resultCount }
+    override fun resultCount(resultCount: Long?): SqPgSelectBase {
+        val param = if (resultCount == null) {
+            null
+        } else {
+            SqParameter<Long, Number>(SqPgTypes.BIG_INT, resultCount)
+        }
+        return this.resultCount(param)
+    }
 
 
-    override fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>?): SqPgSelectBase =
-        this.apply { super<SqGenericSelectBase>.limit(resultCount, firstResultIndex) }
-    override fun limit(resultCount: Int, firstResultIndex: Int?): SqPgSelectBase =
-        this.apply { super<SqGenericSelectBase>.limit(resultCount, firstResultIndex) }
+    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqPgSelectBase =
+        this.apply { super.limit(resultCount, firstResultIndex) }
+    override fun limit(resultCount: Long, firstResultIndex: Long?): SqPgSelectBase =
+        this.apply { super.limit(resultCount, firstResultIndex) }
     // endregion
 
 
+    @Suppress("DuplicatedCode")
     override fun parameters(): List<SqParameter<*, *>>? {
         val resultCount = this.resultCount
         val firstResultIndex = this.firstResultIndex
