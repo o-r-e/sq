@@ -3,6 +3,7 @@ package me.ore.sq
 import me.ore.sq.generic.SqGenericContextImpl
 import java.lang.IllegalStateException
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.net.URL
 import java.sql.Blob
 import java.sql.Clob
@@ -14,6 +15,12 @@ import java.sql.RowId
 import java.sql.SQLXML
 import java.sql.Time
 import java.sql.Timestamp
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.OffsetTime
+import java.util.Calendar
 import kotlin.concurrent.getOrSet
 
 
@@ -77,82 +84,135 @@ interface SqContext {
 
 
     // region Types
-    val jBigDecimalType: SqType<BigDecimal>
-    val jBlobType: SqType<Blob>
-    val jBooleanType: SqType<Boolean>
-    val jByteType: SqType<Byte>
-    val jByteArrayType: SqType<SqByteArray>
-    val jClobType: SqType<Clob>
-    val jDateType: SqType<Date>
-    val jDoubleType: SqType<Double>
-    val jFloatType: SqType<Float>
-    val jIntType: SqType<Int>
-    val jLongType: SqType<Long>
-    val jNClobType: SqType<NClob>
-    val jNumberType: SqType<Number>
-    val jRefType: SqType<Ref>
-    val jRowIdType: SqType<RowId>
-    val jSqlXmlType: SqType<SQLXML>
-    val jShortType: SqType<Short>
+    val charType: SqType<String>
+    val varCharType: SqType<String>
+    val longVarCharType: SqType<String>
+    val nCharType: SqType<String>
+    val nVarCharType: SqType<String>
+    val longNVarCharType: SqType<String>
     val jStringType: SqType<String>
-    val jTimeType: SqType<Time>
-    val jTimestampType: SqType<Timestamp>
-    val jUrlType: SqType<URL>
+        get() = this.varCharType
 
-    val dbBigIntType: SqType<Long>
-    val dbBinaryType: SqType<SqByteArray>
-    val dbBitType: SqType<Boolean>
-    val dbBlobType: SqType<Blob>
-    val dbBooleanType: SqType<Boolean>
-    val dbCharType: SqType<String>
-    val dbClobType: SqType<Clob>
-    val dbDataLinkType: SqType<URL>
-    val dbDateType: SqType<Date>
-    val dbDecimalType: SqType<BigDecimal>
-    val dbDoubleType: SqType<Double>
-    val dbFloatType: SqType<Double>
-    val dbIntegerType: SqType<Int>
-    val dbLongNVarCharType: SqType<String>
-    val dbLongVarBinaryType: SqType<SqByteArray>
-    val dbLongVarCharType: SqType<String>
-    val dbNCharType: SqType<String>
-    val dbNClobType: SqType<NClob>
-    val dbNVarCharType: SqType<String>
-    val dbNumericType: SqType<BigDecimal>
-    val dbRealType: SqType<Float>
-    val dbRefType: SqType<Ref>
-    val dbRowIdType: SqType<RowId>
-    val dbSmallIntType: SqType<Short>
-    val dbSqlXmlType: SqType<SQLXML>
-    val dbTimeType: SqType<Time>
-    val dbTimestampType: SqType<Timestamp>
-    val dbTinyIntType: SqType<Byte>
-    val dbVarBinaryType: SqType<SqByteArray>
-    val dbVarCharType: SqType<String>
+    val numericType: SqType<BigDecimal>
+    val decimalType: SqType<BigDecimal>
+    val tinyIntType: SqType<Byte>
+    val smallIntType: SqType<Short>
+    val integerType: SqType<Int>
+    val bigIntType: SqType<Long>
+    val bigIntAsBigIntegerType: SqType<BigInteger>
+    val realType: SqType<Float>
+    val floatType: SqType<Double>
+    val doubleType: SqType<Double>
+    val jBigDecimalType: SqType<BigDecimal>
+        get() = this.numericType
+    val jByteType: SqType<Byte>
+        get() = this.tinyIntType
+    val jShortType: SqType<Short>
+        get() = this.smallIntType
+    val jIntType: SqType<Int>
+        get() = this.integerType
+    val jLongType: SqType<Long>
+        get() = this.bigIntType
+    val jBigIntegerType: SqType<BigInteger>
+        get() = this.bigIntAsBigIntegerType
+    val jFloatType: SqType<Float>
+        get() = this.realType
+    val jDoubleType: SqType<Double>
+        get() = this.doubleType
+    val jInexactNumberType: SqType<Number>
+
+    val bitType: SqType<Boolean>
+    val booleanType: SqType<Boolean>
+    val jBooleanType: SqType<Boolean>
+        get() = this.booleanType
+
+    val binaryType: SqType<SqByteArray>
+    val varBinaryType: SqType<SqByteArray>
+    val longVarBinaryType: SqType<SqByteArray>
+    val jByteArrayType: SqType<SqByteArray>
+        get() = this.varBinaryType
+
+    val clobType: SqType<Clob>
+    val blobType: SqType<Blob>
+    val refType: SqType<Ref>
+    val dataLinkType: SqType<URL>
+    val rowIdType: SqType<RowId>
+    val nClobType: SqType<NClob>
+    val sqlXmlType: SqType<SQLXML>
+    val jClobType: SqType<Clob>
+        get() = this.clobType
+    val jBlobType: SqType<Blob>
+        get() = this.blobType
+    val jRefType: SqType<Ref>
+        get() = this.refType
+    val jUrlType: SqType<URL>
+        get() = this.dataLinkType
+    val jRowIdType: SqType<RowId>
+        get() = this.rowIdType
+    val jNClobType: SqType<NClob>
+        get() = this.nClobType
+    val jSqlXmlType: SqType<SQLXML>
+        get() = this.sqlXmlType
+
+    val jSqlDateType: SqType<Date>
+    val jLocalDateType: SqType<LocalDate>
+    val jSqlTimeType: SqType<Time>
+    val jLocalTimeType: SqType<LocalTime>
+    val jSqlTimestampType: SqType<Timestamp>
+    val jCalendarType: SqType<Calendar>
+    val jDateType: SqType<java.util.Date>
+    val jLocalDateTimeType: SqType<LocalDateTime>
+    val jOffsetTimeType: SqType<OffsetTime>
+    val jOffsetDateTimeType: SqType<OffsetDateTime>
+    val dateAsSqlDateType: SqType<Date>
+        get() = this.jSqlDateType
+    val dateType: SqType<LocalDate>
+        get() = this.jLocalDateType
+    val timeAsSqlTimeType: SqType<Time>
+        get() = this.jSqlTimeType
+    val timeType: SqType<LocalTime>
+        get() = this.jLocalTimeType
+    val timestampAsSqlTimestampType: SqType<Timestamp>
+        get() = this.jSqlTimestampType
+    val timestampAsCalendarType: SqType<Calendar>
+        get() = this.jCalendarType
+    val timestampAsDateType: SqType<java.util.Date>
+        get() = this.jDateType
+    val timestampType: SqType<LocalDateTime>
+        get() = this.jLocalDateTimeType
+    val timeWithTimeZoneType: SqType<OffsetTime>
+        get() = this.jOffsetTimeType
+    val timestampWithTimeZoneType: SqType<OffsetDateTime>
+        get() = this.jOffsetDateTimeType
 
     val operationBooleanType: SqType<Boolean>
         get() = this.jBooleanType
 
     val mathOpNumberType: SqType<Number>
-        get() = this.jNumberType
+        get() = this.jInexactNumberType
 
     fun <T: Number?> getTypeForNumber(numberClass: Class<T>): SqType<T & Any>? {
         val result = when (numberClass) {
-            BigDecimal::class.java -> this.jBigDecimalType
-            Byte::class.java -> this.jByteType
-            java.lang.Byte::class.java -> this.jByteType
             Double::class.java -> this.jDoubleType
             java.lang.Double::class.java -> this.jDoubleType
-            Float::class.java -> this.jFloatType
-            java.lang.Float::class.java -> this.jFloatType
-            Int::class.java -> this.jIntType
-            java.lang.Integer::class.java -> this.jIntType
             Long::class.java -> this.jLongType
             java.lang.Long::class.java -> this.jLongType
+            Int::class.java -> this.jIntType
+            java.lang.Integer::class.java -> this.jIntType
+
+            BigDecimal::class.java -> this.jBigDecimalType
+            BigInteger::class.java -> this.jBigIntegerType
+
+            Float::class.java -> this.jFloatType
+            java.lang.Float::class.java -> this.jFloatType
             Short::class.java -> this.jShortType
             java.lang.Short::class.java -> this.jShortType
-            Number::class.java -> this.jNumberType
-            java.lang.Number::class.java -> this.jNumberType
+            Byte::class.java -> this.jByteType
+            java.lang.Byte::class.java -> this.jByteType
+
+            Number::class.java -> this.jInexactNumberType
+            java.lang.Number::class.java -> this.jInexactNumberType
+
             else -> null
         }
         return SqUtil.uncheckedCast(result)
@@ -168,112 +228,152 @@ interface SqContext {
     // region Base items
     fun <JAVA: Any?, DB: Any> param(type: SqType<JAVA & Any>, nullable: Boolean, value: JAVA): SqParameter<JAVA, DB>
 
+    fun <JAVA: String?> charParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.charType.sqCast(), nullable, value)
+    fun <JAVA: String?> varCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.varCharType.sqCast(), nullable, value)
+    fun <JAVA: String?> longVarCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.longVarCharType.sqCast(), nullable, value)
+    fun <JAVA: String?> nCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.nCharType.sqCast(), nullable, value)
+    fun <JAVA: String?> nVarCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.nVarCharType.sqCast(), nullable, value)
+    fun <JAVA: String?> longNVarCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.longNVarCharType.sqCast(), nullable, value)
+    fun <JAVA: String?> jStringParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.jStringType.sqCast(), nullable, value)
+
+    fun <JAVA: BigDecimal?> numericParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.numericType.sqCast(), nullable, value)
+    fun <JAVA: BigDecimal?> decimalParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.decimalType.sqCast(), nullable, value)
+    fun <JAVA: Byte?> tinyIntParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.tinyIntType.sqCast(), nullable, value)
+    fun <JAVA: Short?> smallIntParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.smallIntType.sqCast(), nullable, value)
+    fun <JAVA: Int?> integerParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.integerType.sqCast(), nullable, value)
+    fun <JAVA: Long?> bigIntParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.bigIntType.sqCast(), nullable, value)
+    fun <JAVA: BigInteger?> bigIntAsBigIntegerParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.bigIntAsBigIntegerType.sqCast(), nullable, value)
+    fun <JAVA: Float?> realParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.realType.sqCast(), nullable, value)
+    fun <JAVA: Double?> floatParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.floatType.sqCast(), nullable, value)
+    fun <JAVA: Double?> doubleParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.doubleType.sqCast(), nullable, value)
     fun <JAVA: BigDecimal?> jBigDecimalParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jBigDecimalType.sqCast(), nullable, value)
-    fun <JAVA: Blob?> jBlobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jBlobType.sqCast(), nullable, value)
-    fun <JAVA: Boolean?> jBooleanParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Boolean> = this.param(this.jBooleanType.sqCast(), nullable, value)
-    fun <JAVA: Byte?> jByteParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Boolean> = this.param(this.jByteType.sqCast(), nullable, value)
-    fun <JAVA: SqByteArray?> jByteArrayParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, SqByteArray> = this.param(this.jByteArrayType.sqCast(), nullable, value)
-    fun <JAVA: Clob?> jClobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Clob> = this.param(this.jClobType.sqCast(), nullable, value)
-    fun <JAVA: Date?> jDateParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Date> = this.param(this.jDateType.sqCast(), nullable, value)
-    fun <JAVA: Double?> jDoubleParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jDoubleType.sqCast(), nullable, value)
-    fun <JAVA: Float?> jFloatParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jFloatType.sqCast(), nullable, value)
+    fun <JAVA: Byte?> jByteParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jByteType.sqCast(), nullable, value)
+    fun <JAVA: Short?> jShortParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jShortType.sqCast(), nullable, value)
     fun <JAVA: Int?> jIntParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jIntType.sqCast(), nullable, value)
     fun <JAVA: Long?> jLongParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jLongType.sqCast(), nullable, value)
-    fun <JAVA: NClob?> jNClobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Clob> = this.param(this.jNClobType.sqCast(), nullable, value)
-    fun <JAVA: Ref?> jRefParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Ref> = this.param(this.jRefType.sqCast(), nullable, value)
-    fun <JAVA: RowId?> jRowIdParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, RowId> = this.param(this.jRowIdType.sqCast(), nullable, value)
-    fun <JAVA: SQLXML?> jSqlXmlParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, SQLXML> = this.param(this.jSqlXmlType.sqCast(), nullable, value)
-    fun <JAVA: Short?> jShortParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jShortType.sqCast(), nullable, value)
-    fun <JAVA: String?> jStringParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.jStringType.sqCast(), nullable, value)
-    fun <JAVA: Time?> jTimeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Time> = this.param(this.jTimeType.sqCast(), nullable, value)
-    fun <JAVA: Timestamp?> jTimestampParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Date> = this.param(this.jTimestampType.sqCast(), nullable, value)
-    fun <JAVA: URL?> jUrlParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.jUrlType.sqCast(), nullable, value)
+    fun <JAVA: BigInteger?> jBigIntegerParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jBigIntegerType.sqCast(), nullable, value)
+    fun <JAVA: Float?> jFloatParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jFloatType.sqCast(), nullable, value)
+    fun <JAVA: Double?> jDoubleParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.jDoubleType.sqCast(), nullable, value)
 
-    fun <JAVA: Long?> dbBigIntParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbBigIntType.sqCast(), nullable, value)
-    fun <JAVA: SqByteArray?> dbBinaryParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, SqByteArray> = this.param(this.dbBinaryType.sqCast(), nullable, value)
-    fun <JAVA: Boolean?> dbBitParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Boolean> = this.param(this.dbBitType.sqCast(), nullable, value)
-    fun <JAVA: Blob?> dbBlobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Blob> = this.param(this.dbBlobType.sqCast(), nullable, value)
-    fun <JAVA: Boolean?> dbBooleanParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Boolean> = this.param(this.dbBooleanType.sqCast(), nullable, value)
-    fun <JAVA: String?> dbCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.dbCharType.sqCast(), nullable, value)
-    fun <JAVA: Clob?> dbClobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Boolean> = this.param(this.dbClobType.sqCast(), nullable, value)
-    fun <JAVA: URL?> dbDataLinkParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.dbDataLinkType.sqCast(), nullable, value)
-    fun <JAVA: Date?> dbDateParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Date> = this.param(this.dbDateType.sqCast(), nullable, value)
-    fun <JAVA: BigDecimal?> dbDecimalParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbDecimalType.sqCast(), nullable, value)
-    fun <JAVA: Double?> dbDoubleParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbDoubleType.sqCast(), nullable, value)
-    fun <JAVA: Double?> dbFloatParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbFloatType.sqCast(), nullable, value)
-    fun <JAVA: Int?> dbIntegerParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbIntegerType.sqCast(), nullable, value)
-    fun <JAVA: String?> dbLongNVarCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.dbLongNVarCharType.sqCast(), nullable, value)
-    fun <JAVA: SqByteArray?> dbLongVarBinaryParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, SqByteArray> = this.param(this.dbLongVarBinaryType.sqCast(), nullable, value)
-    fun <JAVA: String?> dbLongVarCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.dbLongVarCharType.sqCast(), nullable, value)
-    fun <JAVA: String?> dbNCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.dbNCharType.sqCast(), nullable, value)
-    fun <JAVA: NClob?> dbNClobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Clob> = this.param(this.dbNClobType.sqCast(), nullable, value)
-    fun <JAVA: String?> dbNVarCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.dbNVarCharType.sqCast(), nullable, value)
-    fun <JAVA: BigDecimal?> dbNumericParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbNumericType.sqCast(), nullable, value)
-    fun <JAVA: Float?> dbRealParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbRealType.sqCast(), nullable, value)
-    fun <JAVA: Ref?> dbRefParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Ref> = this.param(this.dbRefType.sqCast(), nullable, value)
-    fun <JAVA: RowId?> dbRowIdParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, RowId> = this.param(this.dbRowIdType.sqCast(), nullable, value)
-    fun <JAVA: Short?> dbSmallIntParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbSmallIntType.sqCast(), nullable, value)
-    fun <JAVA: SQLXML?> dbSqlXmlParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, SQLXML> = this.param(this.dbSqlXmlType.sqCast(), nullable, value)
-    fun <JAVA: Time?> dbTimeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Time> = this.param(this.dbTimeType.sqCast(), nullable, value)
-    fun <JAVA: Timestamp?> dbTimestampParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Date> = this.param(this.dbTimestampType.sqCast(), nullable, value)
-    fun <JAVA: Byte?> dbTinyIntParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Number> = this.param(this.dbTinyIntType.sqCast(), nullable, value)
-    fun <JAVA: SqByteArray?> dbVarBinaryParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, SqByteArray> = this.param(this.dbVarBinaryType.sqCast(), nullable, value)
-    fun <JAVA: String?> dbVarCharParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.dbVarCharType.sqCast(), nullable, value)
+    fun <JAVA: Boolean?> bitParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Boolean> = this.param(this.bitType.sqCast(), nullable, value)
+    fun <JAVA: Boolean?> booleanParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Boolean> = this.param(this.booleanType.sqCast(), nullable, value)
+    fun <JAVA: Boolean?> jBooleanParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Boolean> = this.param(this.jBooleanType.sqCast(), nullable, value)
+
+    fun <JAVA: SqByteArray?> binaryParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, ByteArray> = this.param(this.binaryType.sqCast(), nullable, value)
+    fun <JAVA: SqByteArray?> varBinaryParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, ByteArray> = this.param(this.varBinaryType.sqCast(), nullable, value)
+    fun <JAVA: SqByteArray?> longVarBinaryParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, ByteArray> = this.param(this.longVarBinaryType.sqCast(), nullable, value)
+    fun <JAVA: SqByteArray?> jByteArrayParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, ByteArray> = this.param(this.jByteArrayType.sqCast(), nullable, value)
+
+    fun <JAVA: Clob?> clobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Clob> = this.param(this.clobType.sqCast(), nullable, value)
+    fun <JAVA: Blob?> blobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Blob> = this.param(this.blobType.sqCast(), nullable, value)
+    fun <JAVA: Ref?> refParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Ref> = this.param(this.refType.sqCast(), nullable, value)
+    fun <JAVA: URL?> dataLinkParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.dataLinkType.sqCast(), nullable, value)
+    fun <JAVA: RowId?> rowIdParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, RowId> = this.param(this.rowIdType.sqCast(), nullable, value)
+    fun <JAVA: NClob?> nClobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Clob> = this.param(this.nClobType.sqCast(), nullable, value)
+    fun <JAVA: SQLXML?> sqlXmlParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.sqlXmlType.sqCast(), nullable, value)
+    fun <JAVA: Clob?> jClobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Clob> = this.param(this.jClobType.sqCast(), nullable, value)
+    fun <JAVA: Blob?> jBlobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Blob> = this.param(this.jBlobType.sqCast(), nullable, value)
+    fun <JAVA: Ref?> jRefParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Ref> = this.param(this.jRefType.sqCast(), nullable, value)
+    fun <JAVA: URL?> jUrlParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.jUrlType.sqCast(), nullable, value)
+    fun <JAVA: RowId?> jRowIdParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, RowId> = this.param(this.jRowIdType.sqCast(), nullable, value)
+    fun <JAVA: NClob?> jNClobParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Clob> = this.param(this.jNClobType.sqCast(), nullable, value)
+    fun <JAVA: SQLXML?> jSqlXmlParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, String> = this.param(this.jSqlXmlType.sqCast(), nullable, value)
+
+    fun <JAVA: Date?> jSqlDateParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.jSqlDateType.sqCast(), nullable, value)
+    fun <JAVA: LocalDate?> jLocalDateParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.jLocalDateType.sqCast(), nullable, value)
+    fun <JAVA: Time?> jSqlTimeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Time> = this.param(this.jSqlTimeType.sqCast(), nullable, value)
+    fun <JAVA: LocalTime?> jLocalTimeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Time> = this.param(this.jLocalTimeType.sqCast(), nullable, value)
+    fun <JAVA: Timestamp?> jSqlTimestampParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.jSqlTimestampType.sqCast(), nullable, value)
+    fun <JAVA: Calendar?> jCalendarParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.jCalendarType.sqCast(), nullable, value)
+    fun <JAVA: java.util.Date?> jDateParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.jDateType.sqCast(), nullable, value)
+    fun <JAVA: LocalDateTime?> jLocalDateTimeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.jLocalDateTimeType.sqCast(), nullable, value)
+    fun <JAVA: OffsetTime?> jOffsetTimeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Time> = this.param(this.jOffsetTimeType.sqCast(), nullable, value)
+    fun <JAVA: OffsetDateTime?> jOffsetDateTimeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.jOffsetDateTimeType.sqCast(), nullable, value)
+    fun <JAVA: Date?> dateAsSqlDateParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.dateAsSqlDateType.sqCast(), nullable, value)
+    fun <JAVA: LocalDate?> dateParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.dateType.sqCast(), nullable, value)
+    fun <JAVA: Time?> timeAsSqlTimeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Time> = this.param(this.timeAsSqlTimeType.sqCast(), nullable, value)
+    fun <JAVA: LocalTime?> timeParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Time> = this.param(this.timeType.sqCast(), nullable, value)
+    fun <JAVA: Timestamp?> timestampAsSqlTimestampParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.timestampAsSqlTimestampType.sqCast(), nullable, value)
+    fun <JAVA: Calendar?> timestampAsCalendarParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.timestampAsCalendarType.sqCast(), nullable, value)
+    fun <JAVA: java.util.Date?> timestampAsDateParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.timestampAsDateType.sqCast(), nullable, value)
+    fun <JAVA: LocalDateTime?> timestampParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.timestampType.sqCast(), nullable, value)
+    fun <JAVA: OffsetTime?> timeWithTimeZoneParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Time> = this.param(this.timeWithTimeZoneType.sqCast(), nullable, value)
+    fun <JAVA: OffsetDateTime?> timestampWithTimeZoneParam(nullable: Boolean, value: JAVA): SqParameter<JAVA, Timestamp> = this.param(this.timestampWithTimeZoneType.sqCast(), nullable, value)
 
 
     fun <JAVA: Any, DB: Any> nullItem(type: SqType<JAVA>): SqNull<JAVA, DB>
 
+    fun charNull(): SqNull<String, String> = this.nullItem(this.charType)
+    fun varCharNull(): SqNull<String, String> = this.nullItem(this.varCharType)
+    fun longVarCharNull(): SqNull<String, String> = this.nullItem(this.longVarCharType)
+    fun nCharNull(): SqNull<String, String> = this.nullItem(this.nCharType)
+    fun nVarCharNull(): SqNull<String, String> = this.nullItem(this.nVarCharType)
+    fun longNVarCharNull(): SqNull<String, String> = this.nullItem(this.longNVarCharType)
+    fun jStringNull(): SqNull<String, String> = this.nullItem(this.jStringType)
+
+    fun numericNull(): SqNull<BigDecimal, Number> = this.nullItem(this.numericType)
+    fun decimalNull(): SqNull<BigDecimal, Number> = this.nullItem(this.decimalType)
+    fun tinyIntNull(): SqNull<Byte, Number> = this.nullItem(this.tinyIntType)
+    fun smallIntNull(): SqNull<Short, Number> = this.nullItem(this.smallIntType)
+    fun integerNull(): SqNull<Int, Number> = this.nullItem(this.integerType)
+    fun bigIntNull(): SqNull<Long, Number> = this.nullItem(this.bigIntType)
+    fun bigIntAsBigIntegerNull(): SqNull<BigInteger, Number> = this.nullItem(this.bigIntAsBigIntegerType)
+    fun realNull(): SqNull<Float, Number> = this.nullItem(this.realType)
+    fun floatNull(): SqNull<Double, Number> = this.nullItem(this.floatType)
+    fun doubleNull(): SqNull<Double, Number> = this.nullItem(this.doubleType)
     fun jBigDecimalNull(): SqNull<BigDecimal, Number> = this.nullItem(this.jBigDecimalType)
-    fun jBlobNull(): SqNull<Blob, Blob> = this.nullItem(this.jBlobType)
-    fun jBooleanNull(): SqNull<Boolean, Boolean> = this.nullItem(this.jBooleanType)
     fun jByteNull(): SqNull<Byte, Number> = this.nullItem(this.jByteType)
-    fun jByteArrayNull(): SqNull<SqByteArray, SqByteArray> = this.nullItem(this.jByteArrayType)
-    fun jClobNull(): SqNull<Clob, Clob> = this.nullItem(this.jClobType)
-    fun jDateNull(): SqNull<Date, Date> = this.nullItem(this.jDateType)
-    fun jDoubleNull(): SqNull<Double, Number> = this.nullItem(this.jDoubleType)
-    fun jFloatNull(): SqNull<Float, Number> = this.nullItem(this.jFloatType)
+    fun jShortNull(): SqNull<Short, Number> = this.nullItem(this.jShortType)
     fun jIntNull(): SqNull<Int, Number> = this.nullItem(this.jIntType)
     fun jLongNull(): SqNull<Long, Number> = this.nullItem(this.jLongType)
-    fun jNClobNull(): SqNull<NClob, Clob> = this.nullItem(this.jNClobType)
-    fun jRefNull(): SqNull<Ref, Ref> = this.nullItem(this.jRefType)
-    fun jRowIdNull(): SqNull<RowId, RowId> = this.nullItem(this.jRowIdType)
-    fun jSqlXmlNull(): SqNull<SQLXML, SQLXML> = this.nullItem(this.jSqlXmlType)
-    fun jShortNull(): SqNull<Short, Number> = this.nullItem(this.jShortType)
-    fun jStringNull(): SqNull<String, String> = this.nullItem(this.jStringType)
-    fun jTimeNull(): SqNull<Time, Time> = this.nullItem(this.jTimeType)
-    fun jTimestampNull(): SqNull<Timestamp, Date> = this.nullItem(this.jTimestampType)
-    fun jUrlNull(): SqNull<URL, String> = this.nullItem(this.jUrlType)
+    fun jBigIntegerNull(): SqNull<BigInteger, Number> = this.nullItem(this.jBigIntegerType)
+    fun jFloatNull(): SqNull<Float, Number> = this.nullItem(this.jFloatType)
+    fun jDoubleNull(): SqNull<Double, Number> = this.nullItem(this.jDoubleType)
 
-    fun dbBigIntNull(): SqNull<Long, Number> = this.nullItem(this.dbBigIntType)
-    fun dbBinaryNull(): SqNull<SqByteArray, SqByteArray> = this.nullItem(this.dbBinaryType)
-    fun dbBitNull(): SqNull<Boolean, Boolean> = this.nullItem(this.dbBitType)
-    fun dbBlobNull(): SqNull<Blob, Blob> = this.nullItem(this.dbBlobType)
-    fun dbBooleanNull(): SqNull<Boolean, Boolean> = this.nullItem(this.dbBooleanType)
-    fun dbCharNull(): SqNull<String, String> = this.nullItem(this.dbCharType)
-    fun dbClobNull(): SqNull<Clob, Clob> = this.nullItem(this.dbClobType)
-    fun dbDatalinkNull(): SqNull<URL, String> = this.nullItem(this.dbDataLinkType)
-    fun dbDateNull(): SqNull<Date, Date> = this.nullItem(this.dbDateType)
-    fun dbDecimalNull(): SqNull<BigDecimal, Number> = this.nullItem(this.dbDecimalType)
-    fun dbDoubleNull(): SqNull<Double, Number> = this.nullItem(this.dbDoubleType)
-    fun dbFloatNull(): SqNull<Double, Number> = this.nullItem(this.dbFloatType)
-    fun dbIntegerNull(): SqNull<Int, Number> = this.nullItem(this.dbIntegerType)
-    fun dbLongNVarcharNull(): SqNull<String, String> = this.nullItem(this.dbLongNVarCharType)
-    fun dbLongVarbinaryNull(): SqNull<SqByteArray, SqByteArray> = this.nullItem(this.dbLongVarBinaryType)
-    fun dbLongVarcharNull(): SqNull<String, String> = this.nullItem(this.dbLongVarCharType)
-    fun dbNCharNull(): SqNull<String, String> = this.nullItem(this.dbNCharType)
-    fun dbNClobNull(): SqNull<NClob, Clob> = this.nullItem(this.dbNClobType)
-    fun dbNVarcharNull(): SqNull<String, String> = this.nullItem(this.dbNVarCharType)
-    fun dbNumericNull(): SqNull<BigDecimal, Number> = this.nullItem(this.dbNumericType)
-    fun dbRealNull(): SqNull<Float, Number> = this.nullItem(this.dbRealType)
-    fun dbRefNull(): SqNull<Ref, Ref> = this.nullItem(this.dbRefType)
-    fun dbRowIdNull(): SqNull<RowId, RowId> = this.nullItem(this.dbRowIdType)
-    fun dbSmallintNull(): SqNull<Short, Number> = this.nullItem(this.dbSmallIntType)
-    fun dbSqlxmlNull(): SqNull<SQLXML, SQLXML> = this.nullItem(this.dbSqlXmlType)
-    fun dbTimeNull(): SqNull<Time, Time> = this.nullItem(this.dbTimeType)
-    fun dbTimestampNull(): SqNull<Timestamp, Timestamp> = this.nullItem(this.dbTimestampType)
-    fun dbTinyintNull(): SqNull<Byte, Number> = this.nullItem(this.dbTinyIntType)
-    fun dbVarbinaryNull(): SqNull<SqByteArray, SqByteArray> = this.nullItem(this.dbVarBinaryType)
-    fun dbVarcharNull(): SqNull<String, String> = this.nullItem(this.dbVarCharType)
+    fun bitNull(): SqNull<Boolean, Boolean> = this.nullItem(this.bitType)
+    fun booleanNull(): SqNull<Boolean, Boolean> = this.nullItem(this.booleanType)
+    fun jBooleanNull(): SqNull<Boolean, Boolean> = this.nullItem(this.jBooleanType)
+
+    fun binaryNull(): SqNull<SqByteArray, ByteArray> = this.nullItem(this.binaryType)
+    fun varBinaryNull(): SqNull<SqByteArray, ByteArray> = this.nullItem(this.varBinaryType)
+    fun longVarBinaryNull(): SqNull<SqByteArray, ByteArray> = this.nullItem(this.longVarBinaryType)
+    fun jByteArrayNull(): SqNull<SqByteArray, ByteArray> = this.nullItem(this.jByteArrayType)
+
+    fun clobNull(): SqNull<Clob, Clob> = this.nullItem(this.clobType)
+    fun blobNull(): SqNull<Blob, Blob> = this.nullItem(this.blobType)
+    fun refNull(): SqNull<Ref, Ref> = this.nullItem(this.refType)
+    fun dataLinkNull(): SqNull<URL, String> = this.nullItem(this.dataLinkType)
+    fun rowIdNull(): SqNull<RowId, RowId> = this.nullItem(this.rowIdType)
+    fun nClobNull(): SqNull<NClob, Clob> = this.nullItem(this.nClobType)
+    fun sqlXmlNull(): SqNull<SQLXML, String> = this.nullItem(this.sqlXmlType)
+    fun jClobNull(): SqNull<Clob, Clob> = this.nullItem(this.jClobType)
+    fun jBlobNull(): SqNull<Blob, Blob> = this.nullItem(this.jBlobType)
+    fun jRefNull(): SqNull<Ref, Ref> = this.nullItem(this.jRefType)
+    fun jUrlNull(): SqNull<URL, String> = this.nullItem(this.jUrlType)
+    fun jRowIdNull(): SqNull<RowId, RowId> = this.nullItem(this.jRowIdType)
+    fun jNClobNull(): SqNull<NClob, Clob> = this.nullItem(this.jNClobType)
+    fun jSqlXmlNull(): SqNull<SQLXML, String> = this.nullItem(this.jSqlXmlType)
+
+    fun jSqlDateNull(): SqNull<Date, Timestamp> = this.nullItem(this.jSqlDateType)
+    fun jLocalDateNull(): SqNull<LocalDate, Timestamp> = this.nullItem(this.jLocalDateType)
+    fun jSqlTimeNull(): SqNull<Time, Time> = this.nullItem(this.jSqlTimeType)
+    fun jLocalTimeNull(): SqNull<LocalTime, Time> = this.nullItem(this.jLocalTimeType)
+    fun jSqlTimestampNull(): SqNull<Timestamp, Timestamp> = this.nullItem(this.jSqlTimestampType)
+    fun jCalendarNull(): SqNull<Calendar, Timestamp> = this.nullItem(this.jCalendarType)
+    fun jDateNull(): SqNull<java.util.Date, Timestamp> = this.nullItem(this.jDateType)
+    fun jLocalDateTimeNull(): SqNull<LocalDateTime, Timestamp> = this.nullItem(this.jLocalDateTimeType)
+    fun jOffsetTimeNull(): SqNull<OffsetTime, Time> = this.nullItem(this.jOffsetTimeType)
+    fun jOffsetDateTimeNull(): SqNull<OffsetDateTime, Timestamp> = this.nullItem(this.jOffsetDateTimeType)
+    fun dateAsSqlDateNull(): SqNull<Date, Timestamp> = this.nullItem(this.dateAsSqlDateType)
+    fun dateNull(): SqNull<LocalDate, Timestamp> = this.nullItem(this.dateType)
+    fun timeAsSqlTimeNull(): SqNull<Time, Time> = this.nullItem(this.timeAsSqlTimeType)
+    fun timeNull(): SqNull<LocalTime, Time> = this.nullItem(this.timeType)
+    fun timestampAsSqlTimestampNull(): SqNull<Timestamp, Timestamp> = this.nullItem(this.timestampAsSqlTimestampType)
+    fun timestampAsCalendarNull(): SqNull<Calendar, Timestamp> = this.nullItem(this.timestampAsCalendarType)
+    fun timestampAsDateNull(): SqNull<java.util.Date, Timestamp> = this.nullItem(this.timestampAsDateType)
+    fun timestampNull(): SqNull<LocalDateTime, Timestamp> = this.nullItem(this.timestampType)
+    fun timeWithTimeZoneNull(): SqNull<OffsetTime, Time> = this.nullItem(this.timeWithTimeZoneType)
+    fun timestampWithTimeZoneNull(): SqNull<OffsetDateTime, Timestamp> = this.nullItem(this.timestampWithTimeZoneType)
 
 
     fun <JAVA: Any?, DB: Any, ORIG: SqExpression<JAVA, DB>> expressionAlias(original: ORIG, alias: String): SqExpressionAlias<JAVA, DB, ORIG>

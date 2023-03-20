@@ -211,6 +211,50 @@ object SqUtil {
     // endregion
 
 
+    // region Utils for types
+    fun throwUnexpectedColumnValueClassException(columnIndex: Int, value: Any, requiredClass: Class<*>, vararg moreRequiredClasses: Class<*>): Nothing {
+        val message = buildString {
+            this
+                .append("Column with index $columnIndex has unexpected value; value class is ")
+                .append(value.javaClass.name)
+                .append(", but required class ")
+
+            if (moreRequiredClasses.isEmpty()) {
+                this.append("is ")
+            } else {
+                this.append("are ")
+            }
+
+            this.append(requiredClass.name)
+
+            moreRequiredClasses.forEach { additionalRequiredClass ->
+                this
+                    .append(", ")
+                    .append(additionalRequiredClass.name)
+            }
+        }
+
+        val exception = IllegalStateException(message)
+        exception.stackTrace = exception.stackTrace.let { stackTrace ->
+            val size = stackTrace.size
+            stackTrace.takeLast(size - 1).toTypedArray()
+        }
+        throw exception
+    }
+
+    fun prepareStringValueForComment(value: String): String {
+        val maxLength = 25
+        return if (value.length > maxLength) {
+            val printedLength = maxLength - 3
+            val more = value.length - printedLength
+            "\"${value.take(printedLength)}... ($more character(s) hidden)\""
+        } else {
+            "\"$value\""
+        }
+    }
+    // endregion
+
+
     // region Result set reading
     @Suppress("MemberVisibilityCanBePrivate")
     val READING_CANCELLED = object {

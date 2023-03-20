@@ -33,6 +33,58 @@ interface SqColumnValueMapping<T: SqTable> {
         this[column] = param
     }
 }
+
+abstract class SqType<JAVA: Any> {
+    // region Reading
+    open fun readNotNull(source: ResultSet, columnIndex: Int): JAVA {
+        return this.readNullable(source, columnIndex)
+            ?: error("Got NULL value for NOT-NULL column with index #$columnIndex")
+    }
+
+    open fun readNullable(source: ResultSet, columnIndex: Int): JAVA? {
+        val result = this.readNullableImpl(source, columnIndex)
+        return if (source.wasNull()) {
+            null
+        } else {
+            result
+        }
+    }
+
+    protected abstract fun readNullableImpl(source: ResultSet, columnIndex: Int): JAVA?
+    // endregion
+
+
+    // region Writing
+    open fun write(target: PreparedStatement, parameterIndex: Int, value: JAVA?) {
+        if (value == null) {
+            this.writeNull(target, parameterIndex)
+        } else {
+            this.writeNotNull(target, parameterIndex, value)
+        }
+    }
+
+    protected open fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: JAVA) { target.setObject(parameterIndex, value) }
+
+    protected abstract fun writeNull(target: PreparedStatement, parameterIndex: Int)
+    // endregion
+
+
+    // region Preparing value for comment
+    open fun prepareValueForComment(value: JAVA?): String {
+        return if (value == null) {
+            "<NULL>"
+        } else {
+            this.prepareNotNullValueForComment(value)
+        }
+    }
+
+    protected open fun prepareNotNullValueForComment(value: JAVA): String = value.toString()
+    // endregion
+
+
+    @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+    inline fun <OPT: JAVA?> sqCast(): SqType<OPT & Any> = this as SqType<OPT & Any>
+}
 // endregion
 
 
@@ -112,6 +164,21 @@ interface SqColumn<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
     val columnName: String
     val safeColumnName: String
         get() = SqUtil.makeIdentifierSafeIfNeeded(this.columnName)
+}
+
+interface SqTableColumn<JAVA: Any?, DB: Any>: SqColumn<JAVA, DB> {
+    val table: SqTable
+    override val context: SqContext
+        get() = this.table.context
+
+    override fun nullable(): SqTableColumn<JAVA?, DB>
+
+    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
+        val columnName = SqUtil.makeIdentifierSafeIfNeeded(this.columnName)
+        target.add(columnName, spaced = spaceAllowed)
+    }
+
+    override fun parameters(): List<SqParameter<*, *>>? = null
 }
 
 interface SqColSet: SqItem {
@@ -483,12 +550,12 @@ interface SqSelect: SqReadStatement {
     val firstResultIndex: SqParameter<Int, Number>?
     fun firstResultIndex(firstResultIndex: SqParameter<Int, Number>?): SqSelect
     fun firstResultIndex(firstResultIndex: Int?): SqSelect =
-        this.firstResultIndex(firstResultIndex?.let { this.context.dbIntegerParam(nullable = false, firstResultIndex) })
+        this.firstResultIndex(firstResultIndex?.let { this.context.integerParam(nullable = false, firstResultIndex) })
 
     val resultCount: SqParameter<Int, Number>?
     fun resultCount(resultCount: SqParameter<Int, Number>?): SqSelect
     fun resultCount(resultCount: Int?): SqSelect =
-        this.resultCount(resultCount?.let { this.context.dbIntegerParam(nullable = false, resultCount) })
+        this.resultCount(resultCount?.let { this.context.integerParam(nullable = false, resultCount) })
 
     fun limit(resultCount: SqParameter<Int, Number>, firstResultIndex: SqParameter<Int, Number>? = null): SqSelect =
         this.resultCount(resultCount).firstResultIndex(firstResultIndex)

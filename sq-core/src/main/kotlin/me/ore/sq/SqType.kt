@@ -4,7 +4,7 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 
 
-abstract class SqType<JAVA: Any> {
+abstract class SqType_old<JAVA: Any> {
     open fun readNotNull(source: ResultSet, columnIndex: Int): JAVA {
         return this.readNullable(source, columnIndex)
             ?: throw IllegalStateException("Got NULL value for NOT-NULL column with index #$columnIndex")
@@ -47,5 +47,5 @@ abstract class SqType<JAVA: Any> {
 
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun <OPT: JAVA?> sqCast(): SqType<OPT & Any> = SqUtil.uncheckedCast(this)
+    inline fun <OPT: JAVA?> sqCast(): SqType_old<OPT & Any> = SqUtil.uncheckedCast(this)
 }

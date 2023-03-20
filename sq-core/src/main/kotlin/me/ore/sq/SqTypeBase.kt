@@ -4,13 +4,23 @@ import java.sql.PreparedStatement
 import java.sql.SQLType
 
 
-abstract class SqDetailedType_old<JAVA: Any>: SqType_old<JAVA>() {
-    abstract val sqlType: SQLType
-    open val sqlTypeName: String?
-        get() = this.sqlType.name
-    open val vendorTypeNumber: Int
-        get() = this.sqlType.vendorTypeNumber ?: throw IllegalStateException("SQL type ${this.sqlType} has NULL \"vendorTypeNumber\" property")
+abstract class SqTypeBase<JAVA: Any>: SqType<JAVA>() {
+    // region Type info
+    protected abstract val sqlType: SQLType
 
+    protected open val vendorTypeNumber: Int
+        get() {
+            val sqlType = this.sqlType
+            return sqlType.vendorTypeNumber
+                ?: error("SQL type $sqlType has NULL \"vendorTypeNumber\" property")
+        }
+
+    protected open val sqlTypeName: String?
+        get() = this.sqlType.name
+    // endregion
+
+
+    // region Writing
     override fun writeNull(target: PreparedStatement, parameterIndex: Int) {
         val vendorTypeNumber = this.vendorTypeNumber
         val sqlTypeName = this.sqlTypeName
@@ -20,4 +30,5 @@ abstract class SqDetailedType_old<JAVA: Any>: SqType_old<JAVA>() {
             target.setNull(parameterIndex, vendorTypeNumber, sqlTypeName)
         }
     }
+    // endregion
 }

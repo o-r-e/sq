@@ -1,8 +1,15 @@
 package me.ore.sq
 
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.net.URL
 import java.sql.*
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.OffsetTime
+import java.util.Calendar
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
@@ -57,58 +64,77 @@ fun <T: PreparedStatement> Iterable<SqParameter<*, *>>?.setTo(target: T): T {
 }
 
 
+inline fun <reified JAVA: String?> SqContext.charParam(value: JAVA): SqParameter<JAVA, String> = this.charParam((null is JAVA), value)
+inline fun <reified JAVA: String?> SqContext.varCharParam(value: JAVA): SqParameter<JAVA, String> = this.varCharParam((null is JAVA), value)
+inline fun <reified JAVA: String?> SqContext.longVarCharParam(value: JAVA): SqParameter<JAVA, String> = this.longVarCharParam((null is JAVA), value)
+inline fun <reified JAVA: String?> SqContext.nCharParam(value: JAVA): SqParameter<JAVA, String> = this.nCharParam((null is JAVA), value)
+inline fun <reified JAVA: String?> SqContext.nVarCharParam(value: JAVA): SqParameter<JAVA, String> = this.nVarCharParam((null is JAVA), value)
+inline fun <reified JAVA: String?> SqContext.longNVarCharParam(value: JAVA): SqParameter<JAVA, String> = this.longNVarCharParam((null is JAVA), value)
+inline fun <reified JAVA: String?> SqContext.jStringParam(value: JAVA): SqParameter<JAVA, String> = this.jStringParam((null is JAVA), value)
+
+inline fun <reified JAVA: BigDecimal?> SqContext.numericParam(value: JAVA): SqParameter<JAVA, Number> = this.numericParam((null is JAVA), value)
+inline fun <reified JAVA: BigDecimal?> SqContext.decimalParam(value: JAVA): SqParameter<JAVA, Number> = this.decimalParam((null is JAVA), value)
+inline fun <reified JAVA: Byte?> SqContext.tinyIntParam(value: JAVA): SqParameter<JAVA, Number> = this.tinyIntParam((null is JAVA), value)
+inline fun <reified JAVA: Short?> SqContext.smallIntParam(value: JAVA): SqParameter<JAVA, Number> = this.smallIntParam((null is JAVA), value)
+inline fun <reified JAVA: Int?> SqContext.integerParam(value: JAVA): SqParameter<JAVA, Number> = this.integerParam((null is JAVA), value)
+inline fun <reified JAVA: Long?> SqContext.bigIntParam(value: JAVA): SqParameter<JAVA, Number> = this.bigIntParam((null is JAVA), value)
+inline fun <reified JAVA: BigInteger?> SqContext.bigIntAsBigIntegerParam(value: JAVA): SqParameter<JAVA, Number> = this.bigIntAsBigIntegerParam((null is JAVA), value)
+inline fun <reified JAVA: Float?> SqContext.realParam(value: JAVA): SqParameter<JAVA, Number> = this.realParam((null is JAVA), value)
+inline fun <reified JAVA: Double?> SqContext.floatParam(value: JAVA): SqParameter<JAVA, Number> = this.floatParam((null is JAVA), value)
+inline fun <reified JAVA: Double?> SqContext.doubleParam(value: JAVA): SqParameter<JAVA, Number> = this.doubleParam((null is JAVA), value)
 inline fun <reified JAVA: BigDecimal?> SqContext.jBigDecimalParam(value: JAVA): SqParameter<JAVA, Number> = this.jBigDecimalParam((null is JAVA), value)
-inline fun <reified JAVA: Blob?> SqContext.jBlobParam(value: JAVA): SqParameter<JAVA, Number> = this.jBlobParam((null is JAVA), value)
-inline fun <reified JAVA: Boolean?> SqContext.jBooleanParam(value: JAVA): SqParameter<JAVA, Boolean> = this.jBooleanParam((null is JAVA), value)
-inline fun <reified JAVA: Byte?> SqContext.jByteParam(value: JAVA): SqParameter<JAVA, Boolean> = this.jByteParam((null is JAVA), value)
-inline fun <reified JAVA: SqByteArray?> SqContext.jByteArrayParam(value: JAVA): SqParameter<JAVA, SqByteArray> = this.jByteArrayParam((null is JAVA), value)
-inline fun <reified JAVA: Clob?> SqContext.jClobParam(value: JAVA): SqParameter<JAVA, Clob> = this.jClobParam((null is JAVA), value)
-inline fun <reified JAVA: Date?> SqContext.jDateParam(value: JAVA): SqParameter<JAVA, Date> = this.jDateParam((null is JAVA), value)
-inline fun <reified JAVA: Double?> SqContext.jDoubleParam(value: JAVA): SqParameter<JAVA, Number> = this.jDoubleParam((null is JAVA), value)
-inline fun <reified JAVA: Float?> SqContext.jFloatParam(value: JAVA): SqParameter<JAVA, Number> = this.jFloatParam((null is JAVA), value)
+inline fun <reified JAVA: Byte?> SqContext.jByteParam(value: JAVA): SqParameter<JAVA, Number> = this.jByteParam((null is JAVA), value)
+inline fun <reified JAVA: Short?> SqContext.jShortParam(value: JAVA): SqParameter<JAVA, Number> = this.jShortParam((null is JAVA), value)
 inline fun <reified JAVA: Int?> SqContext.jIntParam(value: JAVA): SqParameter<JAVA, Number> = this.jIntParam((null is JAVA), value)
 inline fun <reified JAVA: Long?> SqContext.jLongParam(value: JAVA): SqParameter<JAVA, Number> = this.jLongParam((null is JAVA), value)
-inline fun <reified JAVA: NClob?> SqContext.jNClobParam(value: JAVA): SqParameter<JAVA, Clob> = this.jNClobParam((null is JAVA), value)
+inline fun <reified JAVA: BigInteger?> SqContext.jBigIntegerParam(value: JAVA): SqParameter<JAVA, Number> = this.jBigIntegerParam((null is JAVA), value)
+inline fun <reified JAVA: Float?> SqContext.jFloatParam(value: JAVA): SqParameter<JAVA, Number> = this.jFloatParam((null is JAVA), value)
+inline fun <reified JAVA: Double?> SqContext.jDoubleParam(value: JAVA): SqParameter<JAVA, Number> = this.jDoubleParam((null is JAVA), value)
+
+inline fun <reified JAVA: Boolean?> SqContext.bitParam(value: JAVA): SqParameter<JAVA, Boolean> = this.bitParam((null is JAVA), value)
+inline fun <reified JAVA: Boolean?> SqContext.booleanParam(value: JAVA): SqParameter<JAVA, Boolean> = this.booleanParam((null is JAVA), value)
+inline fun <reified JAVA: Boolean?> SqContext.jBooleanParam(value: JAVA): SqParameter<JAVA, Boolean> = this.jBooleanParam((null is JAVA), value)
+
+inline fun <reified JAVA: SqByteArray?> SqContext.binaryParam(value: JAVA): SqParameter<JAVA, ByteArray> = this.binaryParam((null is JAVA), value)
+inline fun <reified JAVA: SqByteArray?> SqContext.varBinaryParam(value: JAVA): SqParameter<JAVA, ByteArray> = this.varBinaryParam((null is JAVA), value)
+inline fun <reified JAVA: SqByteArray?> SqContext.longVarBinaryParam(value: JAVA): SqParameter<JAVA, ByteArray> = this.longVarBinaryParam((null is JAVA), value)
+inline fun <reified JAVA: SqByteArray?> SqContext.jByteArrayParam(value: JAVA): SqParameter<JAVA, ByteArray> = this.jByteArrayParam((null is JAVA), value)
+
+inline fun <reified JAVA: Clob?> SqContext.clobParam(value: JAVA): SqParameter<JAVA, Clob> = this.clobParam((null is JAVA), value)
+inline fun <reified JAVA: Blob?> SqContext.blobParam(value: JAVA): SqParameter<JAVA, Blob> = this.blobParam((null is JAVA), value)
+inline fun <reified JAVA: Ref?> SqContext.refParam(value: JAVA): SqParameter<JAVA, Ref> = this.refParam((null is JAVA), value)
+inline fun <reified JAVA: URL?> SqContext.dataLinkParam(value: JAVA): SqParameter<JAVA, String> = this.dataLinkParam((null is JAVA), value)
+inline fun <reified JAVA: RowId?> SqContext.rowIdParam(value: JAVA): SqParameter<JAVA, RowId> = this.rowIdParam((null is JAVA), value)
+inline fun <reified JAVA: NClob?> SqContext.nClobParam(value: JAVA): SqParameter<JAVA, Clob> = this.nClobParam((null is JAVA), value)
+inline fun <reified JAVA: SQLXML?> SqContext.sqlXmlParam(value: JAVA): SqParameter<JAVA, String> = this.sqlXmlParam((null is JAVA), value)
+inline fun <reified JAVA: Clob?> SqContext.jClobParam(value: JAVA): SqParameter<JAVA, Clob> = this.jClobParam((null is JAVA), value)
+inline fun <reified JAVA: Blob?> SqContext.jBlobParam(value: JAVA): SqParameter<JAVA, Blob> = this.jBlobParam((null is JAVA), value)
 inline fun <reified JAVA: Ref?> SqContext.jRefParam(value: JAVA): SqParameter<JAVA, Ref> = this.jRefParam((null is JAVA), value)
-inline fun <reified JAVA: RowId?> SqContext.jRowIdParam(value: JAVA): SqParameter<JAVA, RowId> = this.jRowIdParam((null is JAVA), value)
-inline fun <reified JAVA: SQLXML?> SqContext.jSqlXmlParam(value: JAVA): SqParameter<JAVA, SQLXML> = this.jSqlXmlParam((null is JAVA), value)
-inline fun <reified JAVA: Short?> SqContext.jShortParam(value: JAVA): SqParameter<JAVA, Number> = this.jShortParam((null is JAVA), value)
-inline fun <reified JAVA: String?> SqContext.jStringParam(value: JAVA): SqParameter<JAVA, String> = this.jStringParam((null is JAVA), value)
-inline fun <reified JAVA: Time?> SqContext.jTimeParam(value: JAVA): SqParameter<JAVA, Time> = this.jTimeParam((null is JAVA), value)
-inline fun <reified JAVA: Timestamp?> SqContext.jTimestampParam(value: JAVA): SqParameter<JAVA, Date> = this.jTimestampParam((null is JAVA), value)
 inline fun <reified JAVA: URL?> SqContext.jUrlParam(value: JAVA): SqParameter<JAVA, String> = this.jUrlParam((null is JAVA), value)
+inline fun <reified JAVA: RowId?> SqContext.jRowIdParam(value: JAVA): SqParameter<JAVA, RowId> = this.jRowIdParam((null is JAVA), value)
+inline fun <reified JAVA: NClob?> SqContext.jNClobParam(value: JAVA): SqParameter<JAVA, Clob> = this.jNClobParam((null is JAVA), value)
+inline fun <reified JAVA: SQLXML?> SqContext.jSqlXmlParam(value: JAVA): SqParameter<JAVA, String> = this.jSqlXmlParam((null is JAVA), value)
 
-
-inline fun <reified JAVA: Long?> SqContext.dbBigIntParam(value: JAVA): SqParameter<JAVA, Number> = this.dbBigIntParam((null is JAVA), value)
-inline fun <reified JAVA: SqByteArray?> SqContext.dbBinaryParam(value: JAVA): SqParameter<JAVA, SqByteArray> = this.dbBinaryParam((null is JAVA), value)
-inline fun <reified JAVA: Boolean?> SqContext.dbBitParam(value: JAVA): SqParameter<JAVA, Boolean> = this.dbBitParam((null is JAVA), value)
-inline fun <reified JAVA: Blob?> SqContext.dbBlobParam(value: JAVA): SqParameter<JAVA, Blob> = this.dbBlobParam((null is JAVA), value)
-inline fun <reified JAVA: Boolean?> SqContext.dbBooleanParam(value: JAVA): SqParameter<JAVA, Boolean> = this.dbBooleanParam((null is JAVA), value)
-inline fun <reified JAVA: String?> SqContext.dbCharParam(value: JAVA): SqParameter<JAVA, String> = this.dbCharParam((null is JAVA), value)
-inline fun <reified JAVA: Clob?> SqContext.dbClobParam(value: JAVA): SqParameter<JAVA, Boolean> = this.dbClobParam((null is JAVA), value)
-inline fun <reified JAVA: URL?> SqContext.dbDataLinkParam(value: JAVA): SqParameter<JAVA, String> = this.dbDataLinkParam((null is JAVA), value)
-inline fun <reified JAVA: Date?> SqContext.dbDateParam(value: JAVA): SqParameter<JAVA, Date> = this.dbDateParam((null is JAVA), value)
-inline fun <reified JAVA: BigDecimal?> SqContext.dbDecimalParam(value: JAVA): SqParameter<JAVA, Number> = this.dbDecimalParam((null is JAVA), value)
-inline fun <reified JAVA: Double?> SqContext.dbDoubleParam(value: JAVA): SqParameter<JAVA, Number> = this.dbDoubleParam((null is JAVA), value)
-inline fun <reified JAVA: Double?> SqContext.dbFloatParam(value: JAVA): SqParameter<JAVA, Number> = this.dbFloatParam((null is JAVA), value)
-inline fun <reified JAVA: Int?> SqContext.dbIntegerParam(value: JAVA): SqParameter<JAVA, Number> = this.dbIntegerParam((null is JAVA), value)
-inline fun <reified JAVA: String?> SqContext.dbLongNVarCharParam(value: JAVA): SqParameter<JAVA, String> = this.dbLongNVarCharParam((null is JAVA), value)
-inline fun <reified JAVA: SqByteArray?> SqContext.dbLongVarBinaryParam(value: JAVA): SqParameter<JAVA, SqByteArray> = this.dbLongVarBinaryParam((null is JAVA), value)
-inline fun <reified JAVA: String?> SqContext.dbLongVarCharParam(value: JAVA): SqParameter<JAVA, String> = this.dbLongVarCharParam((null is JAVA), value)
-inline fun <reified JAVA: String?> SqContext.dbNCharParam(value: JAVA): SqParameter<JAVA, String> = this.dbNCharParam((null is JAVA), value)
-inline fun <reified JAVA: NClob?> SqContext.dbNClobParam(value: JAVA): SqParameter<JAVA, Clob> = this.dbNClobParam((null is JAVA), value)
-inline fun <reified JAVA: String?> SqContext.dbNVarCharParam(value: JAVA): SqParameter<JAVA, String> = this.dbNVarCharParam((null is JAVA), value)
-inline fun <reified JAVA: BigDecimal?> SqContext.dbNumericParam(value: JAVA): SqParameter<JAVA, Number> = this.dbNumericParam((null is JAVA), value)
-inline fun <reified JAVA: Float?> SqContext.dbRealParam(value: JAVA): SqParameter<JAVA, Number> = this.dbRealParam((null is JAVA), value)
-inline fun <reified JAVA: Ref?> SqContext.dbRefParam(value: JAVA): SqParameter<JAVA, Ref> = this.dbRefParam((null is JAVA), value)
-inline fun <reified JAVA: RowId?> SqContext.dbRowIdParam(value: JAVA): SqParameter<JAVA, RowId> = this.dbRowIdParam((null is JAVA), value)
-inline fun <reified JAVA: Short?> SqContext.dbSmallIntParam(value: JAVA): SqParameter<JAVA, Number> = this.dbSmallIntParam((null is JAVA), value)
-inline fun <reified JAVA: SQLXML?> SqContext.dbSqlXmlParam(value: JAVA): SqParameter<JAVA, SQLXML> = this.dbSqlXmlParam((null is JAVA), value)
-inline fun <reified JAVA: Time?> SqContext.dbTimeParam(value: JAVA): SqParameter<JAVA, Time> = this.dbTimeParam((null is JAVA), value)
-inline fun <reified JAVA: Timestamp?> SqContext.dbTimestampParam(value: JAVA): SqParameter<JAVA, Date> = this.dbTimestampParam((null is JAVA), value)
-inline fun <reified JAVA: Byte?> SqContext.dbTinyIntParam(value: JAVA): SqParameter<JAVA, Number> = this.dbTinyIntParam((null is JAVA), value)
-inline fun <reified JAVA: SqByteArray?> SqContext.dbVarBinaryParam(value: JAVA): SqParameter<JAVA, SqByteArray> = this.dbVarBinaryParam((null is JAVA), value)
-inline fun <reified JAVA: String?> SqContext.dbVarCharParam(value: JAVA): SqParameter<JAVA, String> = this.dbVarCharParam((null is JAVA), value)
+inline fun <reified JAVA: Date?> SqContext.jSqlDateParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.jSqlDateParam((null is JAVA), value)
+inline fun <reified JAVA: LocalDate?> SqContext.jLocalDateParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.jLocalDateParam((null is JAVA), value)
+inline fun <reified JAVA: Time?> SqContext.jSqlTimeParam(value: JAVA): SqParameter<JAVA, Time> = this.jSqlTimeParam((null is JAVA), value)
+inline fun <reified JAVA: LocalTime?> SqContext.jLocalTimeParam(value: JAVA): SqParameter<JAVA, Time> = this.jLocalTimeParam((null is JAVA), value)
+inline fun <reified JAVA: Timestamp?> SqContext.jSqlTimestampParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.jSqlTimestampParam((null is JAVA), value)
+inline fun <reified JAVA: Calendar?> SqContext.jCalendarParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.jCalendarParam((null is JAVA), value)
+inline fun <reified JAVA: java.util.Date?> SqContext.jDateParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.jDateParam((null is JAVA), value)
+inline fun <reified JAVA: LocalDateTime?> SqContext.jLocalDateTimeParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.jLocalDateTimeParam((null is JAVA), value)
+inline fun <reified JAVA: OffsetTime?> SqContext.jOffsetTimeParam(value: JAVA): SqParameter<JAVA, Time> = this.jOffsetTimeParam((null is JAVA), value)
+inline fun <reified JAVA: OffsetDateTime?> SqContext.jOffsetDateTimeParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.jOffsetDateTimeParam((null is JAVA), value)
+inline fun <reified JAVA: Date?> SqContext.dateAsSqlDateParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.dateAsSqlDateParam((null is JAVA), value)
+inline fun <reified JAVA: LocalDate?> SqContext.dateParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.dateParam((null is JAVA), value)
+inline fun <reified JAVA: Time?> SqContext.timeAsSqlTimeParam(value: JAVA): SqParameter<JAVA, Time> = this.timeAsSqlTimeParam((null is JAVA), value)
+inline fun <reified JAVA: LocalTime?> SqContext.timeParam(value: JAVA): SqParameter<JAVA, Time> = this.timeParam((null is JAVA), value)
+inline fun <reified JAVA: Timestamp?> SqContext.timestampAsSqlTimestampParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.timestampAsSqlTimestampParam((null is JAVA), value)
+inline fun <reified JAVA: Calendar?> SqContext.timestampAsCalendarParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.timestampAsCalendarParam((null is JAVA), value)
+inline fun <reified JAVA: java.util.Date?> SqContext.timestampAsDateParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.timestampAsDateParam((null is JAVA), value)
+inline fun <reified JAVA: LocalDateTime?> SqContext.timestampParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.timestampParam((null is JAVA), value)
+inline fun <reified JAVA: OffsetTime?> SqContext.timeWithTimeZoneParam(value: JAVA): SqParameter<JAVA, Time> = this.timeWithTimeZoneParam((null is JAVA), value)
+inline fun <reified JAVA: OffsetDateTime?> SqContext.timestampWithTimeZoneParam(value: JAVA): SqParameter<JAVA, Timestamp> = this.timestampWithTimeZoneParam((null is JAVA), value)
 
 
 inline fun <S: SqConnReadStatement, R: Any?> S.read(resultListCapacity: Int = 1, block: S.(resultSet: SqResultSet) -> SqReadResult<R>): List<R> {
