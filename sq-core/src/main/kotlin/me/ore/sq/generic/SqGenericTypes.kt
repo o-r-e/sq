@@ -463,6 +463,3 @@ object SqGenericTypes {
     val SQL_XML: SqType<SQLXML> = otherType(JDBCType.SQLXML)
     // endregion
 }
-
-
-fun <JAVA: Int?> integerParam(value: JAVA): SqParameter<JAVA, Number> = SqGenericTypes.INTEGER.createParam(value)
