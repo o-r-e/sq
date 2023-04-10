@@ -2,6 +2,7 @@ package me.ore.sq
 
 import me.ore.sq.generic.*
 import me.ore.sq.util.SqUtil
+import java.sql.Connection
 import java.sql.PreparedStatement
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -16,6 +17,44 @@ fun <T: SqWriter> T.addSpaced(text: String): T = this.apply { this.addText(text,
 fun <T: SqWriter> T.clear(): T = this.apply { this.clearData() }
 
 fun <T: SqColumnValueMapping<*>> T.clear(): T = this.apply { this.clearData() }
+// endregion
+
+
+// region Context / start
+inline fun <T, C: SqContext> sq(context: C, block: C.() -> T): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return block.invoke(context)
+}
+
+inline fun <T> sq(data: SqContextData, block: SqContext.Context.() -> T): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return SqContext.Context(data).start().use(block)
+}
+
+inline fun <T> sq(data: SqContextData, connection: Connection, block: SqContext.ConnContext.() -> T): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return SqContext.ConnContext(data, connection).start().use(block)
+}
+
+inline fun <T> sq(template: SqContextTemplate, block: SqContext.Context.() -> T): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return template.create().start().use(block)
+}
+
+inline fun <T> sq(template: SqContextTemplate, connection: Connection, block: SqContext.ConnContext.() -> T): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return template.create(connection).start().use(block)
+}
+
+inline fun <T> sq(block: SqContext.Context.() -> T): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return SqContextTemplate.defaultTemplate.create().start().use(block)
+}
+
+inline fun <T> sq(connection: Connection, block: SqContext.ConnContext.() -> T): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    return SqContextTemplate.defaultTemplate.create(connection).start().use(block)
+}
 // endregion
 
 

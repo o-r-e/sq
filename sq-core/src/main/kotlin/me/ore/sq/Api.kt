@@ -859,7 +859,6 @@ interface SqConnSingleColSelectConstructor {
         groupBy: List<SqColumn<*, *>>? = null,
         having: SqExpression<*, Boolean>? = null,
         orderBy: List<SqOrderBy>? = null,
-        columns: List<SqColumn<*, *>> = listOf(column),
     ): SqConnSingleColSelect<JAVA, DB>
 }
 
