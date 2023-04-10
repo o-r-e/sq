@@ -6,38 +6,21 @@ import me.ore.sq.*
 open class SqGenericDelete<T: SqTable>(
     override val context: SqContext,
     override val table: T,
+    override var where: SqExpression<*, Boolean>? = null,
 ): SqDelete<T> {
-    // region Where
-    @Suppress("MemberVisibilityCanBePrivate", "PropertyName")
-    protected var _where: SqExpression<*, Boolean>? = null
-
-    override val where: SqExpression<*, Boolean>?
-        get() = this._where
-
-    override fun where(condition: SqExpression<*, Boolean>?): SqGenericDelete<T> = this.apply {
-        this._where = condition
-    }
-    // endregion
-
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        val internalSpaceAllowed = if (asTextPart) {
-            target.add("(", spaced = false)
-            false
-        } else {
-            spaceAllowed
-        }
-
-        target.add("DELETE FROM", spaced = internalSpaceAllowed)
-        this.table.appendTo(target, asTextPart = true, spaceAllowed = true)
-
-        this.where?.let { where ->
-            target.ls().add("WHERE ", spaced = false)
-            where.appendTo(target, asTextPart = true, spaceAllowed = false)
-        }
-
-        if (asTextPart) {
-            target.add(")", spaced = false)
+    companion object {
+        val CONSTRUCTOR: SqDeleteConstructor = object : SqDeleteConstructor {
+            override fun <T : SqTable> createDelete(
+                context: SqContext,
+                table: T,
+                where: SqExpression<*, Boolean>?
+            ): SqDelete<T> {
+                return SqGenericDelete(context, table, where)
+            }
         }
     }
+
+
+    override val definitionItem: SqItem
+        get() = this
 }

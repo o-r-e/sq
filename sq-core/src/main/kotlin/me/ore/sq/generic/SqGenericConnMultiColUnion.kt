@@ -1,32 +1,25 @@
 package me.ore.sq.generic
 
 import me.ore.sq.SqConnMultiColUnion
-import me.ore.sq.SqConnectedContext
-import me.ore.sq.SqParameter
+import me.ore.sq.SqConnMultiColUnionConstructor
+import me.ore.sq.SqContext
 import me.ore.sq.SqSelect
 
 
 open class SqGenericConnMultiColUnion(
-    override val context: SqConnectedContext,
-    unionAll: Boolean,
-    selects: Iterable<SqSelect>,
-): SqGenericMultiColUnion(context, unionAll, selects), SqConnMultiColUnion {
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqGenericConnMultiColUnion = this.apply {
-        super.firstResultIndex(firstResultIndex)
-    }
-    override fun firstResultIndex(firstResultIndex: Long?): SqGenericConnMultiColUnion = this.apply {
-        super.firstResultIndex(firstResultIndex)
-    }
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqGenericConnMultiColUnion = this.apply {
-        super.resultCount(resultCount)
-    }
-    override fun resultCount(resultCount: Long?): SqGenericConnMultiColUnion = this.apply {
-        super.resultCount(resultCount)
-    }
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqGenericConnMultiColUnion = this.apply {
-        super.limit(resultCount, firstResultIndex)
-    }
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqGenericConnMultiColUnion = this.apply {
-        super.limit(resultCount, firstResultIndex)
+    override val context: SqContext.ConnContext,
+    override var unionAll: Boolean,
+    override var selects: List<SqSelect>,
+): SqGenericUnionBase(), SqConnMultiColUnion {
+    companion object {
+        val CONSTRUCTOR: SqConnMultiColUnionConstructor = object : SqConnMultiColUnionConstructor {
+            override fun createConnMultiColUnion(
+                context: SqContext.ConnContext,
+                unionAll: Boolean,
+                selects: List<SqSelect>
+            ): SqConnMultiColUnion {
+                return SqGenericConnMultiColUnion(context, unionAll, selects)
+            }
+        }
     }
 }

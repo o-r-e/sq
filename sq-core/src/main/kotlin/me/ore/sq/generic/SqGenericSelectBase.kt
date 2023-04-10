@@ -1,151 +1,71 @@
 package me.ore.sq.generic
 
 import me.ore.sq.*
-import java.util.Collections
 
 
-abstract class SqGenericSelectBase(
-    override val context: SqContext,
-    override val distinct: Boolean,
-    columns: Iterable<SqColumn<*, *>>,
-): SqSelect {
-    // region Columns
-    override val columns: List<SqColumn<*, *>> = columns.toList()
-
-    override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
-        return IllegalArgumentException("Cannot find column $column in \"select\" $this")
-    }
-    // endregion
+abstract class SqGenericSelectBase: SqGenericReadStatementBase(), SqSelect {
+    override val definitionItem: SqItem
+        get() = this
 
 
-    // region From
-    protected open fun createFromList(): MutableList<SqColSet> = ArrayList()
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val internalSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
 
-    @Suppress("MemberVisibilityCanBePrivate", "PropertyName")
-    protected var _from: MutableList<SqColSet>? = null
+        target.add("SELECT ", spaced = internalSpaceAllowed)
+        if (this.distinct) target.add("DISTINCT ")
 
-    override val from: List<SqColSet>?
-        get() = this._from?.let { Collections.unmodifiableList(it) }
+        this.columns.forEachIndexed { index, column ->
+            if (index > 0) target.add(", ")
+            column.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
 
-    override fun from(from: Iterable<SqColSet>): SqGenericSelectBase = this.apply {
-        val tmpFrom = this
-            ._from
-            ?.also { it.clear() }
-            ?: run {
-                val tmpFrom = this.createFromList()
-                this._from = tmpFrom
-                tmpFrom
-            }
-
-        tmpFrom.addAll(from)
-    }
-    // endregion
-
-
-    // region Where
-    @Suppress("PropertyName", "MemberVisibilityCanBePrivate")
-    protected var _where: SqExpression<*, Boolean>? = null
-
-    override val where: SqExpression<*, Boolean>?
-        get() = this._where
-
-    override fun where(condition: SqExpression<*, Boolean>?): SqGenericSelectBase = this.apply { this._where = condition }
-    // endregion
-
-
-    // region Group by
-    protected open fun createGroupByList(): MutableList<SqColumn<*, *>> = ArrayList()
-
-    @Suppress("PropertyName")
-    protected open var _groupBy: MutableList<SqColumn<*, *>>? = null
-
-    override val groupBy: List<SqColumn<*, *>>?
-        get() = this._groupBy?.let { Collections.unmodifiableList(it) }
-
-    override fun groupBy(items: Iterable<SqColumn<*, *>>): SqGenericSelectBase = this.apply {
-        val tmpGroupBy = this
-            ._groupBy
-            ?.also { it.clear() }
-            ?: run {
-                val tmpGroupBy = this.createGroupByList()
-                this._groupBy = tmpGroupBy
-                tmpGroupBy
-            }
-
-        tmpGroupBy.addAll(items)
-    }
-    // endregion
-
-
-    // region Having
-    @Suppress("PropertyName", "MemberVisibilityCanBePrivate")
-    protected var _having: SqExpression<*, Boolean>? = null
-
-    override val having: SqExpression<*, Boolean>?
-        get() = this._having
-
-    override fun having(condition: SqExpression<*, Boolean>?): SqGenericSelectBase = this.apply { this._having = condition }
-    // endregion
-
-
-    // region Order by
-    protected open fun createOrderByList(): MutableList<SqOrderBy> = ArrayList()
-
-    @Suppress("MemberVisibilityCanBePrivate", "PropertyName")
-    protected open var _orderBy: MutableList<SqOrderBy>? = null
-
-    override val orderBy: List<SqOrderBy>?
-        get() = this._orderBy?.let { Collections.unmodifiableList(it) }
-
-    override fun orderBy(items: Iterable<SqOrderBy>): SqGenericSelectBase = this.apply {
-        val tmpOrderBy = this
-            ._orderBy
-            ?.also { it.clear() }
-            ?: run {
-                val tmpOrderBy = this.createOrderByList()
-                this._orderBy = tmpOrderBy
-                tmpOrderBy
-            }
-
-        tmpOrderBy.addAll(items)
-    }
-    // endregion
-
-
-    override fun parameters(): List<SqParameter<*, *>>? {
-        val self = this
-        return buildList {
-            self.columns.forEach { column ->
-                column.possibleDefinitionParameters()?.let { parameters ->
-                    this.addAll(parameters)
-                }
-            }
-            self.from?.forEach { fromItem ->
-                fromItem.possibleDefinitionParameters()?.let { parameters ->
-                    this.addAll(parameters)
-                }
-            }
-            self.where?.let { where ->
-                where.parameters()?.let { parameters ->
-                    this.addAll(parameters)
-                }
-            }
-            self.groupBy?.forEach { groupByItem ->
-                groupByItem.parameters()?.let { parameters ->
-                    this.addAll(parameters)
-                }
-            }
-            self.having?.let { having ->
-                having.parameters()?.let { parameters ->
-                    this.addAll(parameters)
-                }
-            }
-            self.orderBy?.forEach { orderByItem ->
-                orderByItem.parameters()?.let { parameters ->
-                    this.addAll(parameters)
-                }
+        this.from?.takeIf { it.isNotEmpty() }?.let { from ->
+            target.ls().add("FROM ")
+            from.forEachIndexed { index, colSet ->
+                if (index > 0) target.add(", ")
+                colSet.appendSqlTo(target, asPart = true, spaceAllowed = false)
             }
         }
-            .takeIf { it.isNotEmpty() }
+
+        this.where?.let { where ->
+            target.ls().add("WHERE ")
+            where.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+
+        this.groupBy?.takeIf { it.isNotEmpty() }?.let { groupBy ->
+            target.ls().add("GROUP BY ")
+            groupBy.forEachIndexed { index, column ->
+                if (index > 0) target.add(", ")
+                column.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            }
+        }
+
+        this.having?.let { having ->
+            target.ls().add("HAVING ")
+            having.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+
+        this.orderBy?.takeIf { it.isNotEmpty() }?.let { orderBy ->
+            target.ls().add("ORDER BY ")
+            orderBy.forEachIndexed { index, orderByItem ->
+                if (index > 0) target.add(", ")
+                orderByItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            }
+        }
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.columns.forEach { it.appendParametersTo(target) }
+        this.from?.forEach { it.appendParametersTo(target) }
+        this.where?.appendParametersTo(target)
+        this.groupBy?.forEach { it.appendParametersTo(target) }
+        this.having?.appendParametersTo(target)
     }
 }

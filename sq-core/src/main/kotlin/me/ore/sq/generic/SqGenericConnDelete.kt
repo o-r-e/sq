@@ -1,11 +1,22 @@
 package me.ore.sq.generic
 
-import me.ore.sq.SqConnDelete
-import me.ore.sq.SqConnectedContext
-import me.ore.sq.SqExpression
-import me.ore.sq.SqTable
+import me.ore.sq.*
 
 
-open class SqGenericConnDelete<T: SqTable>(override val context: SqConnectedContext, table: T): SqGenericDelete<T>(context, table), SqConnDelete<T> {
-    override fun where(condition: SqExpression<*, Boolean>?): SqGenericConnDelete<T> = this.apply { super.where(condition) }
+open class SqGenericConnDelete<T: SqTable>(
+    override val context: SqContext.ConnContext,
+    override val table: T,
+    override var where: SqExpression<*, Boolean>? = null,
+): SqGenericDelete<T>(context, table, where), SqConnDelete<T> {
+    companion object {
+        val CONSTRUCTOR: SqConnDeleteConstructor = object : SqConnDeleteConstructor {
+            override fun <T : SqTable> createConnDelete(
+                context: SqContext.ConnContext,
+                table: T,
+                where: SqExpression<*, Boolean>?
+            ): SqConnDelete<T> {
+                return SqGenericConnDelete(context, table, where)
+            }
+        }
+    }
 }

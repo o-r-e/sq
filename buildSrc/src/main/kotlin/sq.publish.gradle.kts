@@ -1,12 +1,13 @@
-import java.net.URI
-
 plugins {
     `maven-publish`
     signing
 }
 
 val mavenPublicationName = "mavenJava"
-fun isSnapshotVersion(): Boolean = version.toString().endsWith("SNAPSHOT")
+fun isSnapshotVersion(): Boolean = version.toString().toUpperCase().endsWith("SNAPSHOT")
+
+val sonatypeUsername: String? = project.properties["sonatype.username"]?.toString()
+val sonatypePassword: String? = project.properties["sonatype.password"]?.toString()
 
 publishing {
     publications {
@@ -44,29 +45,33 @@ publishing {
     }
 
     repositories {
-        maven {
+        maven localBuildDir@ {
             val repoUrl = if (isSnapshotVersion()) {
                 uri(layout.buildDirectory.dir("repo-snapshot"))
             } else {
                 uri(layout.buildDirectory.dir("repo-release"))
             }
 
-            name = "myRepo"
+            name = "localBuildDir"
             url = repoUrl
         }
-        maven {
-            val repoUrl = if (isSnapshotVersion()) {
-                uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            } else {
-                uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            }
 
-            name = "sonatype"
-            url = repoUrl
+        // Sonatype
+        if ((sonatypeUsername != null) && (sonatypePassword != null)) {
+            maven ossrh@{
+                val repoUrl = if (isSnapshotVersion()) {
+                    uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+                } else {
+                    uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                }
 
-            this.credentials {
-                this.username = property("ossrhUsername")!!.toString()
-                this.password = property("ossrhPassword")!!.toString()
+                name = "sonatype"
+                url = repoUrl
+
+                this.credentials {
+                    this.username = sonatypeUsername
+                    this.password = sonatypePassword
+                }
             }
         }
     }

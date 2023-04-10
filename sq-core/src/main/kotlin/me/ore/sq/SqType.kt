@@ -1,61 +1,133 @@
 package me.ore.sq
 
+import me.ore.sq.util.SqUtil
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
 
-abstract class SqType<JAVA: Any> {
-    // region Reading
-    open fun readNotNull(source: ResultSet, columnIndex: Int): JAVA {
-        return this.readNullable(source, columnIndex)
-            ?: error("Got NULL value for NOT-NULL column with index #$columnIndex")
-    }
+class SqType<JAVA: Any?, DB: Any> private constructor(
+    val nullable: Boolean,
+    val valueClass: Class<JAVA & Any>,
+    val dbType: Class<DB>,
+    val reader: SqValueReader<JAVA & Any>,
+    val writer: SqValueWriter<JAVA & Any>,
+) {
+    companion object {
+        private fun <JAVA: Any, DB: Any> createTypePair(
+            valueClass: Class<JAVA>,
+            dbType: Class<DB>,
+            reader: SqValueReader<JAVA>,
+            writer: SqValueWriter<JAVA>,
+        ): Pair<SqType<JAVA?, DB>, SqType<JAVA, DB>> {
+            val nullable = SqType<JAVA?, DB>(nullable = true, valueClass, dbType, reader, writer)
+            val notNull = SqType(nullable = false, valueClass, dbType, reader, writer)
 
-    open fun readNullable(source: ResultSet, columnIndex: Int): JAVA? {
-        val result = this.readNullableImpl(source, columnIndex)
-        return if (source.wasNull()) {
-            null
-        } else {
-            result
+            @Suppress("UNCHECKED_CAST")
+            nullable.oppositeType = notNull as SqType<JAVA?, DB>
+            notNull.oppositeType = nullable
+
+            return nullable to notNull
+        }
+
+        fun <JAVA: Any, DB: Any> nullable(
+            valueClass: Class<JAVA>,
+            dbType: Class<DB>,
+            reader: SqValueReader<JAVA>,
+            writer: SqValueWriter<JAVA>,
+        ): SqType<JAVA?, DB> {
+            return this.createTypePair(valueClass, dbType, reader, writer).first
+        }
+
+        fun <JAVA: Any, DB: Any> notNull(
+            valueClass: Class<JAVA>,
+            dbType: Class<DB>,
+            reader: SqValueReader<JAVA>,
+            writer: SqValueWriter<JAVA>,
+        ): SqType<JAVA, DB> {
+            return this.createTypePair(valueClass, dbType, reader, writer).second
         }
     }
 
-    protected abstract fun readNullableImpl(source: ResultSet, columnIndex: Int): JAVA?
-    // endregion
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SqType<*, *>
+
+        if (nullable != other.nullable) return false
+        if (valueClass != other.valueClass) return false
+        if (dbType != other.dbType) return false
+        if (reader != other.reader) return false
+        return writer == other.writer
+    }
+
+    override fun hashCode(): Int {
+        var result = nullable.hashCode()
+        result = 31 * result + valueClass.hashCode()
+        result = 31 * result + dbType.hashCode()
+        result = 31 * result + reader.hashCode()
+        result = 31 * result + writer.hashCode()
+        return result
+    }
+
+    override fun toString(): String = buildString {
+        val self = this@SqType
+
+        this.append(self.javaClass.simpleName)
+            .append('<')
+            .append(SqUtil.readableClassName(self.valueClass))
+            .append(", ")
+            .append(SqUtil.readableClassName(self.dbType))
+            .append(">(")
+
+        if (self.nullable) this.append("nullable")
+        else this.append("not null")
+
+        this
+            .append(", valueClass=").append(SqUtil.readableClassName(self.valueClass))
+            .append(", dbType=").append(SqUtil.readableClassName(self.dbType))
+            .append(", reader=").append(self.reader)
+            .append(", writer=").append(self.writer)
+            .append(')')
+    }
 
 
-    // region Writing
-    open fun write(target: PreparedStatement, parameterIndex: Int, value: JAVA?) {
-        if (value == null) {
-            this.writeNull(target, parameterIndex)
+    private lateinit var oppositeType: SqType<JAVA?, DB>
+
+    fun nullable(): SqType<JAVA?, DB> {
+        return if (this.nullable) {
+            @Suppress("UNCHECKED_CAST")
+            this as SqType<JAVA?, DB>
         } else {
-            this.writeNotNull(target, parameterIndex, value)
+            this.oppositeType
         }
     }
 
-    protected open fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: JAVA) { target.setObject(parameterIndex, value) }
-
-    protected abstract fun writeNull(target: PreparedStatement, parameterIndex: Int)
-    // endregion
-
-
-    // region Preparing value for comment
-    open fun prepareValueForComment(value: JAVA?): String {
-        return if (value == null) {
-            "<NULL>"
+    fun notNull(): SqType<JAVA & Any, DB> {
+        val result = if (this.nullable) {
+            this.oppositeType
         } else {
-            this.prepareNotNullValueForComment(value)
+            this
         }
+
+        @Suppress("UNCHECKED_CAST")
+        return (result as SqType<JAVA & Any, DB>)
     }
 
-    protected open fun prepareNotNullValueForComment(value: JAVA): String = value.toString()
-    // endregion
 
+    fun read(source: ResultSet, columnIndex: Int): JAVA {
+        val result = if (this.nullable) {
+            this.reader.readNullable(source, columnIndex)
+        } else {
+            this.reader.readNullable(source, columnIndex)
+        }
+        @Suppress("UNCHECKED_CAST")
+        return (result as JAVA)
+    }
 
-    @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
-    inline fun <OPT: JAVA?> sqCast(): SqType<OPT & Any> = this as SqType<OPT & Any>
+    fun write(target: PreparedStatement, parameterIndex: Int, value: JAVA) { this.writer.write(target, parameterIndex, value) }
 
+    fun valueToComment(value: JAVA?): String = this.writer.valueToComment(value).replace("*/", "* /")
 
-    fun <DB: Any> createNull(context: SqContext? = null): SqNull<JAVA, DB> = SqNull(this, context)
-    fun <DB: Any, OPT_JAVA: JAVA?> createParam(value: OPT_JAVA, context: SqContext? = null): SqParameter<OPT_JAVA, DB> = SqParameter(this.sqCast(), value, context)
 }

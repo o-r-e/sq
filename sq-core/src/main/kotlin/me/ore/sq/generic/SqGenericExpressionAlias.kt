@@ -1,26 +1,23 @@
 package me.ore.sq.generic
 
-import me.ore.sq.*
+import me.ore.sq.SqContext
+import me.ore.sq.SqExpression
+import me.ore.sq.SqExpressionAlias
+import me.ore.sq.SqExpressionAliasConstructor
+import me.ore.sq.util.SqUtil
 
 
 open class SqGenericExpressionAlias<JAVA: Any?, DB: Any, ORIG: SqExpression<JAVA, DB>>(
     override val context: SqContext,
-    original: ORIG,
+    override val original: ORIG,
     override val alias: String,
+    override val safeAlias: String = SqUtil.makeIdentifierSafeIfNeeded(alias),
 ): SqExpressionAlias<JAVA, DB, ORIG> {
-    // region Nullable
-    @Suppress("PropertyName")
-    protected open var _nullable: Boolean = original.nullable
-
-    override val nullable: Boolean
-        get() = this._nullable
-
-    override fun nullable(): SqExpression<JAVA?, DB> {
-        this._nullable = true
-        return SqUtil.uncheckedCast(this)
+    companion object {
+        val CONSTRUCTOR: SqExpressionAliasConstructor = object : SqExpressionAliasConstructor {
+            override fun <JAVA, DB : Any, ORIG : SqExpression<JAVA, DB>> createExpressionAlias(context: SqContext, original: ORIG, alias: String): SqExpressionAlias<JAVA, DB, ORIG> {
+                return SqGenericExpressionAlias(context, original, alias)
+            }
+        }
     }
-    // endregion
-
-    @Suppress("CanBePrimaryConstructorProperty")
-    override val original: ORIG = original
 }

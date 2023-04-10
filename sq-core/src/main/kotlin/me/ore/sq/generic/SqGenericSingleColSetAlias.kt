@@ -1,37 +1,26 @@
 package me.ore.sq.generic
 
 import me.ore.sq.*
+import me.ore.sq.util.SqUtil
 
 
-open class SqGenericSingleColSetAlias<JAVA: Any?, DB: Any, ORIG: SqSingleColSet<JAVA?, DB>>(
+open class SqGenericSingleColSetAlias<JAVA: Any?, DB: Any, ORIG: SqSingleColSet<JAVA, DB>>(
     override val context: SqContext,
-    original: ORIG,
+    override val original: ORIG,
     override val alias: String,
+    override val safeAlias: String = SqUtil.makeIdentifierSafeIfNeeded(alias),
 ): SqSingleColSetAlias<JAVA, DB, ORIG> {
-    // region Nullable
-    override fun nullable(): SqGenericSingleColSetAlias<JAVA?, DB, ORIG> {
-        this.column.nullable()
-        return SqUtil.uncheckedCast(this)
-    }
-
-    override val nullable: Boolean
-        get() = this.column.nullable
-    // endregion
-
-
-    @Suppress("CanBePrimaryConstructorProperty")
-    override val original: ORIG = original
-
-    override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
-        return IllegalArgumentException("Cannot find column $column in \"single col set alias\" $this")
+    companion object {
+        val CONSTRUCTOR: SqSingleColSetAliasConstructor = object : SqSingleColSetAliasConstructor {
+            override fun <JAVA, DB : Any, ORIG : SqSingleColSet<JAVA, DB>> createSingleColSetAlias(context: SqContext, original: ORIG, alias: String): SqSingleColSetAlias<JAVA, DB, ORIG> {
+                return SqGenericSingleColSetAlias(context, original, alias)
+            }
+        }
     }
 
 
     override val column: SqColSetAliasColumn<JAVA, DB> by lazy(LazyThreadSafetyMode.NONE) {
-        SqUtil.uncheckedCast(this.context.colSetAliasColumn(this, original.column))
+        this.context.colSetAliasColumn(this, this.original.column)
     }
-
-    override val columns: List<SqColumn<*, *>> by lazy(LazyThreadSafetyMode.NONE) {
-        listOf(this.column)
-    }
+    override val columns: List<SqColumn<*, *>> by lazy(LazyThreadSafetyMode.NONE) { listOf(this.column) }
 }

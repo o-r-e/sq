@@ -1,28 +1,28 @@
 package me.ore.sq.generic
 
 import me.ore.sq.*
+import me.ore.sq.SqMultiColSetAlias
+import me.ore.sq.util.SqUtil
 
 
 open class SqGenericMultiColSetAlias<ORIG: SqMultiColSet>(
     override val context: SqContext,
-    original: ORIG,
+    override val original: ORIG,
     override val alias: String,
+    override val safeAlias: String = SqUtil.makeIdentifierSafeIfNeeded(alias),
 ): SqMultiColSetAlias<ORIG> {
-    @Suppress("CanBePrimaryConstructorProperty")
-    override val original: ORIG = original
-
-    override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
-        return IllegalArgumentException("Cannot find column $column in \"multi column set alias\" $this")
-    }
-
-
-    protected open fun createColumns(): List<SqColSetAliasColumn<*, *>> {
-        return this.context.let { context ->
-            this.original.columns.map { originalColumn ->
-                context.colSetAliasColumn(this, originalColumn)
+    companion object {
+        val CONSTRUCTOR: SqMultiColSetAliasConstructor = object : SqMultiColSetAliasConstructor {
+            override fun <ORIG : SqMultiColSet> createMultiColSetAlias(context: SqContext, original: ORIG, alias: String): SqMultiColSetAlias<ORIG> {
+                return SqGenericMultiColSetAlias(context, original, alias)
             }
         }
     }
 
-    override val columns: List<SqColSetAliasColumn<*, *>> by lazy(LazyThreadSafetyMode.NONE) { this.createColumns() }
+
+    override val columns: List<SqColSetAliasColumn<*, *>> by lazy(LazyThreadSafetyMode.NONE) {
+        this.original.columns.map {
+            this.context.colSetAliasColumn(this, it)
+        }
+    }
 }

@@ -3,11 +3,22 @@ package me.ore.sq.generic
 import me.ore.sq.*
 
 
-open class SqGenericConnUpdate<T: SqTable>(override val context: SqConnectedContext, table: T): SqGenericUpdate<T>(context, table), SqConnUpdate<T> {
-    override fun set(columnValueMap: Map<SqColumn<*, *>, SqExpression<*, *>>): SqGenericConnUpdate<T> = this.apply { super<SqGenericUpdate>.set(columnValueMap) }
-
-    override fun where(condition: SqExpression<*, Boolean>?): SqGenericConnUpdate<T> = this.apply { super.where(condition) }
-
-
-    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqGenericConnUpdate<T> = this.apply { super<SqGenericUpdate>.applyValueMapping(mapping) }
+open class SqGenericConnUpdate<T: SqTable>(
+    override val context: SqContext.ConnContext,
+    override val table: T,
+    override var set: Map<SqTableColumn<*, *>, SqExpression<*, *>>? = null,
+    override var where: SqExpression<*, Boolean>? = null,
+): SqGenericUpdate<T>(context, table, set, where), SqConnUpdate<T> {
+    companion object {
+        val CONSTRUCTOR: SqConnUpdateConstructor = object : SqConnUpdateConstructor {
+            override fun <T : SqTable> createConnUpdate(
+                context: SqContext.ConnContext,
+                table: T,
+                set: Map<SqTableColumn<*, *>, SqExpression<*, *>>?,
+                where: SqExpression<*, Boolean>?
+            ): SqConnUpdate<T> {
+                return SqGenericConnUpdate(context, table, set, where)
+            }
+        }
+    }
 }

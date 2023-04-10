@@ -8,12 +8,15 @@ open class SqGenericCaseItem<JAVA: Any?, DB: Any>(
     override val whenItem: SqExpression<*, Boolean>,
     override val thenItem: SqExpression<JAVA, DB>,
 ): SqCaseItem<JAVA, DB> {
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        target.add("WHEN", spaced = spaceAllowed)
-        this.whenItem.appendTo(target, asTextPart = true, spaceAllowed = true)
-        target.add("THEN", spaced = true)
-        this.thenItem.appendTo(target, asTextPart = true, spaceAllowed = true)
+    companion object {
+        val CONSTRUCTOR: SqCaseItemConstructor = object : SqCaseItemConstructor {
+            override fun <JAVA, DB : Any> createCaseItem(context: SqContext, whenItem: SqExpression<*, Boolean>, thenItem: SqExpression<JAVA, DB>): SqCaseItem<JAVA, DB> {
+                return SqGenericCaseItem(context, whenItem, thenItem)
+            }
+        }
     }
 
-    override fun parameters(): List<SqParameter<*, *>>? = SqUtil.collectParameters(this.whenItem, this.thenItem)
+
+    override val definitionItem: SqItem
+        get() = this
 }

@@ -1,6 +1,8 @@
 package me.ore.sq.generic
 
+import me.ore.sq.SqContext
 import me.ore.sq.SqWriter
+import me.ore.sq.SqWriterConstructor
 
 
 open class SqGenericWriter(
@@ -10,6 +12,12 @@ open class SqGenericWriter(
     companion object {
         const val DEFAULT_LINE_SEPARATOR = "\r\n"
         const val DEFAULT_SPACE = " "
+
+        val CONSTRUCTOR: SqWriterConstructor = object : SqWriterConstructor {
+            override fun createWriter(context: SqContext): SqWriter {
+                return SqGenericWriter()
+            }
+        }
     }
 
 
@@ -37,18 +45,13 @@ open class SqGenericWriter(
 
     override fun toString(): String = this.stringBuilder.toString()
 
-    override fun ls(): SqGenericWriter = this.apply {
-        this.stringBuilder.append(this.lineSeparator)
-    }
 
-    override fun add(text: String, spaced: Boolean): SqGenericWriter = this.apply {
-        if (spaced) {
-            this.addSpaceIfMissed()
-        }
+    override fun addLineSeparator() { this.stringBuilder.append(this.lineSeparator) }
+
+    override fun addText(text: String, spaced: Boolean) {
+        if (spaced) this.addSpaceIfMissed()
         this.stringBuilder.append(text)
     }
 
-    override fun clear(): SqGenericWriter = this.apply {
-        this.stringBuilder.clear()
-    }
+    override fun clearData() { this.stringBuilder.clear() }
 }

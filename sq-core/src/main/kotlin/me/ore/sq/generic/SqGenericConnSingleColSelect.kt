@@ -4,30 +4,33 @@ import me.ore.sq.*
 
 
 open class SqGenericConnSingleColSelect<JAVA: Any?, DB: Any>(
-    override val context: SqConnectedContext, distinct: Boolean, column: SqColumn<JAVA, DB>
-): SqGenericSingleColSelect<JAVA, DB>(context, distinct, column), SqConnSingleColSelect<JAVA, DB> {
-    override fun from(from: Iterable<SqColSet>): SqGenericConnSingleColSelect<JAVA, DB> = this.apply { super<SqGenericSingleColSelect>.from(from) }
-    override fun where(condition: SqExpression<*, Boolean>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply { super.where(condition) }
-    override fun groupBy(items: Iterable<SqColumn<*, *>>): SqGenericConnSingleColSelect<JAVA, DB> = this.apply { super<SqGenericSingleColSelect>.groupBy(items) }
-    override fun having(condition: SqExpression<*, Boolean>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply { super.having(condition) }
-    override fun orderBy(items: Iterable<SqOrderBy>): SqGenericConnSingleColSelect<JAVA, DB> = this.apply { super<SqGenericSingleColSelect>.orderBy(items) }
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super.firstResultIndex(firstResultIndex)
-    }
-    override fun firstResultIndex(firstResultIndex: Long?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super.firstResultIndex(firstResultIndex)
-    }
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super.resultCount(resultCount)
-    }
-    override fun resultCount(resultCount: Long?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super.resultCount(resultCount)
-    }
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super<SqGenericSingleColSelect>.limit(resultCount, firstResultIndex)
-    }
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqGenericConnSingleColSelect<JAVA, DB> = this.apply {
-        super<SqGenericSingleColSelect>.limit(resultCount, firstResultIndex)
+    override val context: SqContext.ConnContext,
+    override var distinct: Boolean,
+    override var column: SqColumn<JAVA, DB>,
+    override var from: List<SqColSet>? = null,
+    override var where: SqExpression<*, Boolean>? = null,
+    override var groupBy: List<SqColumn<*, *>>? = null,
+    override var having: SqExpression<*, Boolean>? = null,
+    override var orderBy: List<SqOrderBy>? = null,
+    override val columns: List<SqColumn<*, *>> = listOf(column),
+): SqGenericSelectBase(), SqConnSingleColSelect<JAVA, DB> {
+    companion object {
+        val CONSTRUCTOR: SqConnSingleColSelectConstructor = object : SqConnSingleColSelectConstructor {
+            override fun <JAVA, DB : Any> createConnSingleColSelect(
+                context: SqContext.ConnContext,
+                distinct: Boolean,
+                column: SqColumn<JAVA, DB>,
+                from: List<SqColSet>?,
+                where: SqExpression<*, Boolean>?,
+                groupBy: List<SqColumn<*, *>>?,
+                having: SqExpression<*, Boolean>?,
+                orderBy: List<SqOrderBy>?,
+                columns: List<SqColumn<*, *>>
+            ): SqConnSingleColSelect<JAVA, DB> {
+                return SqGenericConnSingleColSelect(
+                    context, distinct, column, from, where, groupBy, having, orderBy, columns
+                )
+            }
+        }
     }
 }

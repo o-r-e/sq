@@ -1,5 +1,6 @@
 package me.ore.sq
 
+import me.ore.sq.util.SqUtil
 import java.util.*
 
 
@@ -22,7 +23,10 @@ open class SqTable(
     override val context: SqContext
         get() = SqContext.CONTEXT
 
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
+    override val definitionItem: SqItem
+        get() = this
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
         val schemeName = this.schemeName
         val tableName = this.tableName
 
@@ -48,12 +52,8 @@ open class SqTable(
         target.add(preparedTableName, spaced = spaceAllowed)
     }
 
-    override fun parameters(): List<SqParameter<*, *>>? = null
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {}
 
-
-    override fun getColumnIndex(column: SqColumn<*, *>): Int? {
-        return this._columns.indexOf(column).takeIf { it >= 0 }
-    }
 
     override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
         return IllegalArgumentException("Cannot find column $column in table $this")

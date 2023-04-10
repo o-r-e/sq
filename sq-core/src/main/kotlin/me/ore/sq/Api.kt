@@ -7,14 +7,41 @@ import java.sql.Statement
 
 
 // region Utils
-interface SqWriter {
-    fun ls(): SqWriter
-    fun add(text: String, spaced: Boolean): SqWriter
-    fun clear(): SqWriter
+interface SqObjectMap {
+    companion object {
+        val EMPTY: SqObjectMap = object : SqObjectMap {
+            override fun <T : Any> get(key: Class<T>): T? = null
+        }
+    }
 
-    fun comma(): SqWriter = this.add(",", spaced = false)
-    fun dot(): SqWriter = this.add(".", spaced = false)
+    operator fun <T: Any> get(key: Class<T>): T?
 }
+
+
+interface SqValueReader<JAVA: Any> {
+    fun readNullable(source: ResultSet, columnIndex: Int): JAVA?
+    fun readNotNull(source: ResultSet, columnIndex: Int): JAVA {
+        return this.readNullable(source, columnIndex)
+            ?: error("Column with index $columnIndex has NULL value")
+    }
+}
+
+interface SqValueWriter<JAVA: Any> {
+    fun write(target: PreparedStatement, parameterIndex: Int, value: JAVA?)
+
+    fun valueToComment(value: JAVA?): String
+}
+
+
+interface SqWriter {
+    fun addLineSeparator()
+    fun addText(text: String, spaced: Boolean)
+    fun clearData()
+}
+interface SqWriterConstructor {
+    fun createWriter(context: SqContext): SqWriter
+}
+
 
 interface SqColumnValueMapping<T: SqTable> {
     val statement: SqTableWriteStatement<T>
@@ -22,16 +49,18 @@ interface SqColumnValueMapping<T: SqTable> {
         get() = this.statement.context
     val table: T
         get() = this.statement.table
-    val map: MutableMap<SqColumn<*, *>, SqExpression<*, *>>
+    val map: MutableMap<SqTableColumn<*, *>, SqExpression<*, *>>
 
-    operator fun <DB: Any> set(column: SqColumn<*, DB>, value: SqExpression<*, DB>): SqColumnValueMapping<T> = this.apply {
+    operator fun <DB: Any> set(column: SqTableColumn<*, DB>, value: SqExpression<*, DB>): SqColumnValueMapping<T> = this.apply {
         this.map[column] = value
     }
 
-    operator fun <JAVA: Any?, DB: Any> set(column: SqColumn<JAVA, DB>, value: JAVA): SqColumnValueMapping<T> = this.apply {
-        val param = this.context.param<JAVA?, DB>(column.type.sqCast(), value)
+    operator fun <JAVA: Any?, DB: Any> set(column: SqTableColumn<JAVA, DB>, value: JAVA): SqColumnValueMapping<T> = this.apply {
+        val param = this.context.param<JAVA, DB>(column.type, value)
         this[column] = param
     }
+
+    fun clearData() { this.map.clear() }
 }
 // endregion
 
@@ -39,34 +68,24 @@ interface SqColumnValueMapping<T: SqTable> {
 // region Base items
 interface SqItem {
     val context: SqContext
+    val definitionItem: SqItem
 
-    fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean)
+    fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean)
+    fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>)
+
     fun sql(): String {
-        return this.context.createWriter()
+        return this.context.writer()
             .let { writer ->
                 try {
-                    this.appendTo(writer, asTextPart = false, spaceAllowed = false)
+                    this.appendSqlTo(writer, asPart = false, spaceAllowed = false)
                     writer.toString()
                 } finally {
                     writer.clear()
                 }
             }
     }
-    fun parameters(): List<SqParameter<*, *>>?
 
-    fun appendPossibleDefinitionTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        return this.workWithPossibleAlias(
-            { it.appendDefinitionTo(target, asTextPart, spaceAllowed) },
-            { it.appendTo(target, asTextPart, spaceAllowed) },
-        )
-    }
-
-    fun possibleDefinitionParameters(): List<SqParameter<*, *>>? {
-        return this.workWithPossibleAlias(
-            { it.definitionParameters() },
-            { it.parameters() },
-        )
-    }
+    fun parameters(): List<SqParameter<*, *>> = buildList { this@SqItem.appendParametersTo(this) }
 
     fun <T: PreparedStatement> setParametersTo(target: T): T = this.parameters().setTo(target)
 
@@ -77,28 +96,51 @@ interface SqItem {
     }
 }
 
+interface SqConnItem: SqItem {
+    override val context: SqContext.ConnContext
+    val connection: Connection
+        get() = this.context.connection
 
-interface SqExpression<JAVA: Any?, DB: Any>: SqItem {
-    val type: SqType<JAVA & Any>
-
-    val nullable: Boolean
-    fun nullable(): SqExpression<JAVA?, DB>
-
-    fun read(resultSet: ResultSet, index: Int): JAVA {
-        val result = if (this.nullable) {
-            this.type.readNullable(resultSet, index)
-        } else {
-            this.type.readNotNull(resultSet, index)
-        }
-        return SqUtil.uncheckedCast(result)
-    }
+    fun prepareStatement(): PreparedStatement = this.prepareStatement(this.connection)
 }
 
+
+interface SqExpression<JAVA: Any?, DB: Any>: SqItem {
+    val type: SqType<JAVA, DB>
+    fun read(source: ResultSet, columnIndex: Int): JAVA = this.type.read(source, columnIndex)
+}
+
+interface SqNull<JAVA: Any, DB: Any>: SqExpression<JAVA?, DB> {
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) { target.add("NULL", spaced = spaceAllowed) }
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {}
+}
+interface SqNullConstructor {
+    fun <JAVA: Any, DB: Any> createNull(context: SqContext, type: SqType<JAVA?, DB>): SqNull<JAVA, DB>
+}
+
+interface SqParameter<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
+    val value: JAVA
+    fun write(target: PreparedStatement, parameterIndex: Int) { this.type.write(target, parameterIndex, this.value) }
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        target.add("?", spaced = spaceAllowed)
+
+        if (this.context.data.printParameterValues) {
+            target.add("/*", spaced = true)
+            target.add(this.type.valueToComment(this.value), spaced = true)
+            target.add("*/", spaced = true)
+        }
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) { target.add(this) }
+}
+interface SqParameterConstructor {
+    fun <JAVA: Any?, DB: Any> createParameter(context: SqContext, type: SqType<JAVA, DB>, value: JAVA): SqParameter<JAVA, DB>
+}
 
 interface SqColumn<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
     val columnName: String
     val safeColumnName: String
-        get() = SqUtil.makeIdentifierSafeIfNeeded(this.columnName)
 }
 
 interface SqTableColumn<JAVA: Any?, DB: Any>: SqColumn<JAVA, DB> {
@@ -106,15 +148,10 @@ interface SqTableColumn<JAVA: Any?, DB: Any>: SqColumn<JAVA, DB> {
     override val context: SqContext
         get() = this.table.context
 
-    override fun nullable(): SqTableColumn<JAVA?, DB>
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        val columnName = SqUtil.makeIdentifierSafeIfNeeded(this.columnName)
-        target.add(columnName, spaced = spaceAllowed)
-    }
-
-    override fun parameters(): List<SqParameter<*, *>>? = null
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) { target.add(this.safeColumnName, spaced = spaceAllowed) }
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) { }
 }
+
 
 interface SqColSet: SqItem {
     val columns: List<SqColumn<*, *>>
@@ -134,6 +171,9 @@ interface SqMultiColSet: SqColSet
 interface SqSingleColSet<JAVA: Any?, DB: Any>: SqColSet, SqExpression<JAVA, DB> {
     val column: SqColumn<JAVA, DB>
 
+    override val type: SqType<JAVA, DB>
+        get() = this.column.type
+
     override fun getColumnIndex(column: SqColumn<*, *>): Int? {
         return if (column == this.column) {
             0
@@ -141,120 +181,37 @@ interface SqSingleColSet<JAVA: Any?, DB: Any>: SqColSet, SqExpression<JAVA, DB> 
             null
         }
     }
-
-    override val type: SqType<JAVA & Any>
-        get() = this.column.type
-
-    override fun nullable(): SqSingleColSet<JAVA?, DB>
 }
-
-
-interface SqStatement: SqItem
-
-interface SqReadStatement: SqStatement, SqColSet {
-    fun <T: Any?> cancelReading(): SqReadResult.CancelReading<T> = SqReadResult.CancelReading()
-    fun <T: Any?> result(value: T): SqReadResult.Result<T> = SqReadResult.Result(value)
-
-
-    val firstResultIndex: SqParameter<Long, Number>?
-    fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqReadStatement
-    fun firstResultIndex(firstResultIndex: Long?): SqReadStatement
-
-
-    val resultCount: SqParameter<Long, Number>?
-    fun resultCount(resultCount: SqParameter<Long, Number>?): SqReadStatement
-    fun resultCount(resultCount: Long?): SqReadStatement
-
-    fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>? = null): SqReadStatement =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    fun limit(resultCount: Long, firstResultIndex: Long? = null): SqReadStatement =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-}
-
-interface SqMultiColReadStatement: SqReadStatement, SqMultiColSet
-
-interface SqSingleColReadStatement<JAVA: Any?, DB: Any>: SqReadStatement, SqSingleColSet<JAVA, DB> {
-    override fun nullable(): SqSingleColReadStatement<JAVA?, DB>
-}
-
-interface SqTableModificationStatement<T: SqTable>: SqStatement {
-    val table: T
-}
-
-interface SqTableWriteStatement<T: SqTable>: SqTableModificationStatement<T> {
-    fun createValueMapping(): SqColumnValueMapping<T>
-    fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqTableWriteStatement<T>
-}
-
-interface SqConnStatement: SqStatement {
-    override val context: SqConnectedContext
-    val connection: Connection
-        get() = this.context.connection
-
-    fun prepareStatement(): PreparedStatement = this.prepareStatement(this.connection)
-}
-
-interface SqConnReadStatement: SqReadStatement, SqConnStatement
-
-interface SqConnMultiColReadStatement: SqMultiColReadStatement, SqConnReadStatement
-
-interface SqConnSingleColReadStatement<JAVA: Any?, DB: Any>: SqSingleColReadStatement<JAVA, DB>, SqConnReadStatement
-
-interface SqConnTableModificationStatement<T: SqTable>: SqTableModificationStatement<T>, SqConnStatement
-
-interface SqConnTableWriteStatement<T: SqTable>: SqTableWriteStatement<T>, SqConnTableModificationStatement<T>
 
 
 interface SqAlias<ORIG: SqItem>: SqItem {
     val original: ORIG
+    override val definitionItem: SqItem
+        get() = this.original
+
     val alias: String
     val safeAlias: String
-        get() = SqUtil.makeIdentifierSafeIfNeeded(this.alias)
 
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        target.add(this.safeAlias, spaced = spaceAllowed)
-    }
-
-    fun appendDefinitionTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        this.original.appendTo(target, asTextPart = true, spaceAllowed)
-        target.add("AS", spaced = true).add(this.safeAlias, spaced = true)
-    }
-
-
-    override fun parameters(): List<SqParameter<*, *>>? = null
-
-    fun definitionParameters(): List<SqParameter<*, *>>? = this.original.parameters()
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) { target.add(this.alias, spaced = spaceAllowed) }
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {}
 }
 
 interface SqExpressionAlias<JAVA: Any?, DB: Any, ORIG: SqExpression<JAVA, DB>>: SqColumn<JAVA, DB>, SqAlias<ORIG> {
-    override val type: SqType<JAVA & Any>
+    override val type: SqType<JAVA, DB>
         get() = this.original.type
-
     override val columnName: String
         get() = this.alias
+    override val safeColumnName: String
+        get() = this.safeAlias
+}
+interface SqExpressionAliasConstructor {
+    fun <JAVA: Any?, DB: Any, ORIG: SqExpression<JAVA, DB>> createExpressionAlias(context: SqContext, original: ORIG, alias: String): SqExpressionAlias<JAVA, DB, ORIG>
 }
 
-interface SqColSetAlias<ORIG: SqColSet>: SqAlias<ORIG>, SqColSet
-
-interface SqColSetAliasColumn<JAVA: Any?, DB: Any>: SqColumn<JAVA, DB> {
-    val alias: SqColSetAlias<*>
-    val column: SqColumn<JAVA, DB>
-
-    override val columnName: String
-        get() = this.column.columnName
-
-    override val type: SqType<JAVA & Any>
-        get() = this.column.type
-
-    override fun nullable(): SqColSetAliasColumn<JAVA?, DB>
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        this.alias.appendTo(target, asTextPart = true, spaceAllowed)
-        target.dot().add(this.safeColumnName, spaced = false)
+interface SqColSetAlias<ORIG: SqColSet>: SqAlias<ORIG>, SqColSet {
+    override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
+        return IllegalArgumentException("Cannot find column $column in \"column set alias\" $this")
     }
-
-    override fun parameters(): List<SqParameter<*, *>>? = null
 }
 
 interface SqMultiColSetAlias<ORIG: SqMultiColSet>: SqColSetAlias<ORIG>, SqMultiColSet {
@@ -265,359 +222,650 @@ interface SqMultiColSetAlias<ORIG: SqMultiColSet>: SqColSetAlias<ORIG>, SqMultiC
             .firstOrNull { it.column == originalColumn }
             ?: throw IllegalStateException("Cannot find alias column for original column $originalColumn")
 
-        return SqUtil.uncheckedCast(result)
+        @Suppress("UNCHECKED_CAST")
+        return (result as SqColSetAliasColumn<JAVA, DB>)
     }
 }
-
-interface SqSingleColSetAlias<JAVA: Any?, DB: Any, ORIG: SqSingleColSet<JAVA?, DB>>: SqColSetAlias<ORIG>, SqSingleColSet<JAVA, DB> {
-    override fun nullable(): SqSingleColSetAlias<JAVA?, DB, ORIG>
-}
-// endregion
-
-
-// region Comparisons (tests)
-interface SqSingleValueTest<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
-    val value: SqItem
-
-    override fun parameters(): List<SqParameter<*, *>>? = this.value.parameters()
-
-    override fun nullable(): SqSingleValueTest<JAVA?>
+interface SqMultiColSetAliasConstructor {
+    fun <ORIG: SqMultiColSet> createMultiColSetAlias(context: SqContext, original: ORIG, alias: String): SqMultiColSetAlias<ORIG>
 }
 
-interface SqTwoValueTest<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
-    val firstValue: SqItem
-    val secondValue: SqItem
-
-    override fun parameters(): List<SqParameter<*, *>>? = SqUtil.collectParameters(this.firstValue, this.secondValue)
-
-    override fun nullable(): SqTwoValueTest<JAVA?>
+interface SqSingleColSetAlias<JAVA: Any?, DB: Any, ORIG: SqSingleColSet<JAVA, DB>>: SqColSetAlias<ORIG>, SqSingleColSet<JAVA, DB> {
+    override val column: SqColSetAliasColumn<JAVA, DB>
+}
+interface SqSingleColSetAliasConstructor {
+    fun <JAVA: Any?, DB: Any, ORIG: SqSingleColSet<JAVA, DB>> createSingleColSetAlias(context: SqContext, original: ORIG, alias: String): SqSingleColSetAlias<JAVA, DB, ORIG>
 }
 
-interface SqMultiValueTest<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
-    val values: List<SqItem>
 
-    override fun parameters(): List<SqParameter<*, *>>? = SqUtil.collectParameters(this.values)
+interface SqColSetAliasColumn<JAVA: Any?, DB: Any>: SqColumn<JAVA, DB> {
+    val alias: SqColSetAlias<*>
+    val column: SqColumn<JAVA, DB>
 
-    override fun nullable(): SqMultiValueTest<JAVA?>
-}
+    override val columnName: String
+        get() = this.column.columnName
+    override val safeColumnName: String
+        get() = this.column.safeColumnName
 
-interface SqBetweenTest<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
-    val mainValue: SqItem
-    val firstBoundsValue: SqItem
-    val secondBoundsValue: SqItem
+    override val type: SqType<JAVA, DB>
+        get() = this.column.type
 
-    override fun parameters(): List<SqParameter<*, *>>? = SqUtil.collectParameters(this.mainValue, this.firstBoundsValue, this.secondBoundsValue)
-
-    override fun nullable(): SqBetweenTest<JAVA?>
-}
-
-interface SqInListTest<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
-    val mainValue: SqItem
-    val listValues: List<SqItem>
-
-    override fun parameters(): List<SqParameter<*, *>>? = SqUtil.collectParameters(buildList {
-        val self = this@SqInListTest
-        this.add(self.mainValue)
-        this.addAll(self.listValues)
-    })
-
-    override fun nullable(): SqInListTest<JAVA?>
-}
-// endregion
-
-
-// region Case
-interface SqCaseItemStart {
-    val context: SqContext
-    val whenItem: SqExpression<*, Boolean>
-    infix fun <JAVA: Any?, DB: Any> then(thenItem: SqExpression<JAVA, DB>): SqCaseItem<JAVA, DB> {
-        return this.context.caseItem(this.whenItem, thenItem)
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        this.alias.appendSqlTo(target, asPart = true, spaceAllowed)
+        target.add(".").add(this.safeColumnName, spaced = false)
     }
-}
 
-interface SqCaseItem<JAVA: Any?, DB: Any>: SqItem {
-    val whenItem: SqExpression<*, Boolean>
-    val thenItem: SqExpression<JAVA, DB>
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {}
 }
-
-interface SqCase<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
-    val items: List<SqCaseItem<JAVA, DB>>
-    val elseItem: SqExpression<JAVA, DB>?
+interface SqColSetAliasColumnConstructor {
+    fun <JAVA: Any?, DB: Any> createColSetAliasColumn(context: SqContext, alias: SqColSetAlias<*>, column: SqColumn<JAVA, DB>): SqColSetAliasColumn<JAVA, DB>
 }
 // endregion
 
 
-// region Functions
-interface SqNamedFunction<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
-    val name: String
-    val nameSeparated: Boolean
-    val values: List<SqItem>
+// region Boolean groups, "single value" tests, comparisons, named functions, mathematical operations
+interface SqBooleanGroup<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
+    val groupType: SqBooleanGroupType
+    val items: List<SqExpression<*, Boolean>>
 
-    override fun parameters(): List<SqParameter<*, *>>? = SqUtil.collectParameters(this.values)
-
-    override fun nullable(): SqNamedFunction<JAVA?, DB>
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        target
-            .add(this.name, spaced = spaceAllowed)
-            .add("(", spaced = this.nameSeparated)
-
-        this.values.forEachIndexed { index, value ->
-            val valueSpaceAllowed = if (index > 0) {
-                target.comma()
-                true
-            } else {
-                false
-            }
-            value.appendTo(target, asTextPart = true, spaceAllowed = valueSpaceAllowed)
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val firstItemSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
         }
 
-        target.add(")", spaced = false)
+        val itemSeparator = when (this.groupType) {
+            SqBooleanGroupType.AND -> " AND "
+            SqBooleanGroupType.OR -> " OR "
+        }
+
+        this.items.forEachIndexed { index, item ->
+            val itemSpaceAllowed = if (index == 0) {
+                firstItemSpaceAllowed
+            } else {
+                target.add(itemSeparator)
+                false
+            }
+            item.appendSqlTo(target, asPart = true, itemSpaceAllowed)
+        }
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.items.forEach { it.appendParametersTo(target) }
     }
 }
-// endregion
-
-
-// region Mathematical operations
-interface SqMathOperation<JAVA: Number?>: SqExpression<JAVA, Number> {
-    val operands: List<SqExpression<*, Number>>
-
-    override fun nullable(): SqMathOperation<JAVA?>
-
-    override fun parameters(): List<SqParameter<*, *>>? = SqUtil.collectParameters(this.operands)
+interface SqBooleanGroupConstructor {
+    fun <JAVA: Boolean?> createBooleanGroup(context: SqContext, type: SqType<JAVA, Boolean>, groupType: SqBooleanGroupType, items: List<SqExpression<*, Boolean>>): SqBooleanGroup<JAVA>
 }
+
+interface SqNot<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
+    val expression: SqExpression<*, Boolean>
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val internalSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        target.add("NOT ", spaced = internalSpaceAllowed)
+        this.expression.appendSqlTo(target, asPart = true, spaceAllowed = false)
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.expression.appendParametersTo(target)
+    }
+}
+interface SqNotConstructor {
+    fun <JAVA: Boolean?> createNot(context: SqContext, type: SqType<JAVA, Boolean>, expression: SqExpression<*, Boolean>): SqNot<JAVA>
+}
+
+
+interface SqNullTest: SqExpression<Boolean, Boolean> {
+    val negation: Boolean
+    val expression: SqExpression<*, *>
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val expressionSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        this.expression.appendSqlTo(target, asPart = true, spaceAllowed = expressionSpaceAllowed)
+        if (this.negation) {
+            target.add(" IS NOT NULL")
+        } else {
+            target.add(" IS NULL")
+        }
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.expression.appendParametersTo(target)
+    }
+}
+interface SqNullTestConstructor {
+    fun createNullTest(context: SqContext, type: SqType<Boolean, Boolean>, negation: Boolean, expression: SqExpression<*, *>): SqNullTest
+}
+
+
+interface SqComparison<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
+    val firstOperand: SqExpression<*, *>
+    val secondOperand: SqExpression<*, *>
+    val operation: String
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val firstOperandSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        this.firstOperand.appendSqlTo(target, asPart = true, firstOperandSpaceAllowed)
+        target.add(" ").add(this.operation).add(" ")
+        this.secondOperand.appendSqlTo(target, asPart = true, spaceAllowed = false)
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.firstOperand.appendParametersTo(target)
+        this.secondOperand.appendParametersTo(target)
+    }
+}
+interface SqComparisonConstructor {
+    fun <JAVA: Boolean?> createComparison(
+        context: SqContext,
+        type: SqType<JAVA, Boolean>,
+        firstOperand: SqExpression<*, *>,
+        secondOperand: SqExpression<*, *>,
+        operation: String,
+    ): SqComparison<JAVA>
+}
+
+
+interface SqBetweenTest<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
+    val negation: Boolean
+    val testedValue: SqExpression<*, *>
+    val firstRangeValue: SqExpression<*, *>
+    val secondRangeValue: SqExpression<*, *>
+
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val testedValueSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        this.testedValue.appendSqlTo(target, asPart = true, spaceAllowed = testedValueSpaceAllowed)
+        if (this.negation) {
+            target.add(" NOT BETWEEN ")
+        } else {
+            target.add(" BETWEEN ")
+        }
+        this.firstRangeValue.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        target.add(" AND ")
+        this.secondRangeValue.appendSqlTo(target, asPart = true, spaceAllowed = false)
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.testedValue.appendParametersTo(target)
+        this.firstRangeValue.appendParametersTo(target)
+        this.secondRangeValue.appendParametersTo(target)
+    }
+}
+interface SqBetweenTestConstructor {
+    fun <JAVA: Boolean?> createBetweenTest(
+        context: SqContext,
+        type: SqType<JAVA, Boolean>,
+        negation: Boolean,
+        testedValue: SqExpression<*, *>,
+        firstRangeValue: SqExpression<*, *>,
+        secondRangeValue: SqExpression<*, *>,
+    ): SqBetweenTest<JAVA>
+}
+
+interface SqBetweenTestStart<JAVA: Any?, DB: Any> {
+    val context: SqContext
+    val type: SqType<JAVA, DB>
+    val negation: Boolean
+    val testedValue: SqExpression<*, DB>
+    val firstRangeValue: SqExpression<*, DB>
+}
+interface SqBetweenTestStartConstructor {
+    fun <JAVA: Any?, DB: Any> createBetweenTestStart(
+        context: SqContext,
+        type: SqType<JAVA, DB>,
+        negation: Boolean,
+        testedValue: SqExpression<*, DB>,
+        firstRangeValue: SqExpression<*, DB>,
+    ): SqBetweenTestStart<JAVA, DB>
+}
+
+
+interface SqInListTest<JAVA: Boolean?>: SqExpression<JAVA, Boolean> {
+    val negation: Boolean
+    val testedValue: SqExpression<*, *>
+    val listValues: List<SqExpression<*, *>>
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val testedValueSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        this.testedValue.appendSqlTo(target, asPart = true, spaceAllowed = testedValueSpaceAllowed)
+        if (this.negation) {
+            target.add(" NOT IN (")
+        } else {
+            target.add(" IN (")
+        }
+        this.listValues.forEachIndexed { index, listValue ->
+            if (index > 0) target.add(", ")
+            listValue.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+
+        target.add(")")
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.testedValue.appendParametersTo(target)
+        this.listValues.forEach { it.appendParametersTo(target) }
+    }
+}
+interface SqInListTestConstructor {
+    fun <JAVA: Boolean?> createInListTest(
+        context: SqContext,
+        type: SqType<JAVA, Boolean>,
+        negation: Boolean,
+        testedValue: SqExpression<*, *>,
+        listValues: List<SqExpression<*, *>>,
+    ): SqInListTest<JAVA>
+}
+
+
+interface SqNamedFunction<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
+    val name: String
+    val nameSpaced: Boolean
+    val values: List<SqItem>
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        target
+            .add(this.name, spaced = spaceAllowed)
+            .add("(", spaced = this.nameSpaced)
+
+        this.values.forEachIndexed { index, value ->
+            if (index > 0) target.add(", ")
+            value.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+
+        target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.values.forEach { it.appendParametersTo(target) }
+    }
+}
+interface SqNamedFunctionConstructor {
+    fun <JAVA: Any?, DB: Any> createNamedFunction(
+        context: SqContext,
+        type: SqType<JAVA, DB>,
+        name: String,
+        nameSpaced: Boolean?,
+        values: List<SqItem>,
+    ): SqNamedFunction<JAVA, DB>
+}
+
+
+interface SqMathOperation<JAVA: Number?>: SqExpression<JAVA, Number>
 
 interface SqTwoOperandMathOperation<JAVA: Number?>: SqMathOperation<JAVA> {
     val firstOperand: SqExpression<*, Number>
     val operation: String
     val secondOperand: SqExpression<*, Number>
-    override val operands: List<SqExpression<*, Number>>
-        get() = listOf(this.firstOperand, this.secondOperand)
 
-    override fun nullable(): SqTwoOperandMathOperation<JAVA?>
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val firstOperandSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        this.firstOperand.appendSqlTo(target, asPart = true, spaceAllowed = firstOperandSpaceAllowed)
+        target.add(" ").add(this.operation, spaced = false).add(" ")
+        this.secondOperand.appendSqlTo(target, asPart = true, spaceAllowed = false)
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.firstOperand.appendParametersTo(target)
+        this.secondOperand.appendParametersTo(target)
+    }
 }
+interface SqTwoOperandMathOperationConstructor {
+    fun <JAVA: Number?> createTwoOperandMathOperation(
+        context: SqContext,
+        type: SqType<JAVA, Number>,
+        firstOperand: SqExpression<*, Number>,
+        operation: String,
+        secondOperand: SqExpression<*, Number>,
+    ): SqTwoOperandMathOperation<JAVA>
+}
+// endregion
+
+
+// region Case
+interface SqCaseItem<JAVA: Any?, DB: Any>: SqItem {
+    val whenItem: SqExpression<*, Boolean>
+    val thenItem: SqExpression<JAVA, DB>
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        target.add("WHEN ", spaced = spaceAllowed)
+        this.whenItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        target.add(" THEN ", spaced = false)
+        this.thenItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.whenItem.appendParametersTo(target)
+        this.thenItem.appendParametersTo(target)
+    }
+}
+interface SqCaseItemConstructor {
+    fun <JAVA: Any?, DB: Any> createCaseItem(context: SqContext, whenItem: SqExpression<*, Boolean>, thenItem: SqExpression<JAVA, DB>): SqCaseItem<JAVA, DB>
+}
+
+interface SqCase<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
+    val items: List<SqCaseItem<out JAVA, DB>>
+    val elseItem: SqExpression<out JAVA, DB>?
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val internalSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        target.add("CASE", spaced = internalSpaceAllowed)
+        this.items.forEach { item ->
+            target.ls()
+            item.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+        this.elseItem?.let { elseItem ->
+            target.ls().add("ELSE ")
+            elseItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+        target.ls().add("END")
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.items.forEach { it.appendParametersTo(target) }
+        this.elseItem?.appendParametersTo(target)
+    }
+}
+interface SqCaseConstructor {
+    fun <JAVA: Any?, DB: Any> createCase(
+        context: SqContext,
+        type: SqType<JAVA, DB>,
+        items: List<SqCaseItem<out JAVA, DB>>,
+        elseItem: SqExpression<out JAVA, DB>?,
+    ): SqCase<JAVA, DB>
+}
+
+
+
+interface SqCaseBuildStartUntyped {
+    val context: SqContext
+
+    infix fun startWhen(condition: SqExpression<*, Boolean>): SqCaseBuildItemStartUntyped
+    infix fun <JAVA: Any?, DB: Any> startElse(value: SqExpression<JAVA, DB>): SqCaseBuildEnd<JAVA, DB>
+    infix fun <JAVA: Any?, DB: Any> end(type: SqType<JAVA, DB>): SqCase<JAVA, DB>
+}
+interface SqCaseBuildStartUntypedConstructor {
+    fun createCaseBuildStartUntyped(context: SqContext): SqCaseBuildStartUntyped
+}
+
+interface SqCaseBuildItemStartUntyped {
+    val context: SqContext
+    val whenItem: SqExpression<*, Boolean>
+
+    infix fun <JAVA: Any?, DB: Any> addThen(value: SqExpression<JAVA, DB>): SqCaseBuildMiddle<JAVA, DB>
+}
+
+interface SqCaseBuildItemStartTyped<JAVA: Any?, DB: Any> {
+    val context: SqContext
+    val type: SqType<JAVA, DB>
+    val whenItem: SqExpression<*, Boolean>
+
+    infix fun addThenNotNull(value: SqExpression<out JAVA, DB>): SqCaseBuildMiddle<JAVA, DB>
+    infix fun addThenNullable(value: SqExpression<out JAVA?, DB>): SqCaseBuildMiddle<JAVA?, DB>
+
+    infix fun addThenNotNull(value: JAVA): SqCaseBuildMiddle<JAVA, DB> =
+        this.addThenNotNull(this.context.param(this.type, value))
+    infix fun addThenNullable(value: JAVA?): SqCaseBuildMiddle<JAVA?, DB> =
+        this.addThenNullable(this.context.param(this.type.nullable(), value))
+}
+
+interface SqCaseBuildMiddle<JAVA: Any?, DB: Any> {
+    val context: SqContext
+    val types: SqType<JAVA, DB>
+
+    infix fun startWhen(condition: SqExpression<*, Boolean>): SqCaseBuildItemStartTyped<JAVA, DB>
+
+    infix fun startElseNotNull(value: SqExpression<out JAVA, DB>): SqCaseBuildEnd<JAVA, DB>
+    infix fun startElseNullable(value: SqExpression<out JAVA?, DB>): SqCaseBuildEnd<JAVA?, DB>
+
+    fun end(): SqCase<JAVA?, DB>
+}
+interface SqCaseBuildMiddleConstructor {
+    fun <JAVA: Any?, DB: Any> createCaseBuildMiddle(context: SqContext, type: SqType<JAVA, DB>): SqCaseBuildMiddle<JAVA, DB>
+}
+
+interface SqCaseBuildEnd<JAVA: Any?, DB: Any> {
+    val context: SqContext
+    val type: SqType<JAVA, DB>
+
+    fun end(): SqCase<JAVA, DB>
+}
+// endregion
+
+
+// region Statements - base
+interface SqStatement: SqItem
+
+interface SqConnStatement: SqStatement, SqConnItem
+
+
+interface SqReadStatement: SqStatement, SqColSet {
+    var firstResultIndexParam: SqParameter<Long, Number>?
+    fun setFirstResultIndexValue(firstResultIndex: Long?)
+    var firstResultIndex: Long?
+        get() = this.firstResultIndexParam?.value
+        set(value) { this.setFirstResultIndexValue(value) }
+
+
+    var resultCountParam: SqParameter<Long, Number>?
+    fun setResultCountValue(value: Long?)
+    var resultCount: Long?
+        get() = this.resultCountParam?.value
+        set(value) { this.setResultCountValue(value) }
+}
+interface SqConnReadStatement: SqReadStatement, SqConnStatement
+
+interface SqMultiColReadStatement: SqReadStatement, SqMultiColSet
+interface SqConnMultiColReadStatement: SqMultiColReadStatement, SqConnReadStatement
+
+interface SqSingleColReadStatement<JAVA: Any?, DB: Any>: SqReadStatement, SqSingleColSet<JAVA, DB>
+interface SqConnSingleColReadStatement<JAVA: Any?, DB: Any>: SqSingleColReadStatement<JAVA, DB>, SqConnReadStatement
+
+
+interface SqTableEditStatement<T: SqTable>: SqStatement {
+    val table: T
+}
+interface SqConnTableEditStatement<T: SqTable>: SqTableEditStatement<T>, SqConnStatement
+
+
+interface SqTableWriteStatement<T: SqTable>: SqTableEditStatement<T> {
+    fun createValueMapping(): SqColumnValueMapping<T>
+    fun applyValueMapping(mapping: SqColumnValueMapping<T>)
+}
+interface SqConnTableWriteStatement<T: SqTable>: SqTableWriteStatement<T>, SqConnTableEditStatement<T>
 // endregion
 
 
 // region Statements - join, order by, select, union
 interface SqJoin: SqMultiColSet {
-    val type: SqJoinType
+    val joinType: SqJoinType
     val mainColSet: SqColSet
     val joinedColSet: SqColSet
 
     val on: SqExpression<*, Boolean>?
-    fun on(on: SqExpression<*, Boolean>?): SqJoin
+    fun setOn(on: SqExpression<*, Boolean>?)
 
-
-    override val columns: List<SqColumn<*, *>>
-        get() = this.mainColSet.columns
 
     override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
         return IllegalStateException("Cannot find column $column in \"join column set\" $this")
     }
 
 
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        this.mainColSet.appendPossibleDefinitionTo(target, asTextPart = true, spaceAllowed)
-        target.add(this.type.name, spaced = true).add("JOIN", spaced = true)
-        this.joinedColSet.appendPossibleDefinitionTo(target, asTextPart = true, spaceAllowed = true)
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        this.mainColSet.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed)
+        target.add(this.joinType.name, spaced = true).add("JOIN", spaced = true)
+        this.joinedColSet.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed = true)
 
         this.on?.let { on ->
             target.add("ON", spaced = true)
-            on.appendTo(target, asTextPart = true, spaceAllowed = true)
+            on.appendSqlTo(target, asPart = true, spaceAllowed = true)
         }
     }
 
-    override fun parameters(): List<SqParameter<*, *>>? {
-        return SqUtil.collectParametersFromLists(
-            this.mainColSet.possibleDefinitionParameters(),
-            this.joinedColSet.possibleDefinitionParameters(),
-            this.on?.parameters(),
-        )
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.mainColSet.definitionItem.appendParametersTo(target)
+        this.joinedColSet.definitionItem.appendParametersTo(target)
     }
+}
+interface SqJoinConstructor {
+    fun createJoin(context: SqContext, joinType: SqJoinType, mainColSet: SqColSet, joinedColSet: SqColSet): SqJoin
 }
 
 interface SqOrderBy: SqItem {
     val column: SqColumn<*, *>
     val order: SqSortOrder
 
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        this.column.appendTo(target, asTextPart = true, spaceAllowed)
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        this.column.appendSqlTo(target, asPart = true, spaceAllowed)
         target.add(this.order.name, spaced = true)
     }
 
-    override fun parameters(): List<SqParameter<*, *>>? = this.column.parameters()
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) { this.column.appendParametersTo(target) }
+}
+interface SqOrderByConstructor {
+    fun createOrderBy(context: SqContext, column: SqColumn<*, *>, order: SqSortOrder): SqOrderBy
 }
 
 
 interface SqSelect: SqReadStatement {
-    val distinct: Boolean
+    var distinct: Boolean
+    var from: List<SqColSet>?
+    var where: SqExpression<*, Boolean>?
+    var groupBy: List<SqColumn<*, *>>?
+    var having: SqExpression<*, Boolean>?
+    var orderBy: List<SqOrderBy>?
 
-    val from: List<SqColSet>?
-    fun from(from: Iterable<SqColSet>): SqSelect
-    fun from(first: SqColSet, vararg more: SqColSet): SqSelect = this.from(listOf(first, *more))
-
-    val where: SqExpression<*, Boolean>?
-    fun where(condition: SqExpression<*, Boolean>?): SqSelect
-
-    val groupBy: List<SqColumn<*, *>>?
-    fun groupBy(items: Iterable<SqColumn<*, *>>): SqSelect
-    fun groupBy(first: SqColumn<*, *>, vararg more: SqColumn<*, *>): SqSelect = this.groupBy(listOf(first, *more))
-
-    val having: SqExpression<*, Boolean>?
-    fun having(condition: SqExpression<*, Boolean>?): SqSelect
-
-    val orderBy: List<SqOrderBy>?
-    fun orderBy(items: Iterable<SqOrderBy>): SqSelect
-    fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqSelect = this.orderBy(listOf(first, *more))
-
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) { SqUtil.appendSelect(this, target, asTextPart, spaceAllowed) }
+    override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
+        return IllegalArgumentException("Cannot find column $column in \"select\" statement $this")
+    }
 }
 
 interface SqMultiColSelect: SqSelect, SqMultiColReadStatement {
-    override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
-        return IllegalArgumentException("Cannot find column $column in \"select\" statement $this")
-    }
-
-    override fun from(from: Iterable<SqColSet>): SqMultiColSelect
-    override fun from(first: SqColSet, vararg more: SqColSet): SqMultiColSelect = this.from(listOf(first, *more))
-
-    override fun where(condition: SqExpression<*, Boolean>?): SqMultiColSelect
-
-    override fun groupBy(items: Iterable<SqColumn<*, *>>): SqMultiColSelect
-    override fun groupBy(first: SqColumn<*, *>, vararg more: SqColumn<*, *>): SqMultiColSelect = this.groupBy(listOf(first, *more))
-
-    override fun having(condition: SqExpression<*, Boolean>?): SqMultiColSelect
-
-    override fun orderBy(items: Iterable<SqOrderBy>): SqMultiColSelect
-    override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqMultiColSelect = this.orderBy(listOf(first, *more))
-
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqMultiColSelect
-    override fun firstResultIndex(firstResultIndex: Long?): SqMultiColSelect
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqMultiColSelect
-    override fun resultCount(resultCount: Long?): SqMultiColSelect
-
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqMultiColSelect =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqMultiColSelect =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
+    override var columns: List<SqColumn<*, *>>
+}
+interface SqMultiColSelectConstructor {
+    fun createMultiColSelect(
+        context: SqContext,
+        distinct: Boolean = false,
+        columns: List<SqColumn<*, *>> = emptyList(),
+        from: List<SqColSet>? = null,
+        where: SqExpression<*, Boolean>? = null,
+        groupBy: List<SqColumn<*, *>>? = null,
+        having: SqExpression<*, Boolean>? = null,
+        orderBy: List<SqOrderBy>? = null,
+    ): SqMultiColSelect
 }
 
 interface SqSingleColSelect<JAVA: Any?, DB: Any>: SqSelect, SqSingleColReadStatement<JAVA, DB> {
-    override fun nullable(): SqSingleColSelect<JAVA?, DB>
-
-    override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
-        return IllegalArgumentException("Cannot find column $column in \"select\" statement $this")
-    }
-
-    override fun from(from: Iterable<SqColSet>): SqSingleColSelect<JAVA, DB>
-    override fun from(first: SqColSet, vararg more: SqColSet): SqSingleColSelect<JAVA, DB> = this.from(listOf(first, *more))
-
-    override fun where(condition: SqExpression<*, Boolean>?): SqSingleColSelect<JAVA, DB>
-
-    override fun groupBy(items: Iterable<SqColumn<*, *>>): SqSingleColSelect<JAVA, DB>
-    override fun groupBy(first: SqColumn<*, *>, vararg more: SqColumn<*, *>): SqSingleColSelect<JAVA, DB> = this.groupBy(listOf(first, *more))
-
-    override fun having(condition: SqExpression<*, Boolean>?): SqSingleColSelect<JAVA, DB>
-
-    override fun orderBy(items: Iterable<SqOrderBy>): SqSingleColSelect<JAVA, DB>
-    override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqSingleColSelect<JAVA, DB> = this.orderBy(listOf(first, *more))
-
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqSingleColSelect<JAVA, DB>
-    override fun firstResultIndex(firstResultIndex: Long?): SqSingleColSelect<JAVA, DB>
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqSingleColSelect<JAVA, DB>
-    override fun resultCount(resultCount: Long?): SqSingleColSelect<JAVA, DB>
-
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqSingleColSelect<JAVA, DB> =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqSingleColSelect<JAVA, DB> =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
+    override var column: SqColumn<JAVA, DB>
+}
+interface SqSingleColSelectConstructor {
+    fun <JAVA: Any?, DB: Any> createSingleColSelect(
+        context: SqContext,
+        distinct: Boolean,
+        column: SqColumn<JAVA, DB>,
+        from: List<SqColSet>? = null,
+        where: SqExpression<*, Boolean>? = null,
+        groupBy: List<SqColumn<*, *>>? = null,
+        having: SqExpression<*, Boolean>? = null,
+        orderBy: List<SqOrderBy>? = null,
+    ): SqSingleColSelect<JAVA, DB>
 }
 
-interface SqConnSelect: SqSelect, SqConnReadStatement {
-    override fun from(from: Iterable<SqColSet>): SqConnSelect
-    override fun from(first: SqColSet, vararg more: SqColSet): SqConnSelect = this.from(listOf(first, *more))
+interface SqConnSelect: SqSelect, SqConnReadStatement
 
-    override fun where(condition: SqExpression<*, Boolean>?): SqConnSelect
-
-    override fun groupBy(items: Iterable<SqColumn<*, *>>): SqConnSelect
-    override fun groupBy(first: SqColumn<*, *>, vararg more: SqColumn<*, *>): SqConnSelect = this.groupBy(listOf(first, *more))
-
-    override fun having(condition: SqExpression<*, Boolean>?): SqConnSelect
-
-    override fun orderBy(items: Iterable<SqOrderBy>): SqConnSelect
-    override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqConnSelect = this.orderBy(listOf(first, *more))
-
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnSelect
-    override fun firstResultIndex(firstResultIndex: Long?): SqConnSelect
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnSelect
-    override fun resultCount(resultCount: Long?): SqConnSelect
-
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnSelect =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnSelect =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
+interface SqConnMultiColSelect: SqMultiColSelect, SqConnSelect, SqConnMultiColReadStatement
+interface SqConnMultiColSelectConstructor {
+    fun createConnMultiColSelect(
+        context: SqContext.ConnContext,
+        distinct: Boolean,
+        columns: List<SqColumn<*, *>>,
+        from: List<SqColSet>? = null,
+        where: SqExpression<*, Boolean>? = null,
+        groupBy: List<SqColumn<*, *>>? = null,
+        having: SqExpression<*, Boolean>? = null,
+        orderBy: List<SqOrderBy>? = null,
+    ): SqConnMultiColSelect
 }
 
-interface SqConnMultiColSelect: SqMultiColSelect, SqConnSelect, SqConnMultiColReadStatement {
-    override fun from(from: Iterable<SqColSet>): SqConnMultiColSelect
-    override fun from(first: SqColSet, vararg more: SqColSet): SqConnMultiColSelect = this.from(listOf(first, *more))
-
-    override fun where(condition: SqExpression<*, Boolean>?): SqConnMultiColSelect
-
-    override fun groupBy(items: Iterable<SqColumn<*, *>>): SqConnMultiColSelect
-    override fun groupBy(first: SqColumn<*, *>, vararg more: SqColumn<*, *>): SqConnMultiColSelect = this.groupBy(listOf(first, *more))
-
-    override fun having(condition: SqExpression<*, Boolean>?): SqConnMultiColSelect
-
-    override fun orderBy(items: Iterable<SqOrderBy>): SqConnMultiColSelect
-    override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqConnMultiColSelect = this.orderBy(listOf(first, *more))
-
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnMultiColSelect
-    override fun firstResultIndex(firstResultIndex: Long?): SqConnMultiColSelect
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnMultiColSelect
-    override fun resultCount(resultCount: Long?): SqConnMultiColSelect
-
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnMultiColSelect =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnMultiColSelect =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-}
-
-interface SqConnSingleColSelect<JAVA: Any?, DB: Any>: SqSingleColSelect<JAVA, DB>, SqConnSelect, SqConnSingleColReadStatement<JAVA, DB> {
-    override fun from(from: Iterable<SqColSet>): SqConnSingleColSelect<JAVA, DB>
-    override fun from(first: SqColSet, vararg more: SqColSet): SqConnSingleColSelect<JAVA, DB> = this.from(listOf(first, *more))
-
-    override fun where(condition: SqExpression<*, Boolean>?): SqConnSingleColSelect<JAVA, DB>
-
-    override fun groupBy(items: Iterable<SqColumn<*, *>>): SqConnSingleColSelect<JAVA, DB>
-    override fun groupBy(first: SqColumn<*, *>, vararg more: SqColumn<*, *>): SqConnSingleColSelect<JAVA, DB> = this.groupBy(listOf(first, *more))
-
-    override fun having(condition: SqExpression<*, Boolean>?): SqConnSingleColSelect<JAVA, DB>
-
-    override fun orderBy(items: Iterable<SqOrderBy>): SqConnSingleColSelect<JAVA, DB>
-    override fun orderBy(first: SqOrderBy, vararg more: SqOrderBy): SqConnSingleColSelect<JAVA, DB> = this.orderBy(listOf(first, *more))
-
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnSingleColSelect<JAVA, DB>
-    override fun firstResultIndex(firstResultIndex: Long?): SqConnSingleColSelect<JAVA, DB>
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnSingleColSelect<JAVA, DB>
-    override fun resultCount(resultCount: Long?): SqConnSingleColSelect<JAVA, DB>
-
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnSingleColSelect<JAVA, DB> =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnSingleColSelect<JAVA, DB> =
-        this.resultCount(resultCount).firstResultIndex(firstResultIndex)
+interface SqConnSingleColSelect<JAVA: Any?, DB: Any>: SqSingleColSelect<JAVA, DB>, SqConnSelect, SqConnSingleColReadStatement<JAVA, DB>
+interface SqConnSingleColSelectConstructor {
+    fun <JAVA: Any?, DB: Any> createConnSingleColSelect(
+        context: SqContext.ConnContext,
+        distinct: Boolean,
+        column: SqColumn<JAVA, DB>,
+        from: List<SqColSet>? = null,
+        where: SqExpression<*, Boolean>? = null,
+        groupBy: List<SqColumn<*, *>>? = null,
+        having: SqExpression<*, Boolean>? = null,
+        orderBy: List<SqOrderBy>? = null,
+        columns: List<SqColumn<*, *>> = listOf(column),
+    ): SqConnSingleColSelect<JAVA, DB>
 }
 
 
 interface SqUnion: SqReadStatement {
-    val unionAll: Boolean
+    var unionAll: Boolean
     val selects: List<SqSelect>
 
     val firstSelect: SqSelect
@@ -625,65 +873,23 @@ interface SqUnion: SqReadStatement {
             return this.selects.firstOrNull()
                 ?: throw IllegalArgumentException("\"Union\" request $this has no one select request")
         }
-
-    override fun appendTo(target: SqWriter, asTextPart: Boolean, spaceAllowed: Boolean) {
-        val firstSelectSpaceAllowed = if (asTextPart) {
-            target.add("(", spaced = spaceAllowed).ls()
-            false
-        } else {
-            spaceAllowed
-        }
-
-        val separator = if (this.unionAll) {
-            "UNION ALL"
-        } else {
-            "UNION"
-        }
-
-        this.selects.forEachIndexed { index, select ->
-            val selectSpaceAllowed = if (index == 0) {
-                firstSelectSpaceAllowed
-            } else {
-                target.ls().add(separator, spaced = false).ls()
-                false
-            }
-
-            select.appendTo(target, asTextPart = true, spaceAllowed = selectSpaceAllowed)
-        }
-
-        if (asTextPart) {
-            target.ls().add(")", spaced = false)
-        }
-    }
-
-    override fun parameters(): List<SqParameter<*, *>>? = SqUtil.collectParameters(this.selects)
-
     override val columns: List<SqColumn<*, *>>
         get() = this.firstSelect.columns
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqUnion
-    override fun firstResultIndex(firstResultIndex: Long?): SqUnion
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqUnion
-    override fun resultCount(resultCount: Long?): SqUnion
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqUnion
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqUnion
-}
-
-interface SqMultiColUnion: SqUnion, SqMultiColReadStatement {
     override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
         return IllegalArgumentException("Cannot find column $column in \"union\" statement $this")
     }
+}
 
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqMultiColUnion
-    override fun firstResultIndex(firstResultIndex: Long?): SqMultiColUnion
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqMultiColUnion
-    override fun resultCount(resultCount: Long?): SqMultiColUnion
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqMultiColUnion
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqMultiColUnion
+interface SqMultiColUnion: SqUnion, SqMultiColReadStatement {
+    override var selects: List<SqSelect>
+}
+interface SqMultiColUnionConstructor {
+    fun createMultiColUnion(context: SqContext, unionAll: Boolean, selects: List<SqSelect>): SqMultiColUnion
 }
 
 interface SqSingleColUnion<JAVA: Any?, DB: Any>: SqUnion, SqSingleColReadStatement<JAVA, DB> {
-    override val selects: List<SqSingleColSelect<JAVA, DB>>
+    override var selects: List<SqSingleColSelect<JAVA, DB>>
 
     override val firstSelect: SqSingleColSelect<JAVA, DB>
         get() {
@@ -693,70 +899,81 @@ interface SqSingleColUnion<JAVA: Any?, DB: Any>: SqUnion, SqSingleColReadStateme
 
     override val column: SqColumn<JAVA, DB>
         get() = this.firstSelect.column
-
-    override fun createColumnNotFoundException(column: SqColumn<*, *>): Exception {
-        return IllegalArgumentException("Cannot find column $column in \"union\" statement $this")
-    }
-
-    override fun nullable(): SqSingleColUnion<JAVA?, DB>
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqSingleColUnion<JAVA, DB>
-    override fun firstResultIndex(firstResultIndex: Long?): SqSingleColUnion<JAVA, DB>
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqSingleColUnion<JAVA, DB>
-    override fun resultCount(resultCount: Long?): SqSingleColUnion<JAVA, DB>
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqSingleColUnion<JAVA, DB>
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqSingleColUnion<JAVA, DB>
+}
+interface SqSingleColUnionConstructor {
+    fun <JAVA: Any?, DB: Any> createSingleColUnion(context: SqContext, unionAll: Boolean, selects: List<SqSingleColSelect<JAVA, DB>>): SqSingleColUnion<JAVA, DB>
 }
 
-interface SqConnUnion: SqUnion, SqConnReadStatement {
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnUnion
-    override fun firstResultIndex(firstResultIndex: Long?): SqConnUnion
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnUnion
-    override fun resultCount(resultCount: Long?): SqConnUnion
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnUnion
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnUnion
+interface SqConnUnion: SqUnion, SqConnReadStatement
+
+interface SqConnMultiColUnion: SqMultiColUnion, SqConnMultiColReadStatement
+interface SqConnMultiColUnionConstructor {
+    fun createConnMultiColUnion(context: SqContext.ConnContext, unionAll: Boolean, selects: List<SqSelect>,): SqConnMultiColUnion
 }
 
-interface SqConnMultiColUnion: SqMultiColUnion, SqConnMultiColReadStatement {
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnMultiColUnion
-    override fun firstResultIndex(firstResultIndex: Long?): SqConnMultiColUnion
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnMultiColUnion
-    override fun resultCount(resultCount: Long?): SqConnMultiColUnion
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnMultiColUnion
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnMultiColUnion
-}
-
-interface SqConnSingleColUnion<JAVA: Any?, DB: Any>: SqSingleColUnion<JAVA, DB>, SqConnUnion, SqConnSingleColReadStatement<JAVA, DB> {
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqConnSingleColUnion<JAVA, DB>
-    override fun firstResultIndex(firstResultIndex: Long?): SqConnSingleColUnion<JAVA, DB>
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqConnSingleColUnion<JAVA, DB>
-    override fun resultCount(resultCount: Long?): SqConnSingleColUnion<JAVA, DB>
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqConnSingleColUnion<JAVA, DB>
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqConnSingleColUnion<JAVA, DB>
+interface SqConnSingleColUnion<JAVA: Any?, DB: Any>: SqSingleColUnion<JAVA, DB>, SqConnUnion, SqConnSingleColReadStatement<JAVA, DB>
+interface SqConnSingleColUnionConstructor {
+    fun <JAVA: Any?, DB: Any> createConnSingleColUnion(
+        context: SqContext.ConnContext,
+        unionAll: Boolean,
+        selects: List<SqSingleColSelect<JAVA, DB>>,
+    ): SqConnSingleColUnion<JAVA, DB>
 }
 // endregion
 
 
 // region Statements - modification
 interface SqInsert<T: SqTable>: SqTableWriteStatement<T> {
-    val columns: List<SqColumn<*, *>>
-    fun columns(columns: Iterable<SqColumn<*, *>>?): SqInsert<T>
-    fun columns(first: SqColumn<*, *>, vararg more: SqColumn<*, *>): SqInsert<T> = this.columns(listOf(first, *more))
+    var columns: List<SqTableColumn<*, *>>?
+    var values: List<SqExpression<*, *>>?
+    var select: SqReadStatement?
 
-    val values: List<SqExpression<*, *>>?
-    fun values(values: Iterable<SqExpression<*, *>>?): SqInsert<T>
-    fun values(first: SqExpression<*, *>, vararg more: SqExpression<*, *>): SqInsert<T> = this.values(listOf(first, *more))
-
-    val select: SqReadStatement?
-    fun select(select: SqReadStatement?): SqInsert<T>
-
-
-    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqInsert<T> {
-        return this
-            .columns(mapping.map.keys)
-            .values(mapping.map.values)
+    override fun applyValueMapping(mapping: SqColumnValueMapping<T>) {
+        this.columns(mapping.map.keys.toList()).values(mapping.map.values.toList())
     }
 
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val insertSpaceAllowed = if (asPart) {
+            target.add("(", spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        target.add("INSERT INTO ", spaced = insertSpaceAllowed)
+        this.table.appendSqlTo(target, asPart = true, spaceAllowed = false)
+
+        this.columns?.takeUnless { it.isEmpty() }?.let { columns ->
+            target.add(" (")
+            columns.forEachIndexed { index, column ->
+                if (index > 0) target.add(", ")
+                column.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            }
+            target.add(")")
+        }
+
+        this.values?.takeUnless { it.isEmpty() }?.let { values ->
+            target.add(" VALUES (")
+            values.forEachIndexed { index, value ->
+                if (index > 0) target.add(", ")
+                value.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            }
+            target.add(")")
+        }
+
+        this.select?.let { select ->
+            target.add(" ")
+            select.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.columns?.forEach { it.appendParametersTo(target) }
+        this.values?.forEach { it.appendParametersTo(target) }
+        this.select?.appendParametersTo(target)
+    }
 
     fun prepareStatement(connection: Connection, returnGeneratedKeys: Boolean): PreparedStatement {
         val autoGeneratedKeys = if (returnGeneratedKeys) {
@@ -769,55 +986,141 @@ interface SqInsert<T: SqTable>: SqTableWriteStatement<T> {
         return result
     }
 }
+interface SqInsertConstructor {
+    fun <T: SqTable> createInsert(
+        context: SqContext,
+        table: T,
+        columns: List<SqTableColumn<*, *>>? = null,
+        values: List<SqExpression<*, *>>? = null,
+        select: SqReadStatement? = null,
+    ): SqInsert<T>
+}
 
 interface SqConnInsert<T: SqTable>: SqInsert<T>, SqConnTableWriteStatement<T> {
-    override fun columns(columns: Iterable<SqColumn<*, *>>?): SqConnInsert<T>
-    override fun columns(first: SqColumn<*, *>, vararg more: SqColumn<*, *>): SqConnInsert<T> = this.columns(listOf(first, *more))
-
-    override fun values(values: Iterable<SqExpression<*, *>>?): SqConnInsert<T>
-    override fun values(first: SqExpression<*, *>, vararg more: SqExpression<*, *>): SqConnInsert<T> = this.values(listOf(first, *more))
-
-    override fun select(select: SqReadStatement?): SqConnInsert<T>
-
-
-    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqConnInsert<T> = this.apply { super.applyValueMapping(mapping) }
-
-
     fun prepareStatement(returnGeneratedKeys: Boolean): PreparedStatement = this.prepareStatement(this.connection, returnGeneratedKeys)
+}
+interface SqConnInsertConstructor {
+    fun <T: SqTable> createConnInsert(
+        context: SqContext.ConnContext,
+        table: T,
+        columns: List<SqTableColumn<*, *>>? = null,
+        values: List<SqExpression<*, *>>? = null,
+        select: SqReadStatement? = null,
+    ): SqConnInsert<T>
 }
 
 
 interface SqUpdate<T: SqTable>: SqTableWriteStatement<T> {
-    val set: Map<SqColumn<*, *>, SqExpression<*, *>>
-    fun set(columnValueMap: Map<SqColumn<*, *>, SqExpression<*, *>>): SqUpdate<T>
-    fun set(vararg columnValuePairs: Pair<SqColumn<*, *>, SqExpression<*, *>>): SqUpdate<T> = this.set(mapOf(*columnValuePairs))
+    var set: Map<SqTableColumn<*, *>, SqExpression<*, *>>?
+    var where: SqExpression<*, Boolean>?
 
-    val where: SqExpression<*, Boolean>?
-    fun where(condition: SqExpression<*, Boolean>?): SqUpdate<T>
+    override fun applyValueMapping(mapping: SqColumnValueMapping<T>) { this.set = LinkedHashMap(mapping.map) }
 
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val updateSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
 
-    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqUpdate<T> = this.set(mapping.map)
+        target.add("UPDATE ", spaced = updateSpaceAllowed)
+        this.table.appendSqlTo(target, asPart = true, spaceAllowed = false)
+
+        this.set?.takeUnless { it.isEmpty() }?.let { set ->
+            target.add(" SET ").ls()
+            var first = true
+            set.forEach { (column, value) ->
+                if (first) {
+                    first = false
+                } else {
+                    target.add(",").ls()
+                }
+                target.add("  ")
+                column.appendSqlTo(target, asPart = true, spaceAllowed = false)
+                target.add(" = ")
+                value.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            }
+        }
+
+        this.where?.let { where ->
+            target.ls().add("WHERE ")
+            where.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.table.appendParametersTo(target)
+        this.set?.forEach { (column, value) ->
+            column.appendParametersTo(target)
+            value.appendParametersTo(target)
+        }
+        this.where?.appendParametersTo(target)
+    }
+}
+interface SqUpdateConstructor {
+    fun <T: SqTable> createUpdate(
+        context: SqContext,
+        table: T,
+        set: Map<SqTableColumn<*, *>, SqExpression<*, *>>? = null,
+        where: SqExpression<*, Boolean>? = null,
+    ): SqUpdate<T>
 }
 
-interface SqConnUpdate<T: SqTable>: SqUpdate<T>, SqConnTableWriteStatement<T> {
-    override fun set(columnValueMap: Map<SqColumn<*, *>, SqExpression<*, *>>): SqConnUpdate<T>
-    override fun set(vararg columnValuePairs: Pair<SqColumn<*, *>, SqExpression<*, *>>): SqConnUpdate<T> = this.set(mapOf(*columnValuePairs))
-
-    override fun where(condition: SqExpression<*, Boolean>?): SqConnUpdate<T>
-
-
-    override fun applyValueMapping(mapping: SqColumnValueMapping<T>): SqConnUpdate<T> = this.set(mapping.map)
+interface SqConnUpdate<T: SqTable>: SqUpdate<T>, SqConnTableWriteStatement<T>
+interface SqConnUpdateConstructor {
+    fun <T: SqTable> createConnUpdate(
+        context: SqContext.ConnContext,
+        table: T,
+        set: Map<SqTableColumn<*, *>, SqExpression<*, *>>? = null,
+        where: SqExpression<*, Boolean>? = null,
+    ): SqConnUpdate<T>
 }
 
 
-interface SqDelete<T: SqTable>: SqTableModificationStatement<T> {
-    val where: SqExpression<*, Boolean>?
-    fun where(condition: SqExpression<*, Boolean>?): SqDelete<T>
+interface SqDelete<T: SqTable>: SqTableEditStatement<T> {
+    var where: SqExpression<*, Boolean>?
 
-    override fun parameters(): List<SqParameter<*, *>>? = this.where?.parameters()
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        val deleteSpaceAllowed = if (asPart) {
+            target.add("(", spaced = spaceAllowed)
+            false
+        } else {
+            spaceAllowed
+        }
+
+        target.add("DELETE FROM ", spaced = deleteSpaceAllowed)
+        this.table.appendSqlTo(target, asPart = true, spaceAllowed = false)
+
+        this.where?.let { where ->
+            target.add(" WHERE ")
+            where.appendSqlTo(target, asPart = true, spaceAllowed = false)
+        }
+
+        if (asPart) target.add(")")
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.table.appendParametersTo(target)
+        this.where?.appendParametersTo(target)
+    }
+}
+interface SqDeleteConstructor {
+    fun <T: SqTable> createDelete(
+        context: SqContext,
+        table: T,
+        where: SqExpression<*, Boolean>? = null,
+    ): SqDelete<T>
 }
 
-interface SqConnDelete<T: SqTable>: SqDelete<T>, SqConnTableModificationStatement<T> {
-    override fun where(condition: SqExpression<*, Boolean>?): SqConnDelete<T>
+interface SqConnDelete<T: SqTable>: SqDelete<T>, SqConnTableEditStatement<T>
+interface SqConnDeleteConstructor {
+    fun <T: SqTable> createConnDelete(
+        context: SqContext.ConnContext,
+        table: T,
+        where: SqExpression<*, Boolean>? = null,
+    ): SqConnDelete<T>
 }
 // endregion

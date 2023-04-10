@@ -4,30 +4,29 @@ import me.ore.sq.*
 
 
 open class SqGenericConnMultiColSelect(
-    override val context: SqConnectedContext, distinct: Boolean, columns: Iterable<SqColumn<*, *>>
-): SqGenericMultiColSelect(context, distinct, columns), SqConnMultiColSelect {
-    override fun from(from: Iterable<SqColSet>): SqGenericConnMultiColSelect = this.apply { super<SqGenericMultiColSelect>.from(from) }
-    override fun where(condition: SqExpression<*, Boolean>?): SqGenericConnMultiColSelect = this.apply { super.where(condition) }
-    override fun groupBy(items: Iterable<SqColumn<*, *>>): SqGenericConnMultiColSelect = this.apply { super<SqGenericMultiColSelect>.groupBy(items) }
-    override fun having(condition: SqExpression<*, Boolean>?): SqGenericConnMultiColSelect = this.apply { super.having(condition) }
-    override fun orderBy(items: Iterable<SqOrderBy>): SqGenericConnMultiColSelect = this.apply { super<SqGenericMultiColSelect>.orderBy(items) }
-
-    override fun firstResultIndex(firstResultIndex: SqParameter<Long, Number>?): SqGenericConnMultiColSelect = this.apply {
-        super.firstResultIndex(firstResultIndex)
-    }
-    override fun firstResultIndex(firstResultIndex: Long?): SqGenericConnMultiColSelect = this.apply {
-        super.firstResultIndex(firstResultIndex)
-    }
-    override fun resultCount(resultCount: SqParameter<Long, Number>?): SqGenericConnMultiColSelect = this.apply {
-        super.resultCount(resultCount)
-    }
-    override fun resultCount(resultCount: Long?): SqGenericConnMultiColSelect = this.apply {
-        super.resultCount(resultCount)
-    }
-    override fun limit(resultCount: SqParameter<Long, Number>, firstResultIndex: SqParameter<Long, Number>?): SqGenericConnMultiColSelect = this.apply {
-        super<SqGenericMultiColSelect>.limit(resultCount, firstResultIndex)
-    }
-    override fun limit(resultCount: Long, firstResultIndex: Long?): SqGenericConnMultiColSelect = this.apply {
-        super<SqGenericMultiColSelect>.limit(resultCount, firstResultIndex)
+    override val context: SqContext.ConnContext,
+    override var distinct: Boolean,
+    override var columns: List<SqColumn<*, *>>,
+    override var from: List<SqColSet>? = null,
+    override var where: SqExpression<*, Boolean>? = null,
+    override var groupBy: List<SqColumn<*, *>>? = null,
+    override var having: SqExpression<*, Boolean>? = null,
+    override var orderBy: List<SqOrderBy>? = null,
+): SqGenericSelectBase(), SqConnMultiColSelect {
+    companion object {
+        val CONSTRUCTOR: SqConnMultiColSelectConstructor = object : SqConnMultiColSelectConstructor {
+            override fun createConnMultiColSelect(
+                context: SqContext.ConnContext,
+                distinct: Boolean,
+                columns: List<SqColumn<*, *>>,
+                from: List<SqColSet>?,
+                where: SqExpression<*, Boolean>?,
+                groupBy: List<SqColumn<*, *>>?,
+                having: SqExpression<*, Boolean>?,
+                orderBy: List<SqOrderBy>?
+            ): SqConnMultiColSelect {
+                return SqGenericConnMultiColSelect(context, distinct, columns, from, where, groupBy, having, orderBy)
+            }
+        }
     }
 }
