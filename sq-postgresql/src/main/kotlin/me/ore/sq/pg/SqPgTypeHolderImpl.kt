@@ -82,7 +82,7 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
         )
     }
 
-    override val pgTimeWithTimeZone: SqType<OffsetTime, Time> = run {
+    override val pgTimeTZ: SqType<OffsetTime, Time> = run {
         SqType.notNull(
             OffsetTime::class.java,
             Time::class.java,
@@ -109,7 +109,7 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
         )
     }
 
-    override val pgTimestampWithTimeZone: SqType<OffsetDateTime, Timestamp> = run {
+    override val pgTimestampTZ: SqType<OffsetDateTime, Timestamp> = run {
         SqType.notNull(
             OffsetDateTime::class.java,
             Timestamp::class.java,
@@ -121,7 +121,7 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
 
 
     // region Number types
-    override val pgBitInt: SqType<Long, Number> = run {
+    override val pgBigInt: SqType<Long, Number> = run {
         SqType.notNull(
             Long::class.java,
             Number::class.java,
@@ -130,7 +130,7 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
         )
     }
 
-    override val pgBitIntAsBigInteger: SqType<BigInteger, Number> = run {
+    override val pgBigIntAsBigInteger: SqType<BigInteger, Number> = run {
         SqType.notNull(
             BigInteger::class.java,
             Number::class.java,
@@ -139,7 +139,7 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
         )
     }
 
-    override val pgDoublePrecision: SqType<Double, Number> = run {
+    override val pgDouble: SqType<Double, Number> = run {
         SqType.notNull(
             Double::class.java,
             Number::class.java,
@@ -199,7 +199,7 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
         )
     }
 
-    override val pgCharacterVarying: SqType<String, String> = run {
+    override val pgVarChar: SqType<String, String> = run {
         SqType.notNull(
             String::class.java,
             String::class.java,
