@@ -1043,3 +1043,188 @@ fun SqContext.nullTestType(): SqType<Boolean, Boolean> = this.typeHolder().nullT
 fun SqContext.comparisonType(): SqType<Boolean, Boolean> = this.typeHolder().comparison
 fun SqContext.mathOperationType(): SqType<Number, Number> = this.typeHolder().mathOperation
 // endregion
+
+
+// region Value-based parameters for Java types
+@JvmName("param__not_null")
+fun SqContext.param(value: Boolean): SqParameter<Boolean, Boolean> =
+    this.javaBooleanParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Boolean?): SqParameter<Boolean?, Boolean> =
+    this.javaBooleanParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: ByteArray): SqParameter<ByteArray, ByteArray> =
+    this.javaByteArrayParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: ByteArray?): SqParameter<ByteArray?, ByteArray> =
+    this.javaByteArrayParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Date): SqParameter<Date, Timestamp> =
+    this.javaDateParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Date?): SqParameter<Date?, Timestamp> =
+    this.javaDateParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: LocalDate): SqParameter<LocalDate, Timestamp> =
+    this.javaLocalDateParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: LocalDate?): SqParameter<LocalDate?, Timestamp> =
+    this.javaLocalDateParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: LocalDateTime): SqParameter<LocalDateTime, Timestamp> =
+    this.javaLocalDateTimeParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: LocalDateTime?): SqParameter<LocalDateTime?, Timestamp> =
+    this.javaLocalDateTimeParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: LocalTime): SqParameter<LocalTime, Time> =
+    this.javaLocalTimeParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: LocalTime?): SqParameter<LocalTime?, Time> =
+    this.javaLocalTimeParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: OffsetDateTime): SqParameter<OffsetDateTime, Timestamp> =
+    this.javaOffsetDateTimeParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: OffsetDateTime?): SqParameter<OffsetDateTime?, Timestamp> =
+    this.javaOffsetDateTimeParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: OffsetTime): SqParameter<OffsetTime, Time> =
+    this.javaOffsetTimeParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: OffsetTime?): SqParameter<OffsetTime?, Time> =
+    this.javaOffsetTimeParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Time): SqParameter<Time, Time> =
+    this.javaTimeParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Time?): SqParameter<Time?, Time> =
+    this.javaTimeParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Timestamp): SqParameter<Timestamp, Timestamp> =
+    this.javaTimestampParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Timestamp?): SqParameter<Timestamp?, Timestamp> =
+    this.javaTimestampParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: BigDecimal): SqParameter<BigDecimal, Number> =
+    this.javaBigDecimalParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: BigDecimal?): SqParameter<BigDecimal?, Number> =
+    this.javaBigDecimalParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: BigInteger): SqParameter<BigInteger, Number> =
+    this.javaBigIntegerParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: BigInteger?): SqParameter<BigInteger?, Number> =
+    this.javaBigIntegerParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Byte): SqParameter<Byte, Number> =
+    this.javaByteParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Byte?): SqParameter<Byte?, Number> =
+    this.javaByteParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Double): SqParameter<Double, Number> =
+    this.javaDoubleParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Double?): SqParameter<Double?, Number> =
+    this.javaDoubleParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Float): SqParameter<Float, Number> =
+    this.javaFloatParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Float?): SqParameter<Float?, Number> =
+    this.javaFloatParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Int): SqParameter<Int, Number> =
+    this.javaIntParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Int?): SqParameter<Int?, Number> =
+    this.javaIntParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Long): SqParameter<Long, Number> =
+    this.javaLongParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Long?): SqParameter<Long?, Number> =
+    this.javaLongParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Short): SqParameter<Short, Number> =
+    this.javaShortParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Short?): SqParameter<Short?, Number> =
+    this.javaShortParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: String): SqParameter<String, String> =
+    this.javaStringParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: String?): SqParameter<String?, String> =
+    this.javaStringParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Blob): SqParameter<Blob, Blob> =
+    this.javaBlobParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Blob?): SqParameter<Blob?, Blob> =
+    this.javaBlobParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Clob): SqParameter<Clob, Clob> =
+    this.javaClobParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Clob?): SqParameter<Clob?, Clob> =
+    this.javaClobParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: NClob): SqParameter<NClob, Clob> =
+    this.javaNClobParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: NClob?): SqParameter<NClob?, Clob> =
+    this.javaNClobParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: Ref): SqParameter<Ref, Ref> =
+    this.javaRefParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: Ref?): SqParameter<Ref?, Ref> =
+    this.javaRefParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: RowId): SqParameter<RowId, RowId> =
+    this.javaRowIdParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: RowId?): SqParameter<RowId?, RowId> =
+    this.javaRowIdParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: SQLXML): SqParameter<SQLXML, String> =
+    this.javaSqlXmlParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: SQLXML?): SqParameter<SQLXML?, String> =
+    this.javaSqlXmlParam(value)
+
+@JvmName("param__not_null")
+fun SqContext.param(value: URL): SqParameter<URL, String> =
+    this.javaUrlParam(value)
+@JvmName("param__nullable")
+fun SqContext.param(value: URL?): SqParameter<URL?, String> =
+    this.javaUrlParam(value)
+// endregion
