@@ -1,5 +1,6 @@
 package me.ore.sq.generic
 
+import me.ore.sq.SqDbTypeBit
 import me.ore.sq.SqType
 import me.ore.sq.SqTypeHolder
 import java.math.BigDecimal
@@ -14,10 +15,10 @@ object SqGenericTypeHolder: SqTypeHolder {
     // region Boolean types
     private val booleanReader = SqGenericBooleanReader()
 
-    override val bit: SqType<Boolean, Boolean> = run {
+    override val bit: SqType<Boolean, SqDbTypeBit> = run {
         SqType.notNull(
             Boolean::class.java,
-            Boolean::class.java,
+            SqDbTypeBit::class.java,
             this.booleanReader,
             SqGenericBooleanWriter(Types.BIT),
         )

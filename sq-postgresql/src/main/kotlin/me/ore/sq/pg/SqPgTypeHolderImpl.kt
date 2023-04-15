@@ -1,5 +1,6 @@
 package me.ore.sq.pg
 
+import me.ore.sq.SqDbTypeBit
 import me.ore.sq.SqType
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -12,10 +13,10 @@ import java.time.*
 
 object SqPgTypeHolderImpl: SqPgTypeHolder {
     // region Boolean types
-    override val pgSingleBit: SqType<Boolean, Boolean> = run {
+    override val pgSingleBit: SqType<Boolean, SqDbTypeBit> = run {
         SqType.notNull(
             Boolean::class.java,
-            Boolean::class.java,
+            SqDbTypeBit::class.java,
             SqPgSingleBitReader(),
             SqPgSingleBitWriter(),
         )

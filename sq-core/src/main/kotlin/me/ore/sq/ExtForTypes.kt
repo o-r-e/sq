@@ -22,9 +22,14 @@ import java.time.OffsetDateTime
 import java.time.OffsetTime
 
 
+// region DB types-placeholders
+interface SqDbTypeBit
+// endregion
+
+
 interface SqTypeHolder {
     // region Boolean types
-    val bit: SqType<Boolean, Boolean>
+    val bit: SqType<Boolean, SqDbTypeBit>
     val boolean: SqType<Boolean, Boolean>
 
     val javaBoolean: SqType<Boolean, Boolean>
@@ -181,19 +186,19 @@ fun SqTable.booleanNotNull(columnName: String): SqTableColumn<Boolean, Boolean> 
 fun SqTable.booleanNullable(columnName: String): SqTableColumn<Boolean?, Boolean> =
     this.column(SqGenericTypeHolder.boolean.nullable(), columnName)
 
-fun SqContext.bitType(): SqType<Boolean, Boolean> =
+fun SqContext.bitType(): SqType<Boolean, SqDbTypeBit> =
     this.typeHolder().bit
 @JvmName("bitParam__not_null")
-fun SqContext.bitParam(value: Boolean): SqParameter<Boolean, Boolean> =
+fun SqContext.bitParam(value: Boolean): SqParameter<Boolean, SqDbTypeBit> =
     this.param(this.bitType(), value)
 @JvmName("bitParam__nullable")
-fun SqContext.bitParam(value: Boolean?): SqParameter<Boolean?, Boolean> =
+fun SqContext.bitParam(value: Boolean?): SqParameter<Boolean?, SqDbTypeBit> =
     this.param(this.bitType().nullable(), value)
-fun SqContext.bitNull(): SqNull<Boolean, Boolean> =
+fun SqContext.bitNull(): SqNull<Boolean, SqDbTypeBit> =
     this.nullItem(this.bitType().nullable())
-fun SqTable.bitNotNull(columnName: String): SqTableColumn<Boolean, Boolean> =
+fun SqTable.bitNotNull(columnName: String): SqTableColumn<Boolean, SqDbTypeBit> =
     this.column(SqGenericTypeHolder.bit, columnName)
-fun SqTable.bitNullable(columnName: String): SqTableColumn<Boolean?, Boolean> =
+fun SqTable.bitNullable(columnName: String): SqTableColumn<Boolean?, SqDbTypeBit> =
     this.column(SqGenericTypeHolder.bit.nullable(), columnName)
 
 

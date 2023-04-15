@@ -11,8 +11,8 @@ import java.time.*
 
 interface SqPgTypeHolder: SqTypeHolder {
     // region Boolean types
-    val pgSingleBit: SqType<Boolean, Boolean>
-    override val bit: SqType<Boolean, Boolean>
+    val pgSingleBit: SqType<Boolean, SqDbTypeBit>
+    override val bit: SqType<Boolean, SqDbTypeBit>
         get() = this.pgSingleBit
 
     val pgBoolean: SqType<Boolean, Boolean>
