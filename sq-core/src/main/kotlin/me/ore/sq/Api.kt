@@ -117,6 +117,9 @@ interface SqNull<JAVA: Any, DB: Any>: SqExpression<JAVA?, DB> {
 interface SqNullConstructor {
     fun <JAVA: Any, DB: Any> createNull(context: SqContext, type: SqType<JAVA?, DB>): SqNull<JAVA, DB>
 }
+interface SqUntypedNullConstructor {
+    fun <JAVA: Any, DB: Any> createUntypedNull(context: SqContext): SqNull<JAVA, DB>
+}
 
 interface SqParameter<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
     val value: JAVA

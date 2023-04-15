@@ -70,6 +70,10 @@ fun <JAVA: Any, DB: Any> SqContext.nullItem(type: SqType<JAVA?, DB>): SqNull<JAV
     return this[SqNullConstructor::class.java, SqGenericNull.CONSTRUCTOR]
         .createNull(this, type)
 }
+fun <JAVA: Any, DB: Any> SqContext.nullItem(): SqNull<JAVA, DB> {
+    return this[SqUntypedNullConstructor::class.java, SqGenericUntypedNull.CONSTRUCTOR]
+        .createUntypedNull(this)
+}
 
 
 fun <JAVA: Any?, DB: Any> SqContext.param(type: SqType<JAVA, DB>, value: JAVA): SqParameter<JAVA, DB> {
