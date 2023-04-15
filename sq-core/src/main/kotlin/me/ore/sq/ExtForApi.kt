@@ -20,7 +20,7 @@ fun <T: SqColumnValueMapping<*>> T.clear(): T = this.apply { this.clearData() }
 // endregion
 
 
-// region Context / start
+// region Context data / context start
 inline fun <T, C: SqContext> sq(context: C, block: C.() -> T): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     return block.invoke(context)
