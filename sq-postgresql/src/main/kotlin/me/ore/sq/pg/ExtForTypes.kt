@@ -115,9 +115,13 @@ interface SqPgTypeHolder: SqTypeHolder {
     override val char: SqType<String, String>
         get() = this.pgChar
 
+    val pgCharacter: SqType<String, String>
+
     val pgVarChar: SqType<String, String>
     override val varChar: SqType<String, String>
         get() = this.pgVarChar
+
+    val pgText: SqType<String, String>
 
     override val longVarChar: SqType<String, String>
         get() = SqGenericTypeHolder.longVarChar
@@ -153,6 +157,19 @@ interface SqPgTypeHolder: SqTypeHolder {
         get() = SqGenericTypeHolder.ref
     override val rowId: SqType<RowId, RowId>
         get() = SqGenericTypeHolder.rowId
+    // endregion
+
+
+    // region Other Postgresql types
+    val pgJson: SqType<String, String>
+
+    val pgJsonB: SqType<String, String>
+
+    /** bit(x), where x >= 2 */
+    val pgMultiBit: SqType<BooleanArray, SqDbTypeBit>
+
+    /** bit varying */
+    val pgVarBit: SqType<BooleanArray, SqDbTypeBit>
     // endregion
 }
 
@@ -459,6 +476,36 @@ fun SqTable.pgCharNotNull(columnName: String): SqTableColumn<String, String> =
 fun SqTable.pgCharNullable(columnName: String): SqTableColumn<String?, String> =
     this.column(SqPgTypeHolderImpl.pgChar.nullable(), columnName)
 
+fun SqContext.pgCharacterType(): SqType<String, String> =
+    this.pgTypeHolder().pgCharacter
+@JvmName("pgCharacterParam__not_null")
+fun SqContext.pgCharacterParam(value: String): SqParameter<String, String> =
+    this.param(this.pgCharacterType(), value)
+@JvmName("pgCharacterParam__nullable")
+fun SqContext.pgCharacterParam(value: String?): SqParameter<String?, String> =
+    this.param(this.pgCharacterType().nullable(), value)
+fun SqContext.pgCharacterNull(): SqNull<String, String> =
+    this.nullItem(this.pgCharacterType().nullable())
+fun SqTable.pgCharacterNotNull(columnName: String): SqTableColumn<String, String> =
+    this.column(SqPgTypeHolderImpl.pgCharacter, columnName)
+fun SqTable.pgCharacterNullable(columnName: String): SqTableColumn<String?, String> =
+    this.column(SqPgTypeHolderImpl.pgCharacter.nullable(), columnName)
+
+fun SqContext.pgTextType(): SqType<String, String> =
+    this.pgTypeHolder().pgText
+@JvmName("pgTextParam__not_null")
+fun SqContext.pgTextParam(value: String): SqParameter<String, String> =
+    this.param(this.pgTextType(), value)
+@JvmName("pgTextParam__nullable")
+fun SqContext.pgTextParam(value: String?): SqParameter<String?, String> =
+    this.param(this.pgTextType().nullable(), value)
+fun SqContext.pgTextNull(): SqNull<String, String> =
+    this.nullItem(this.pgTextType().nullable())
+fun SqTable.pgTextNotNull(columnName: String): SqTableColumn<String, String> =
+    this.column(SqPgTypeHolderImpl.pgText, columnName)
+fun SqTable.pgTextNullable(columnName: String): SqTableColumn<String?, String> =
+    this.column(SqPgTypeHolderImpl.pgText.nullable(), columnName)
+
 fun SqContext.pgVarCharType(): SqType<String, String> =
     this.pgTypeHolder().pgVarChar
 @JvmName("pgVarCharParam__not_null")
@@ -491,4 +538,67 @@ fun SqTable.pgXmlNotNull(columnName: String): SqTableColumn<SQLXML, String> =
     this.column(SqPgTypeHolderImpl.pgXml, columnName)
 fun SqTable.pgXmlNullable(columnName: String): SqTableColumn<SQLXML?, String> =
     this.column(SqPgTypeHolderImpl.pgXml.nullable(), columnName)
+// endregion
+
+
+// region Other Postgresql types
+fun SqContext.pgJsonType(): SqType<String, String> =
+    this.pgTypeHolder().pgJson
+@JvmName("pgJsonParam__not_null")
+fun SqContext.pgJsonParam(value: String): SqParameter<String, String> =
+    this.param(this.pgJsonType(), value)
+@JvmName("pgJsonParam__nullable")
+fun SqContext.pgJsonParam(value: String?): SqParameter<String?, String> =
+    this.param(this.pgJsonType().nullable(), value)
+fun SqContext.pgJsonNull(): SqNull<String, String> =
+    this.nullItem(this.pgJsonType().nullable())
+fun SqTable.pgJsonNotNull(columnName: String): SqTableColumn<String, String> =
+    this.column(SqPgTypeHolderImpl.pgJson, columnName)
+fun SqTable.pgJsonNullable(columnName: String): SqTableColumn<String?, String> =
+    this.column(SqPgTypeHolderImpl.pgJson.nullable(), columnName)
+
+fun SqContext.pgJsonBType(): SqType<String, String> =
+    this.pgTypeHolder().pgJsonB
+@JvmName("pgJsonBParam__not_null")
+fun SqContext.pgJsonBParam(value: String): SqParameter<String, String> =
+    this.param(this.pgJsonBType(), value)
+@JvmName("pgJsonBParam__nullable")
+fun SqContext.pgJsonBParam(value: String?): SqParameter<String?, String> =
+    this.param(this.pgJsonBType().nullable(), value)
+fun SqContext.pgJsonBNull(): SqNull<String, String> =
+    this.nullItem(this.pgJsonBType().nullable())
+fun SqTable.pgJsonBNotNull(columnName: String): SqTableColumn<String, String> =
+    this.column(SqPgTypeHolderImpl.pgJsonB, columnName)
+fun SqTable.pgJsonBNullable(columnName: String): SqTableColumn<String?, String> =
+    this.column(SqPgTypeHolderImpl.pgJsonB.nullable(), columnName)
+
+fun SqContext.pgMultiBitType(): SqType<BooleanArray, SqDbTypeBit> =
+    this.pgTypeHolder().pgMultiBit
+@JvmName("pgMultiBitParam__not_null")
+fun SqContext.pgMultiBitParam(value: BooleanArray): SqParameter<BooleanArray, SqDbTypeBit> =
+    this.param(this.pgMultiBitType(), value)
+@JvmName("pgMultiBitParam__nullable")
+fun SqContext.pgMultiBitParam(value: BooleanArray?): SqParameter<BooleanArray?, SqDbTypeBit> =
+    this.param(this.pgMultiBitType().nullable(), value)
+fun SqContext.pgMultiBitNull(): SqNull<BooleanArray, SqDbTypeBit> =
+    this.nullItem(this.pgMultiBitType().nullable())
+fun SqTable.pgMultiBitNotNull(columnName: String): SqTableColumn<BooleanArray, SqDbTypeBit> =
+    this.column(SqPgTypeHolderImpl.pgMultiBit, columnName)
+fun SqTable.pgMultiBitNullable(columnName: String): SqTableColumn<BooleanArray?, SqDbTypeBit> =
+    this.column(SqPgTypeHolderImpl.pgMultiBit.nullable(), columnName)
+
+fun SqContext.pgVarBitType(): SqType<BooleanArray, SqDbTypeBit> =
+    this.pgTypeHolder().pgVarBit
+@JvmName("pgVarBitParam__ not_null")
+fun SqContext.pgVarBitParam(value: BooleanArray): SqParameter<BooleanArray, SqDbTypeBit> =
+    this.param(this.pgVarBitType(), value)
+@JvmName("pgVarBitParam__nullable")
+fun SqContext.pgVarBitParam(value: BooleanArray?): SqParameter<BooleanArray?, SqDbTypeBit> =
+    this.param(this.pgVarBitType().nullable(), value)
+fun SqContext.pgVarBitNull(): SqNull<BooleanArray, SqDbTypeBit> =
+    this.nullItem(this.pgVarBitType().nullable())
+fun SqTable.pgVarBitNotNull(columnName: String): SqTableColumn<BooleanArray, SqDbTypeBit> =
+    this.column(SqPgTypeHolderImpl.pgVarBit, columnName)
+fun SqTable.pgVarBitNullable(columnName: String): SqTableColumn<BooleanArray?, SqDbTypeBit> =
+    this.column(SqPgTypeHolderImpl.pgVarBit.nullable(), columnName)
 // endregion

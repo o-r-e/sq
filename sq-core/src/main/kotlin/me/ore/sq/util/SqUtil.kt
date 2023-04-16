@@ -49,7 +49,7 @@ object SqUtil {
     // endregion
 
 
-    // region For types
+    // region Misc
     fun readableClassName(clazz: Class<*>): String = buildString {
         var braceCount = 0
         var current = clazz

@@ -12,6 +12,13 @@ import java.time.*
 
 
 object SqPgTypeHolderImpl: SqPgTypeHolder {
+    // region Shared readers / writers
+    val javaStringReader: SqPgJavaStringReader = SqPgJavaStringReader()
+
+    val multiBitReader: SqPgMultiBitReader = SqPgMultiBitReader()
+    // endregion
+
+
     // region Boolean types
     override val pgSingleBit: SqType<Boolean, SqDbTypeBit> = run {
         SqType.notNull(
@@ -187,15 +194,30 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
 
 
     // region Text types
-    val pgJavaStringReader: SqPgJavaStringReader = SqPgJavaStringReader()
-
-
     override val pgChar: SqType<String, String> = run {
         SqType.notNull(
             String::class.java,
             String::class.java,
-            this.pgJavaStringReader,
-            SqPgCharWriter(),
+            this.javaStringReader,
+            SqPgJavaStringWriter(SqPgTypes.CHAR, SqPgTypes.CHAR__TYPE_NAME),
+        )
+    }
+
+    override val pgCharacter: SqType<String, String> = run {
+        SqType.notNull(
+            String::class.java,
+            String::class.java,
+            this.javaStringReader,
+            SqPgJavaStringWriter(SqPgTypes.CHARACTER, SqPgTypes.CHARACTER__TYPE_NAME),
+        )
+    }
+
+    override val pgText: SqType<String, String> = run {
+        SqType.notNull(
+            String::class.java,
+            String::class.java,
+            this.javaStringReader,
+            SqPgJavaStringWriter(SqPgTypes.TEXT, SqPgTypes.TEXT__TYPE_NAME),
         )
     }
 
@@ -203,8 +225,8 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
         SqType.notNull(
             String::class.java,
             String::class.java,
-            this.pgJavaStringReader,
-            SqPgCharacterVaryingWriter(),
+            this.javaStringReader,
+            SqPgJavaStringWriter(SqPgTypes.VAR_CHAR, SqPgTypes.VAR_CHAR__TYPE_NAME),
         )
     }
     // endregion
@@ -217,6 +239,45 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
             String::class.java,
             SqPgXmlReader(),
             SqPgXmlWriter(),
+        )
+    }
+    // endregion
+
+
+    // region Other Postgresql types
+    override val pgJson: SqType<String, String> = run {
+        SqType.notNull(
+            String::class.java,
+            String::class.java,
+            this.javaStringReader,
+            SqPgPGObjectWriter(SqPgTypes.JSON, SqPgTypes.JSON__TYPE_NAME),
+        )
+    }
+
+    override val pgJsonB: SqType<String, String> = run {
+        SqType.notNull(
+            String::class.java,
+            String::class.java,
+            this.javaStringReader,
+            SqPgPGObjectWriter(SqPgTypes.JSON_B, SqPgTypes.JSON_B__TYPE_NAME),
+        )
+    }
+
+    override val pgMultiBit: SqType<BooleanArray, SqDbTypeBit> = run {
+        SqType.notNull(
+            BooleanArray::class.java,
+            SqDbTypeBit::class.java,
+            this.multiBitReader,
+            SqPgMultiBitWriter(SqPgTypes.BIT, SqPgTypes.BIT__TYPE_NAME),
+        )
+    }
+
+    override val pgVarBit: SqType<BooleanArray, SqDbTypeBit> = run {
+        SqType.notNull(
+            BooleanArray::class.java,
+            SqDbTypeBit::class.java,
+            this.multiBitReader,
+            SqPgMultiBitWriter(SqPgTypes.VAR_BIT, SqPgTypes.VAR_BIT__TYPE_NAME),
         )
     }
     // endregion

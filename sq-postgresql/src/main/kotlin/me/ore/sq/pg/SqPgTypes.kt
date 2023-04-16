@@ -10,6 +10,75 @@ import java.sql.*
 import java.time.*
 
 
+object SqPgTypes {
+    const val BIG_INT: Int = Types.BIGINT
+    const val BIG_INT__TYPE_NAME: String = "int8"
+
+    const val BIT: Int = Types.BIT
+    const val BIT__TYPE_NAME: String = "bit"
+
+    const val BOOLEAN: Int = Types.BOOLEAN
+    const val BOOLEAN__TYPE_NAME: String = "bool"
+
+    const val BYTEA: Int = Types.BINARY
+    const val BYTEA__TYPE_NAME: String = "bytea"
+
+    const val CHAR: Int = Types.CHAR
+    const val CHAR__TYPE_NAME: String = "char"
+
+    const val CHARACTER: Int = Types.CHAR
+    const val CHARACTER__TYPE_NAME: String = "bpchar"
+
+    const val DATE: Int = Types.DATE
+    const val DATE__TYPE_NAME: String = "date"
+
+    const val DOUBLE: Int = Types.DOUBLE
+    const val DOUBLE__TYPE_NAME: String = "float8"
+
+    const val INTEGER: Int = Types.INTEGER
+    const val INTEGER__TYPE_NAME: String = "int4"
+
+    const val JSON: Int = Types.OTHER
+    const val JSON__TYPE_NAME: String = "json"
+
+    const val JSON_B: Int = Types.OTHER
+    const val JSON_B__TYPE_NAME: String = "jsonb"
+
+    const val NUMERIC: Int = Types.NUMERIC
+    const val NUMERIC__TYPE_NAME: String = "numeric"
+
+    const val REAL: Int = Types.REAL
+    const val REAL__TYPE_NAME: String = "float4"
+
+    const val SMALL_INT: Int = Types.SMALLINT
+    const val SMALL_INT__TYPE_NAME: String = "int2"
+
+    const val TEXT: Int = Types.VARCHAR
+    const val TEXT__TYPE_NAME: String = "text"
+
+    const val TIME: Int = Types.TIME
+    const val TIME__TYPE_NAME: String = "time"
+
+    const val TIME_TZ: Int = Types.TIME
+    const val TIME_TZ__TYPE_NAME: String = "timetz"
+
+    const val TIMESTAMP: Int = Types.TIMESTAMP
+    const val TIMESTAMP__TYPE_NAME: String = "timestamp"
+
+    const val TIMESTAMP_TZ: Int = Types.TIMESTAMP
+    const val TIMESTAMP_TZ__TYPE_NAME: String = "timestamptz"
+
+    const val VAR_BIT: Int = Types.OTHER
+    const val VAR_BIT__TYPE_NAME: String = "varbit"
+
+    const val VAR_CHAR: Int = Types.VARCHAR
+    const val VAR_CHAR__TYPE_NAME: String = "varchar"
+
+    const val XML: Int = Types.SQLXML
+    const val XML__TYPE_NAME: String = "xml"
+}
+
+
 // region Boolean types
 open class SqPgSingleBitReader: SqValueReader<Boolean> {
     override fun readNullable(source: ResultSet, columnIndex: Int): Boolean? {
@@ -18,21 +87,16 @@ open class SqPgSingleBitReader: SqValueReader<Boolean> {
 }
 
 open class SqPgSingleBitWriter: SqValueWriterBase<Boolean>() {
-    companion object {
-        protected const val TYPE_NAME = "bit"
-    }
-
-
     override val sqlType: Int
-        get() = Types.BIT
-    override val typeName: String
-        get() = TYPE_NAME
+        get() = SqPgTypes.BIT
+    override val typeName: String?
+        get() = SqPgTypes.BIT__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Boolean) {
         target.setObject(
             parameterIndex,
             PGobject().apply {
-                this.type = TYPE_NAME
+                this.type = this@SqPgSingleBitWriter.typeName
                 this.value = if (value) "1" else "0"
             }
         )
@@ -49,9 +113,9 @@ open class SqPgBooleanReader: SqValueReader<Boolean> {
 
 open class SqPgBooleanWriter: SqValueWriterBase<Boolean>() {
     override val sqlType: Int
-        get() = Types.BOOLEAN
-    override val typeName: String
-        get() = "bool"
+        get() = SqPgTypes.BOOLEAN
+    override val typeName: String?
+        get() = SqPgTypes.BOOLEAN__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Boolean) {
         target.setBoolean(parameterIndex, value)
@@ -71,15 +135,15 @@ open class SqPgByteaReader: SqValueReader<ByteArray> {
 
 open class SqPgByteaWriter: SqValueWriterBase<ByteArray>() {
     override val sqlType: Int
-        get() = Types.BINARY
+        get() = SqPgTypes.BYTEA
     override val typeName: String?
-        get() = "bytea"
+        get() = SqPgTypes.BYTEA__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: ByteArray) {
         target.setBytes(parameterIndex, value)
     }
 
-    override fun notNullValueToComment(value: ByteArray): String = "ByteArray (${value.size} byte(s))"
+    override fun notNullValueToComment(value: ByteArray): String = "Byte array (${value.size} byte(s))"
 }
 // endregion
 
@@ -93,9 +157,9 @@ open class SqPgDateReader: SqValueReader<LocalDate> {
 
 open class SqPgDateWriter: SqValueWriterBase<LocalDate>() {
     override val sqlType: Int
-        get() = Types.DATE
+        get() = SqPgTypes.DATE
     override val typeName: String?
-        get() = "date"
+        get() = SqPgTypes.DATE__TYPE_NAME
 
     override fun notNullValueToComment(value: LocalDate): String = value.toString()
 
@@ -112,9 +176,9 @@ open class SqPgSqlDateReader: SqValueReader<Date> {
 
 open class SqPgSqlDateWriter: SqValueWriterBase<Date>() {
     override val sqlType: Int
-        get() = Types.DATE
+        get() = SqPgTypes.DATE
     override val typeName: String?
-        get() = "date"
+        get() = SqPgTypes.DATE__TYPE_NAME
 
     override fun notNullValueToComment(value: Date): String = value.toString()
 
@@ -131,9 +195,9 @@ open class SqPgTimeReader: SqValueReader<LocalTime> {
 
 open class SqPgTimeWriter: SqValueWriterBase<LocalTime>() {
     override val sqlType: Int
-        get() = Types.TIME
+        get() = SqPgTypes.TIME
     override val typeName: String?
-        get() = "time"
+        get() = SqPgTypes.TIME__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: LocalTime) {
         target.setObject(parameterIndex, value)
@@ -150,9 +214,9 @@ open class SqPgSqlTimeReader: SqValueReader<Time> {
 
 open class SqPgSqlTimeWriter: SqValueWriterBase<Time>() {
     override val sqlType: Int
-        get() = Types.TIME
+        get() = SqPgTypes.TIME
     override val typeName: String?
-        get() = "time"
+        get() = SqPgTypes.TIME__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Time) {
         target.setTime(parameterIndex, value)
@@ -169,9 +233,9 @@ open class SqPgTimeTZReader: SqValueReader<OffsetTime> {
 
 open class SqPgTimeTZWriter: SqValueWriterBase<OffsetTime>() {
     override val sqlType: Int
-        get() = Types.TIME
+        get() = SqPgTypes.TIME_TZ
     override val typeName: String?
-        get() = "timetz"
+        get() = SqPgTypes.TIME_TZ__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: OffsetTime) {
         target.setObject(parameterIndex, value)
@@ -188,9 +252,9 @@ open class SqPgTimestampReader: SqValueReader<LocalDateTime> {
 
 open class SqPgTimestampWriter: SqValueWriterBase<LocalDateTime>() {
     override val sqlType: Int
-        get() = Types.TIMESTAMP
+        get() = SqPgTypes.TIMESTAMP
     override val typeName: String?
-        get() = "timestamp"
+        get() = SqPgTypes.TIMESTAMP__TYPE_NAME
 
     override fun notNullValueToComment(value: LocalDateTime): String = value.toString()
 
@@ -207,9 +271,9 @@ open class SqPgSqlTimestampReader: SqValueReader<Timestamp> {
 
 open class SqPgSqlTimestampWriter: SqValueWriterBase<Timestamp>() {
     override val sqlType: Int
-        get() = Types.TIMESTAMP
+        get() = SqPgTypes.TIMESTAMP
     override val typeName: String?
-        get() = "timestamp"
+        get() = SqPgTypes.TIMESTAMP__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Timestamp) {
         target.setTimestamp(parameterIndex, value)
@@ -226,9 +290,9 @@ open class SqPgTimestampTZReader: SqValueReader<OffsetDateTime> {
 
 open class SqPgTimestampTZWriter: SqValueWriterBase<OffsetDateTime>() {
     override val sqlType: Int
-        get() = Types.TIMESTAMP
+        get() = SqPgTypes.TIMESTAMP_TZ
     override val typeName: String?
-        get() = "timestamptz"
+        get() = SqPgTypes.TIMESTAMP_TZ__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: OffsetDateTime) {
         target.setObject(parameterIndex, value)
@@ -248,9 +312,9 @@ open class SqPgBigIntReader: SqValueReader<Long> {
 
 open class SqPgBigIntWriter: SqValueWriterBase<Long>() {
     override val sqlType: Int
-        get() = Types.BIGINT
+        get() = SqPgTypes.BIG_INT
     override val typeName: String?
-        get() = "int8"
+        get() = SqPgTypes.BIG_INT__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Long) {
         target.setLong(parameterIndex, value)
@@ -267,9 +331,9 @@ open class SqPgMathBigIntReader: SqValueReader<BigInteger> {
 
 open class SqPgMathBigIntWriter: SqValueWriterBase<BigInteger>() {
     override val sqlType: Int
-        get() = Types.BIGINT
+        get() = SqPgTypes.BIG_INT
     override val typeName: String?
-        get() = "int8"
+        get() = SqPgTypes.BIG_INT__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: BigInteger) {
         target.setObject(parameterIndex, value)
@@ -286,9 +350,9 @@ open class SqPgDoublePrecisionReader: SqValueReader<Double> {
 
 open class SqPgDoublePrecisionWriter: SqValueWriterBase<Double>() {
     override val sqlType: Int
-        get() = Types.DOUBLE
+        get() = SqPgTypes.DOUBLE
     override val typeName: String?
-        get() = "float8"
+        get() = SqPgTypes.DOUBLE__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Double) {
         target.setDouble(parameterIndex, value)
@@ -305,9 +369,9 @@ open class SqPgIntegerReader: SqValueReader<Int> {
 
 open class SqPgIntegerWriter: SqValueWriterBase<Int>() {
     override val sqlType: Int
-        get() = Types.INTEGER
+        get() = SqPgTypes.INTEGER
     override val typeName: String?
-        get() = "int4"
+        get() = SqPgTypes.INTEGER__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Int) {
         target.setInt(parameterIndex, value)
@@ -324,9 +388,9 @@ open class SqPgNumericReader: SqValueReader<BigDecimal> {
 
 open class SqPgNumericWriter: SqValueWriterBase<BigDecimal>() {
     override val sqlType: Int
-        get() = Types.NUMERIC
+        get() = SqPgTypes.NUMERIC
     override val typeName: String?
-        get() = "numeric"
+        get() = SqPgTypes.NUMERIC__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: BigDecimal) {
         target.setBigDecimal(parameterIndex, value)
@@ -343,9 +407,9 @@ open class SqPgRealReader: SqValueReader<Float> {
 
 open class SqPgRealWriter: SqValueWriterBase<Float>() {
     override val sqlType: Int
-        get() = Types.REAL
+        get() = SqPgTypes.REAL
     override val typeName: String?
-        get() = "float4"
+        get() = SqPgTypes.REAL__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Float) {
         target.setFloat(parameterIndex,value)
@@ -362,9 +426,9 @@ open class SqPgSmallIntReader: SqValueReader<Short> {
 
 open class SqPgSmallIntWriter: SqValueWriterBase<Short>() {
     override val sqlType: Int
-        get() = Types.SMALLINT
+        get() = SqPgTypes.SMALL_INT
     override val typeName: String?
-        get() = "int2"
+        get() = SqPgTypes.SMALL_INT__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Short) {
         target.setShort(parameterIndex, value)
@@ -382,25 +446,10 @@ open class SqPgJavaStringReader: SqValueReader<String> {
     }
 }
 
-open class SqPgCharWriter: SqValueWriterBase<String>() {
-    override val sqlType: Int
-        get() = Types.CHAR
-    override val typeName: String?
-        get() = "char"
-
-    override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: String) {
-        target.setString(parameterIndex, value)
-    }
-
-    override fun notNullValueToComment(value: String): String = SqUtil.prepareStringValueForComment(value)
-}
-
-open class SqPgCharacterVaryingWriter: SqValueWriterBase<String>() {
-    override val sqlType: Int
-        get() = Types.VARCHAR
-    override val typeName: String?
-        get() = "varchar"
-
+open class SqPgJavaStringWriter(
+    override val sqlType: Int,
+    override val typeName: String,
+): SqValueWriterBase<String>() {
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: String) {
         target.setString(parameterIndex, value)
     }
@@ -419,14 +468,99 @@ open class SqPgXmlReader: SqValueReader<SQLXML> {
 
 open class SqPgXmlWriter: SqValueWriterBase<SQLXML>() {
     override val sqlType: Int
-        get() = Types.SQLXML
+        get() = SqPgTypes.XML
     override val typeName: String?
-        get() = "xml"
+        get() = SqPgTypes.XML__TYPE_NAME
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: SQLXML) {
         target.setSQLXML(parameterIndex, value)
     }
 
     override fun notNullValueToComment(value: SQLXML): String = "... SQL XML content ..."
+}
+// endregion
+
+
+// region Misc Postgresql types
+open class SqPgMultiBitReader: SqValueReader<BooleanArray> {
+    override fun readNullable(source: ResultSet, columnIndex: Int): BooleanArray? {
+        return source.getString(columnIndex)?.let { stringValue ->
+            BooleanArray(stringValue.length) { index ->
+                when (val char = stringValue[index]) {
+                    '0' -> false
+                    '1' -> true
+                    else -> error(buildString {
+                        this
+                            .append("Column with index ")
+                            .append(columnIndex)
+                            .append(" has invalid value \"")
+                            .append(stringValue)
+                            .append("\" - found invalid character \"")
+                            .append(char)
+                            .append("\" (only \"0\" and \"1\" are allowed)")
+                    })
+                }
+            }
+        }
+    }
+}
+
+open class SqPgMultiBitWriter(
+    override val sqlType: Int,
+    override val typeName: String,
+): SqValueWriterBase<BooleanArray>() {
+    protected open fun bitsToString(bits: BooleanArray): String {
+        return bits
+            .map {
+                if (it) {
+                    '1'
+                } else {
+                    '0'
+                }
+            }
+            .joinToString("")
+    }
+
+    override fun notNullValueToComment(value: BooleanArray): String {
+        val trimmedValue: BooleanArray
+        val trimmed: Boolean
+        if (value.size > 15) {
+            trimmedValue = value.copyOf(12)
+            trimmed = true
+        } else {
+            trimmedValue = value
+            trimmed = false
+        }
+
+        val string = this.bitsToString(trimmedValue)
+        return if (trimmed) {
+            "$string... (${value.size - string.length} bit(s) more)"
+        } else {
+            string
+        }
+    }
+
+    override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: BooleanArray) {
+        val pgObject = PGobject().apply {
+            this.type = this@SqPgMultiBitWriter.typeName
+            this.value = this@SqPgMultiBitWriter.bitsToString(value)
+        }
+        target.setObject(parameterIndex, pgObject)
+    }
+}
+
+open class SqPgPGObjectWriter(
+    override val sqlType: Int,
+    override val typeName: String?,
+): SqValueWriterBase<String>() {
+    override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: String) {
+        val valueObject = PGobject().apply {
+            this.type = this@SqPgPGObjectWriter.typeName
+            this.value = value
+        }
+        target.setObject(parameterIndex, valueObject)
+    }
+
+    override fun notNullValueToComment(value: String): String = SqUtil.prepareStringValueForComment(value)
 }
 // endregion
