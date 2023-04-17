@@ -21,14 +21,14 @@ abstract class SqGenericSelectBase: SqGenericReadStatementBase(), SqSelect {
 
         this.columns.forEachIndexed { index, column ->
             if (index > 0) target.add(", ")
-            column.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            column.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
         }
 
         this.from?.takeIf { it.isNotEmpty() }?.let { from ->
             target.ls().add("FROM ")
             from.forEachIndexed { index, colSet ->
                 if (index > 0) target.add(", ")
-                colSet.appendSqlTo(target, asPart = true, spaceAllowed = false)
+                colSet.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
             }
         }
 
@@ -62,8 +62,8 @@ abstract class SqGenericSelectBase: SqGenericReadStatementBase(), SqSelect {
     }
 
     override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
-        this.columns.forEach { it.appendParametersTo(target) }
-        this.from?.forEach { it.appendParametersTo(target) }
+        this.columns.forEach { it.definitionItem.appendParametersTo(target) }
+        this.from?.forEach { it.definitionItem.appendParametersTo(target) }
         this.where?.appendParametersTo(target)
         this.groupBy?.forEach { it.appendParametersTo(target) }
         this.having?.appendParametersTo(target)

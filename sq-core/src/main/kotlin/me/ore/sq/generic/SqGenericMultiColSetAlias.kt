@@ -20,6 +20,21 @@ open class SqGenericMultiColSetAlias<ORIG: SqMultiColSet>(
     }
 
 
+    protected open var _definitionItem: SqAliasDefinition? = null
+
+    protected open fun createAliasDefinition(): SqAliasDefinition =
+        SqGenericAliasDefinition(this.context, this.original, this)
+
+    override val definitionItem: SqAliasDefinition
+        get() {
+            return this._definitionItem ?: run {
+                val result = this.createAliasDefinition()
+                this._definitionItem = result
+                result
+            }
+        }
+
+
     override val columns: List<SqColSetAliasColumn<*, *>> by lazy(LazyThreadSafetyMode.NONE) {
         this.original.columns.map {
             this.context.colSetAliasColumn(this, it)

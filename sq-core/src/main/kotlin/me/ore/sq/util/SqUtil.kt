@@ -27,6 +27,8 @@ object SqUtil {
     const val COMPARISON__GREATER_OR_EQUAL = ">="
     const val COMPARISON__LESS = "<"
     const val COMPARISON__LESS_OR_EQUAL = "<="
+    const val COMPARISON__LIKE = "LIKE"
+    const val COMPARISON__NOT_LIKE = "NOT LIKE"
 
     const val FUNCTION_NAME__ALL = "ALL"
     const val FUNCTION_NAME__ANY = "ANY"

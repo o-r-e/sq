@@ -1,9 +1,6 @@
 package me.ore.sq.generic
 
-import me.ore.sq.SqContext
-import me.ore.sq.SqExpression
-import me.ore.sq.SqExpressionAlias
-import me.ore.sq.SqExpressionAliasConstructor
+import me.ore.sq.*
 import me.ore.sq.util.SqUtil
 
 
@@ -20,4 +17,19 @@ open class SqGenericExpressionAlias<JAVA: Any?, DB: Any, ORIG: SqExpression<JAVA
             }
         }
     }
+
+
+    protected open var _definitionItem: SqAliasDefinition? = null
+
+    protected open fun createAliasDefinition(): SqAliasDefinition =
+        SqGenericAliasDefinition(this.context, this.original, this)
+
+    override val definitionItem: SqAliasDefinition
+        get() {
+            return this._definitionItem ?: run {
+                val result = this.createAliasDefinition()
+                this._definitionItem = result
+                result
+            }
+        }
 }

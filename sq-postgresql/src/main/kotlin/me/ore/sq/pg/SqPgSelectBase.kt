@@ -18,14 +18,14 @@ abstract class SqPgSelectBase: SqPgReadStatementBase(), SqSelect {
 
         this.columns.forEachIndexed { index, column ->
             if (index > 0) target.add(", ")
-            column.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            column.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
         }
 
         this.from?.takeIf { it.isNotEmpty() }?.let { from ->
             target.ls().add("FROM ")
             from.forEachIndexed { index, fromItem ->
                 if (index > 0) target.add(", ")
-                fromItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+                fromItem.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
             }
         }
 
@@ -70,8 +70,8 @@ abstract class SqPgSelectBase: SqPgReadStatementBase(), SqSelect {
 
     @Suppress("DuplicatedCode")
     override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
-        this.columns.forEach { it.appendParametersTo(target) }
-        this.from?.forEach { it.appendParametersTo(target) }
+        this.columns.forEach { it.definitionItem.appendParametersTo(target) }
+        this.from?.forEach { it.definitionItem.appendParametersTo(target) }
         this.where?.appendParametersTo(target)
         this.groupBy?.forEach { it.appendParametersTo(target) }
         this.having?.appendParametersTo(target)

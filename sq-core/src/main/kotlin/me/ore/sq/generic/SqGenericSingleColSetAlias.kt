@@ -19,6 +19,21 @@ open class SqGenericSingleColSetAlias<JAVA: Any?, DB: Any, ORIG: SqSingleColSet<
     }
 
 
+    protected open var _definitionItem: SqAliasDefinition? = null
+
+    protected open fun createAliasDefinition(): SqAliasDefinition =
+        SqGenericAliasDefinition(this.context, this.original, this)
+
+    override val definitionItem: SqAliasDefinition
+        get() {
+            return this._definitionItem ?: run {
+                val result = this.createAliasDefinition()
+                this._definitionItem = result
+                result
+            }
+        }
+
+
     override val column: SqColSetAliasColumn<JAVA, DB> by lazy(LazyThreadSafetyMode.NONE) {
         this.context.colSetAliasColumn(this, this.original.column)
     }

@@ -89,11 +89,16 @@ open class SqGenericCaseBuilder<JAVA: Any?, DB: Any>(
         override fun startWhen(condition: SqExpression<*, Boolean>): SqCaseBuildItemStartTyped<JAVA, DB> =
             ItemStartTyped(this.owner, condition)
 
-        override fun startElseNotNull(value: SqExpression<out JAVA, DB>): SqCaseBuildEnd<JAVA, DB> =
-            this.owner.end
+        override fun startElseNotNull(value: SqExpression<out JAVA, DB>): SqCaseBuildEnd<JAVA, DB> {
+            this.owner.elseItem = value
+            return this.owner.end
+        }
 
-        override fun startElseNullable(value: SqExpression<out JAVA?, DB>): SqCaseBuildEnd<JAVA?, DB> =
-            this.owner.nullable().end
+        override fun startElseNullable(value: SqExpression<out JAVA?, DB>): SqCaseBuildEnd<JAVA?, DB> {
+            val owner = this.owner.nullable()
+            owner.elseItem = value
+            return owner.end
+        }
 
         override fun end(): SqCase<JAVA?, DB> = this.owner.nullable().build()
     }

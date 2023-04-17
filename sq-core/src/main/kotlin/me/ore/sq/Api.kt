@@ -187,10 +187,24 @@ interface SqSingleColSet<JAVA: Any?, DB: Any>: SqColSet, SqExpression<JAVA, DB> 
 }
 
 
+interface SqAliasDefinition: SqItem {
+    val alias: SqAlias<*>
+
+    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+        this.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed = spaceAllowed)
+        target.add(" AS ")
+        this.alias.appendSqlTo(target, asPart = true, spaceAllowed = false)
+    }
+
+    override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {
+        this.definitionItem.appendParametersTo(target)
+        this.alias.appendParametersTo(target)
+    }
+}
+
 interface SqAlias<ORIG: SqItem>: SqItem {
     val original: ORIG
-    override val definitionItem: SqItem
-        get() = this.original
+    override val definitionItem: SqAliasDefinition
 
     val alias: String
     val safeAlias: String

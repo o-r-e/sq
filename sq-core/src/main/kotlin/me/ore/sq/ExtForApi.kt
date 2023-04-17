@@ -158,6 +158,12 @@ fun <JAVA: Boolean?> SqContext.not(type: SqType<JAVA, Boolean>, expression: SqEx
     return this[SqNotConstructor::class.java, SqGenericNot.CONSTRUCTOR]
         .createNot(this, type, expression)
 }
+@JvmName("not__not_null")
+infix fun SqContext.not(expression: SqExpression<out Any, Boolean>): SqNot<Boolean> =
+    this.not(this.comparisonType(), expression)
+@JvmName("not__nullable")
+infix fun SqContext.not(expression: SqExpression<out Any?, Boolean>): SqNot<Boolean?> =
+    this.not(this.comparisonType().nullable(), expression)
 fun <JAVA: Boolean?> SqExpression<*, Boolean>.not(type: SqType<JAVA, Boolean>): SqNot<JAVA> =
     this.context.not(type, this)
 @JvmName("not__not_null")
@@ -328,6 +334,40 @@ infix fun <JAVA: Any, DB: Any> JAVA.lte(expression: SqExpression<JAVA, DB>): SqC
 infix fun <JAVA: Any?, DB: Any> JAVA?.lte(expression: SqExpression<JAVA, DB>): SqComparison<Boolean?> =
     expression.context.param<JAVA?, DB>(expression.type.nullable(), this).lte(expression)
 
+fun <JAVA: Boolean?> SqContext.like(type: SqType<JAVA, Boolean>, firstOperand: SqExpression<*, String>, secondOperand: SqExpression<*, String>): SqComparison<JAVA> =
+    this.comparison(type, firstOperand, secondOperand, SqUtil.COMPARISON__LIKE)
+fun <JAVA: Boolean?> SqExpression<*, String>.like(type: SqType<JAVA, Boolean>, other: SqExpression<*, String>): SqComparison<JAVA> =
+    this.context.like(type, this, other)
+@JvmName("like__not_null")
+infix fun SqExpression<out Any, String>.like(other: SqExpression<out Any, String>): SqComparison<Boolean> =
+    this.like(this.context.comparisonType(), other)
+@JvmName("like__nullable")
+infix fun SqExpression<out Any?, String>.like(other: SqExpression<out Any?, String>): SqComparison<Boolean?> =
+    this.like(this.context.comparisonType().nullable(), other)
+@JvmName("like__not_null")
+infix fun SqExpression<String, String>.like(value: String): SqComparison<Boolean> =
+    this.like(this.context.param(this.type, value))
+@JvmName("like__nullable")
+infix fun <JAVA: String?> SqExpression<JAVA, String>.like(value: JAVA?): SqComparison<Boolean?> =
+    this.like(this.context.param(this.type.nullable(), value))
+
+fun <JAVA: Boolean?> SqContext.notLike(type: SqType<JAVA, Boolean>, firstOperand: SqExpression<*, String>, secondOperand: SqExpression<*, String>): SqComparison<JAVA> =
+    this.comparison(type, firstOperand, secondOperand, SqUtil.COMPARISON__NOT_LIKE)
+fun <JAVA: Boolean?> SqExpression<*, String>.notLike(type: SqType<JAVA, Boolean>, other: SqExpression<*, String>): SqComparison<JAVA> =
+    this.context.notLike(type, this, other)
+@JvmName("notLike__not_null")
+infix fun SqExpression<out Any, String>.notLike(other: SqExpression<out Any, String>): SqComparison<Boolean> =
+    this.notLike(this.context.comparisonType(), other)
+@JvmName("notLike__nullable")
+infix fun SqExpression<out Any?, String>.notLike(other: SqExpression<out Any?, String>): SqComparison<Boolean?> =
+    this.notLike(this.context.comparisonType().nullable(), other)
+@JvmName("notLike__not_null")
+infix fun SqExpression<String, String>.notLike(value: String): SqComparison<Boolean> =
+    this.notLike(this.context.param(this.type, value))
+@JvmName("notLike__nullable")
+infix fun <JAVA: String?> SqExpression<JAVA, String>.notLike(value: JAVA?): SqComparison<Boolean?> =
+    this.notLike(this.context.param(this.type.nullable(), value))
+
 
 fun <JAVA: Boolean?> SqContext.between(
     type: SqType<JAVA, Boolean>,
@@ -419,7 +459,7 @@ infix fun <JAVA: Any?, DB: Any> SqExpression<JAVA, DB>.between(firstRangeValue: 
     this.between(this.context.param(this.type.nullable(), firstRangeValue))
 @JvmName("notBetween__not_null")
 infix fun <JAVA: Any, DB: Any> SqExpression<JAVA, DB>.notBetween(firstRangeValue: JAVA): SqBetweenTestStart<JAVA, DB> =
-    this.between(this.context.param(this.type, firstRangeValue))
+    this.notBetween(this.context.param(this.type, firstRangeValue))
 @JvmName("notBetween__nullable")
 infix fun <JAVA: Any?, DB: Any> SqExpression<JAVA, DB>.notBetween(firstRangeValue: JAVA?): SqBetweenTestStart<JAVA?, DB> =
     this.notBetween(this.context.param(this.type.nullable(), firstRangeValue))
@@ -987,6 +1027,8 @@ infix fun SqColSet.leftJoin(joined: SqColSet): SqJoin = this.join(SqJoinType.LEF
 infix fun SqColSet.rightJoin(joined: SqColSet): SqJoin = this.join(SqJoinType.RIGHT, joined)
 infix fun SqColSet.fullJoin(joined: SqColSet): SqJoin = this.join(SqJoinType.FULL, joined)
 
+infix fun <T: SqJoin> T.on(on: SqExpression<*, Boolean>?): T = this.apply { this.setOn(on) }
+
 
 fun SqContext.orderBy(column: SqColumn<*, *>, order: SqSortOrder): SqOrderBy {
     return this[SqOrderByConstructor::class.java, SqGenericOrderBy.CONSTRUCTOR]
@@ -1142,8 +1184,8 @@ fun <T: SqInsert<*>> T.values(values: List<SqExpression<*, *>>?): T = this.apply
 fun <T: SqInsert<*>> T.values(first: SqExpression<*, *>, vararg more: SqExpression<*, *>): T = this.values(listOf(first, *more))
 fun <T: SqInsert<*>> T.select(select: SqReadStatement?): T = this.apply { this.select = select }
 
-fun <JAVA: Any?> SqInsert<*>.executeReturningId(connection: Connection, idType: SqType<JAVA, *>): JAVA {
-    val list =  this.prepareStatement(connection, returnGeneratedKeys = true).use { statement ->
+fun <JAVA: Any?> SqInsert<*>.executeReturningId(connection: Connection, idType: SqType<JAVA, *>): List<JAVA> {
+    return this.prepareStatement(connection, returnGeneratedKeys = true).use { statement ->
         statement.executeUpdate()
         statement.generatedKeys.use { generatedKeys ->
             buildList(1) {
@@ -1154,19 +1196,16 @@ fun <JAVA: Any?> SqInsert<*>.executeReturningId(connection: Connection, idType: 
             }
         }
     }
-
-    if (list.isEmpty()) error("Insert didn't return generated ID")
-    return list.first()
 }
 
 inline fun <ST: SqInsert<*>, JAVA: Any?> ST.executeReturningId(
     connection: Connection,
     idType: SqType<JAVA, *>,
     initStatement: (ST.(statement: PreparedStatement) -> Unit) = {},
-): JAVA {
+): List<JAVA> {
     contract { callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE) }
 
-    val list = this.prepareStatement(connection, returnGeneratedKeys = true).use { statement ->
+    return this.prepareStatement(connection, returnGeneratedKeys = true).use { statement ->
         initStatement.invoke(this, statement)
         statement.executeUpdate()
         statement.generatedKeys.use { generatedKeys ->
@@ -1178,13 +1217,10 @@ inline fun <ST: SqInsert<*>, JAVA: Any?> ST.executeReturningId(
             }
         }
     }
-
-    if (list.isEmpty()) error("Insert didn't return generated ID")
-    return list.first()
 }
 
-fun <JAVA: Any?> SqConnInsert<*>.executeReturningId(idType: SqType<JAVA, *>): JAVA {
-    val list = this.prepareStatement(returnGeneratedKeys = true).use { statement ->
+fun <JAVA: Any?> SqConnInsert<*>.executeReturningId(idType: SqType<JAVA, *>): List<JAVA> {
+    return this.prepareStatement(returnGeneratedKeys = true).use { statement ->
         statement.executeUpdate()
         statement.generatedKeys.use { generatedKeys ->
             buildList(1) {
@@ -1195,18 +1231,15 @@ fun <JAVA: Any?> SqConnInsert<*>.executeReturningId(idType: SqType<JAVA, *>): JA
             }
         }
     }
-
-    if (list.isEmpty()) error("Insert didn't return generated ID")
-    return list.first()
 }
 
 inline fun <ST: SqConnInsert<*>, JAVA: Any?> ST.executeReturningId(
     idType: SqType<JAVA, *>,
     initStatement: (ST.(statement: PreparedStatement) -> Unit) = {},
-): JAVA {
+): List<JAVA> {
     contract { callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE) }
 
-    val list = this.prepareStatement(returnGeneratedKeys = true).use { statement ->
+    return this.prepareStatement(returnGeneratedKeys = true).use { statement ->
         statement.executeUpdate()
         statement.generatedKeys.use { generatedKeys ->
             buildList(1) {
@@ -1217,9 +1250,6 @@ inline fun <ST: SqConnInsert<*>, JAVA: Any?> ST.executeReturningId(
             }
         }
     }
-
-    if (list.isEmpty()) error("Insert didn't return generated ID")
-    return list.first()
 }
 
 

@@ -128,7 +128,7 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
         val result = if (this.nullable) {
             this.reader.readNullable(source, columnIndex)
         } else {
-            this.reader.readNullable(source, columnIndex)
+            this.reader.readNotNull(source, columnIndex)
         }
         @Suppress("UNCHECKED_CAST")
         return (result as JAVA)

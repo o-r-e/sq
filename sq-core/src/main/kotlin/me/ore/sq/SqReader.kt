@@ -20,8 +20,23 @@ open class SqReader(
 
     open fun stop() { this._stopped = true }
 
+
+    fun getColumnIndex(column: SqColumn<*, *>): Int? {
+        return this.statement.getColumnIndex(column)?.let { it + 1 }
+    }
+
+    fun requireColumnIndex(column: SqColumn<*, *>): Int {
+        return (this.statement.requireColumnIndex(column) + 1)
+    }
+
+
     operator fun <JAVA: Any?> get(column: SqColumn<JAVA, *>): JAVA {
-        val index = (this.statement.requireColumnIndex(column) + 1)
+        val index = this.requireColumnIndex(column)
         return column.read(this.resultSet, index)
+    }
+
+    fun <JAVA: Any?> getNullable(column: SqColumn<JAVA, *>): JAVA? {
+        val index = this.requireColumnIndex(column)
+        return column.type.nullable().read(this.resultSet, index)
     }
 }
