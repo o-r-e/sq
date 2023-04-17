@@ -112,5 +112,20 @@ object SqUtil {
             "\"$value\""
         }
     }
+
+    fun prepareCollectionValueForComment(value: Collection<Any?>): String {
+        return if (value.size > 10) {
+            buildString {
+                this
+                    .append('[')
+                    .append(value.take(10).joinToString())
+                    .append(", ... (")
+                    .append(value.size - 10)
+                    .append(" item(s) more)")
+            }
+        } else {
+            value.toString()
+        }
+    }
     // endregion
 }

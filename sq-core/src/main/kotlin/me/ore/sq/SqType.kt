@@ -11,6 +11,8 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
     val dbType: Class<DB>,
     val reader: SqValueReader<JAVA & Any>,
     val writer: SqValueWriter<JAVA & Any>,
+    val valueClassText: String = SqUtil.readableClassName(valueClass),
+    val dbTypeText: String = SqUtil.readableClassName(dbType),
 ) {
     companion object {
         private fun <JAVA: Any, DB: Any> createTypePair(
@@ -18,9 +20,11 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
             dbType: Class<DB>,
             reader: SqValueReader<JAVA>,
             writer: SqValueWriter<JAVA>,
+            valueClassText: String = SqUtil.readableClassName(valueClass),
+            dbTypeText: String = SqUtil.readableClassName(dbType),
         ): Pair<SqType<JAVA?, DB>, SqType<JAVA, DB>> {
-            val nullable = SqType<JAVA?, DB>(nullable = true, valueClass, dbType, reader, writer)
-            val notNull = SqType(nullable = false, valueClass, dbType, reader, writer)
+            val nullable = SqType<JAVA?, DB>(nullable = true, valueClass, dbType, reader, writer, valueClassText, dbTypeText)
+            val notNull = SqType(nullable = false, valueClass, dbType, reader, writer, valueClassText, dbTypeText)
 
             @Suppress("UNCHECKED_CAST")
             nullable.oppositeType = notNull as SqType<JAVA?, DB>
@@ -34,8 +38,10 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
             dbType: Class<DB>,
             reader: SqValueReader<JAVA>,
             writer: SqValueWriter<JAVA>,
+            valueClassText: String = SqUtil.readableClassName(valueClass),
+            dbTypeText: String = SqUtil.readableClassName(dbType),
         ): SqType<JAVA?, DB> {
-            return this.createTypePair(valueClass, dbType, reader, writer).first
+            return this.createTypePair(valueClass, dbType, reader, writer, valueClassText, dbTypeText).first
         }
 
         fun <JAVA: Any, DB: Any> notNull(
@@ -43,8 +49,10 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
             dbType: Class<DB>,
             reader: SqValueReader<JAVA>,
             writer: SqValueWriter<JAVA>,
+            valueClassText: String = SqUtil.readableClassName(valueClass),
+            dbTypeText: String = SqUtil.readableClassName(dbType),
         ): SqType<JAVA, DB> {
-            return this.createTypePair(valueClass, dbType, reader, writer).second
+            return this.createTypePair(valueClass, dbType, reader, writer, valueClassText, dbTypeText).second
         }
     }
 
@@ -76,9 +84,9 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
 
         this.append(self.javaClass.simpleName)
             .append('<')
-            .append(SqUtil.readableClassName(self.valueClass))
+            .append(self.valueClassText)
             .append(", ")
-            .append(SqUtil.readableClassName(self.dbType))
+            .append(self.dbTypeText)
             .append(">(")
 
         if (self.nullable) this.append("nullable")

@@ -15,9 +15,13 @@ interface SqPgTypeHolder: SqTypeHolder {
     override val bit: SqType<Boolean, SqDbTypeBit>
         get() = this.pgSingleBit
 
+    val pgSingleBitArray: SqType<List<Boolean?>, Array<SqDbTypeBit>>
+
     val pgBoolean: SqType<Boolean, Boolean>
     override val boolean: SqType<Boolean, Boolean>
         get() = this.pgBoolean
+
+    val pgBooleanArray: SqType<List<Boolean?>, Array<Boolean>>
     // endregion
 
 
@@ -25,6 +29,8 @@ interface SqPgTypeHolder: SqTypeHolder {
     val pgBytea: SqType<ByteArray, ByteArray>
     override val binary: SqType<ByteArray, ByteArray>
         get() = this.pgBytea
+
+    val pgByteaArray: SqType<List<ByteArray?>, Array<ByteArray>>
 
     override val longVarBinary: SqType<ByteArray, ByteArray>
         get() = SqGenericTypeHolder.longVarBinary
@@ -39,6 +45,8 @@ interface SqPgTypeHolder: SqTypeHolder {
     override val date: SqType<LocalDate, Timestamp>
         get() = this.pgDate
 
+    val pgDateArray: SqType<List<LocalDate?>, Array<Timestamp>>
+
     val pgDateAsDate: SqType<Date, Timestamp>
     override val dateAsDate: SqType<Date, Timestamp>
         get() = this.pgDateAsDate
@@ -46,6 +54,8 @@ interface SqPgTypeHolder: SqTypeHolder {
     val pgTime: SqType<LocalTime, Time>
     override val time: SqType<LocalTime, Time>
         get() = this.pgTime
+
+    val pgTimeArray: SqType<List<LocalTime?>, Array<Time>>
 
     val pgTimeAsTime: SqType<Time, Time>
     override val timeAsTime: SqType<Time, Time>
@@ -55,9 +65,13 @@ interface SqPgTypeHolder: SqTypeHolder {
     override val timeWithTimeZone: SqType<OffsetTime, Time>
         get() = this.pgTimeTZ
 
+    val pgTimeTZArray: SqType<List<OffsetTime?>, Array<Time>>
+
     val pgTimestamp: SqType<LocalDateTime, Timestamp>
     override val timestamp: SqType<LocalDateTime, Timestamp>
         get() = this.pgTimestamp
+
+    val pgTimestampArray: SqType<List<LocalDateTime?>, Array<Timestamp>>
 
     val pgTimestampAsTimestamp: SqType<Timestamp, Timestamp>
     override val timestampAsTimestamp: SqType<Timestamp, Timestamp>
@@ -66,6 +80,8 @@ interface SqPgTypeHolder: SqTypeHolder {
     val pgTimestampTZ: SqType<OffsetDateTime, Timestamp>
     override val timestampWithTimeZone: SqType<OffsetDateTime, Timestamp>
         get() = this.pgTimestampTZ
+
+    val pgTimestampTZArray: SqType<List<OffsetDateTime?>, Array<Timestamp>>
     // endregion
 
 
@@ -73,6 +89,8 @@ interface SqPgTypeHolder: SqTypeHolder {
     val pgBigInt: SqType<Long, Number>
     override val bigInt: SqType<Long, Number>
         get() = this.pgBigInt
+
+    val pgBigIntArray: SqType<List<Long?>, Array<Number>>
 
     val pgBigIntAsBigInteger: SqType<BigInteger, Number>
     override val bigIntAsBigInteger: SqType<BigInteger, Number>
@@ -84,9 +102,13 @@ interface SqPgTypeHolder: SqTypeHolder {
     override val float: SqType<Double, Number>
         get() = this.pgDouble
 
+    val pgDoubleArray: SqType<List<Double?>, Array<Number>>
+
     val pgInteger: SqType<Int, Number>
     override val integer: SqType<Int, Number>
         get() = this.pgInteger
+
+    val pgIntegerArray: SqType<List<Int?>, Array<Number>>
 
     val pgNumeric: SqType<BigDecimal, Number>
     override val numeric: SqType<BigDecimal, Number>
@@ -94,13 +116,19 @@ interface SqPgTypeHolder: SqTypeHolder {
     override val decimal: SqType<BigDecimal, Number>
         get() = this.pgNumeric
 
+    val pgNumericArray: SqType<List<BigDecimal?>, Array<Number>>
+
     val pgReal: SqType<Float, Number>
     override val real: SqType<Float, Number>
         get() = this.pgReal
 
+    val pgRealArray: SqType<List<Float?>, Array<Number>>
+
     val pgSmallInt: SqType<Short, Number>
     override val smallInt: SqType<Short, Number>
         get() = this.pgSmallInt
+
+    val pgSmallIntArray: SqType<List<Short?>, Array<Number>>
 
     override val tinyInt: SqType<Byte, Number>
         get() = SqGenericTypeHolder.tinyInt
@@ -115,13 +143,21 @@ interface SqPgTypeHolder: SqTypeHolder {
     override val char: SqType<String, String>
         get() = this.pgChar
 
+    val pgCharArray: SqType<List<String?>, Array<String>>
+
     val pgCharacter: SqType<String, String>
+
+    val pgCharacterArray: SqType<List<String?>, Array<String>>
+
+    val pgText: SqType<String, String>
+
+    val pgTextArray: SqType<List<String?>, Array<String>>
 
     val pgVarChar: SqType<String, String>
     override val varChar: SqType<String, String>
         get() = this.pgVarChar
 
-    val pgText: SqType<String, String>
+    val pgVarCharArray: SqType<List<String?>, Array<String>>
 
     override val longVarChar: SqType<String, String>
         get() = SqGenericTypeHolder.longVarChar
@@ -151,6 +187,8 @@ interface SqPgTypeHolder: SqTypeHolder {
     override val sqlXml: SqType<SQLXML, String>
         get() = this.pgXml
 
+    val pgXmlArray: SqType<List<SQLXML?>, Array<String>>
+
     override val dataLink: SqType<URL, String>
         get() = SqGenericTypeHolder.dataLink
     override val ref: SqType<Ref, Ref>
@@ -163,13 +201,23 @@ interface SqPgTypeHolder: SqTypeHolder {
     // region Other Postgresql types
     val pgJson: SqType<String, String>
 
+    val pgJsonArray: SqType<List<String?>, Array<String>>
+
     val pgJsonB: SqType<String, String>
+
+    val pgJsonBArray: SqType<List<String?>, Array<String>>
 
     /** bit(x), where x >= 2 */
     val pgMultiBit: SqType<BooleanArray, SqDbTypeBit>
 
+    /** bit(x), where x >= 2 */
+    val pgMultiBitArray: SqType<List<BooleanArray?>, Array<SqDbTypeBit>>
+
     /** bit varying */
     val pgVarBit: SqType<BooleanArray, SqDbTypeBit>
+
+    /** bit varying */
+    val pgVarBitArray: SqType<List<BooleanArray?>, Array<SqDbTypeBit>>
     // endregion
 }
 
@@ -194,6 +242,21 @@ fun SqTable.pgSingleBitNotNull(columnName: String): SqTableColumn<Boolean, SqDbT
 fun SqTable.pgSingleBitNullable(columnName: String): SqTableColumn<Boolean?, SqDbTypeBit> =
     this.column(SqPgTypeHolderImpl.pgSingleBit.nullable(), columnName)
 
+fun SqContext.pgSingleBitArrayType(): SqType<List<Boolean?>, Array<SqDbTypeBit>> =
+    this.pgTypeHolder().pgSingleBitArray
+@JvmName("pgSingleBitArrayParam__not_null")
+fun SqContext.pgSingleBitArrayParam(value: List<Boolean?>): SqParameter<List<Boolean?>, Array<SqDbTypeBit>> =
+    this.param(this.pgSingleBitArrayType(), value)
+@JvmName("pgSingleBitArrayParam__nullable")
+fun SqContext.pgSingleBitArrayParam(value: List<Boolean?>?): SqParameter<List<Boolean?>?, Array<SqDbTypeBit>> =
+    this.param(this.pgSingleBitArrayType().nullable(), value)
+fun SqContext.pgSingleBitArrayNull(): SqNull<List<Boolean?>, Array<SqDbTypeBit>> =
+    this.nullItem(this.pgSingleBitArrayType().nullable())
+fun SqTable.pgSingleBitArrayNotNull(columnName: String): SqTableColumn<List<Boolean?>, Array<SqDbTypeBit>> =
+    this.column(SqPgTypeHolderImpl.pgSingleBitArray, columnName)
+fun SqTable.pgSingleBitArrayNullable(columnName: String): SqTableColumn<List<Boolean?>?, Array<SqDbTypeBit>> =
+    this.column(SqPgTypeHolderImpl.pgSingleBitArray.nullable(), columnName)
+
 fun SqContext.pgBooleanType(): SqType<Boolean, Boolean> =
     this.pgTypeHolder().pgBoolean
 @JvmName("pgBooleanParam__not_null")
@@ -208,6 +271,21 @@ fun SqTable.pgBooleanNotNull(columnName: String): SqTableColumn<Boolean, Boolean
     this.column(SqPgTypeHolderImpl.pgBoolean, columnName)
 fun SqTable.pgBooleanNullable(columnName: String): SqTableColumn<Boolean?, Boolean> =
     this.column(SqPgTypeHolderImpl.pgBoolean.nullable(), columnName)
+
+fun SqContext.pgBooleanArrayType(): SqType<List<Boolean?>, Array<Boolean>> =
+    this.pgTypeHolder().pgBooleanArray
+@JvmName("pgBooleanArrayParam__not_null")
+fun SqContext.pgBooleanArrayParam(value: List<Boolean?>): SqParameter<List<Boolean?>, Array<Boolean>> =
+    this.param(this.pgBooleanArrayType(), value)
+@JvmName("pgBooleanArrayParam__nullable")
+fun SqContext.pgBooleanArrayParam(value: List<Boolean?>?): SqParameter<List<Boolean?>?, Array<Boolean>> =
+    this.param(this.pgBooleanArrayType().nullable(), value)
+fun SqContext.pgBooleanArrayNull(): SqNull<List<Boolean?>, Array<Boolean>> =
+    this.nullItem(this.pgBooleanArrayType().nullable())
+fun SqTable.pgBooleanArrayNotNull(columnName: String): SqTableColumn<List<Boolean?>, Array<Boolean>> =
+    this.column(SqPgTypeHolderImpl.pgBooleanArray, columnName)
+fun SqTable.pgBooleanArrayNullable(columnName: String): SqTableColumn<List<Boolean?>?, Array<Boolean>> =
+    this.column(SqPgTypeHolderImpl.pgBooleanArray.nullable(), columnName)
 // endregion
 
 
@@ -226,6 +304,21 @@ fun SqTable.pgByteaNotNull(columnName: String): SqTableColumn<ByteArray, ByteArr
     this.column(SqPgTypeHolderImpl.pgBytea, columnName)
 fun SqTable.pgByteaNullable(columnName: String): SqTableColumn<ByteArray?, ByteArray> =
     this.column(SqPgTypeHolderImpl.pgBytea.nullable(), columnName)
+
+fun SqContext.pgByteaArrayType(): SqType<List<ByteArray?>, Array<ByteArray>> =
+    this.pgTypeHolder().pgByteaArray
+@JvmName("pgByteaArrayParam__not_null")
+fun SqContext.pgByteaArrayParam(value: List<ByteArray?>): SqParameter<List<ByteArray?>, Array<ByteArray>> =
+    this.param(this.pgByteaArrayType(), value)
+@JvmName("pgByteaArrayParam__nullable")
+fun SqContext.pgByteaArrayParam(value: List<ByteArray?>?): SqParameter<List<ByteArray?>?, Array<ByteArray>> =
+    this.param(this.pgByteaArrayType().nullable(), value)
+fun SqContext.pgByteaArrayNull(): SqNull<List<ByteArray?>, Array<ByteArray>> =
+    this.nullItem(this.pgByteaArrayType().nullable())
+fun SqTable.pgByteaArrayNotNull(columnName: String): SqTableColumn<List<ByteArray?>, Array<ByteArray>> =
+    this.column(SqPgTypeHolderImpl.pgByteaArray, columnName)
+fun SqTable.pgByteaArrayNullable(columnName: String): SqTableColumn<List<ByteArray?>?, Array<ByteArray>> =
+    this.column(SqPgTypeHolderImpl.pgByteaArray.nullable(), columnName)
 // endregion
 
 
@@ -244,6 +337,21 @@ fun SqTable.pgDateNotNull(columnName: String): SqTableColumn<LocalDate, Timestam
     this.column(SqPgTypeHolderImpl.pgDate, columnName)
 fun SqTable.pgDateNullable(columnName: String): SqTableColumn<LocalDate?, Timestamp> =
     this.column(SqPgTypeHolderImpl.pgDate.nullable(), columnName)
+
+fun SqContext.pgDateArrayType(): SqType<List<LocalDate?>, Array<Timestamp>> =
+    this.pgTypeHolder().pgDateArray
+@JvmName("pgDateArrayParam__not_null")
+fun SqContext.pgDateArrayParam(value: List<LocalDate?>): SqParameter<List<LocalDate?>, Array<Timestamp>> =
+    this.param(this.pgDateArrayType(), value)
+@JvmName("pgDateArrayParam__nullable")
+fun SqContext.pgDateArrayParam(value: List<LocalDate?>?): SqParameter<List<LocalDate?>?, Array<Timestamp>> =
+    this.param(this.pgDateArrayType().nullable(), value)
+fun SqContext.pgDateArrayNull(): SqNull<List<LocalDate?>, Array<Timestamp>> =
+    this.nullItem(this.pgDateArrayType().nullable())
+fun SqTable.pgDateArrayNotNull(columnName: String): SqTableColumn<List<LocalDate?>, Array<Timestamp>> =
+    this.column(SqPgTypeHolderImpl.pgDateArray, columnName)
+fun SqTable.pgDateArrayNullable(columnName: String): SqTableColumn<List<LocalDate?>?, Array<Timestamp>> =
+    this.column(SqPgTypeHolderImpl.pgDateArray.nullable(), columnName)
 
 fun SqContext.pgDateAsDateType(): SqType<Date, Timestamp> =
     this.pgTypeHolder().pgDateAsDate
@@ -275,6 +383,21 @@ fun SqTable.pgTimeNotNull(columnName: String): SqTableColumn<LocalTime, Time> =
 fun SqTable.pgTimeNullable(columnName: String): SqTableColumn<LocalTime?, Time> =
     this.column(SqPgTypeHolderImpl.pgTime.nullable(), columnName)
 
+fun SqContext.pgTimeArrayType(): SqType<List<LocalTime?>, Array<Time>> =
+    this.pgTypeHolder().pgTimeArray
+@JvmName("pgTimeArrayParam__not_null")
+fun SqContext.pgTimeArrayParam(value: List<LocalTime?>): SqParameter<List<LocalTime?>, Array<Time>> =
+    this.param(this.pgTimeArrayType(), value)
+@JvmName("pgTimeArrayParam__nullable")
+fun SqContext.pgTimeArrayParam(value: List<LocalTime?>?): SqParameter<List<LocalTime?>?, Array<Time>> =
+    this.param(this.pgTimeArrayType().nullable(), value)
+fun SqContext.pgTimeArrayNull(): SqNull<List<LocalTime?>, Array<Time>> =
+    this.nullItem(this.pgTimeArrayType().nullable())
+fun SqTable.pgTimeArrayNotNull(columnName: String): SqTableColumn<List<LocalTime?>, Array<Time>> =
+    this.column(SqPgTypeHolderImpl.pgTimeArray, columnName)
+fun SqTable.pgTimeArrayNullable(columnName: String): SqTableColumn<List<LocalTime?>?, Array<Time>> =
+    this.column(SqPgTypeHolderImpl.pgTimeArray.nullable(), columnName)
+
 fun SqContext.pgTimeAsTimeType(): SqType<Time, Time> =
     this.pgTypeHolder().pgTimeAsTime
 @JvmName("pgTimeAsTimeParam__not_null")
@@ -305,6 +428,21 @@ fun SqTable.pgTimeTZNotNull(columnName: String): SqTableColumn<OffsetTime, Time>
 fun SqTable.pgTimeTZNullable(columnName: String): SqTableColumn<OffsetTime?, Time> =
     this.column(SqPgTypeHolderImpl.pgTimeTZ.nullable(), columnName)
 
+fun SqContext.pgTimeTZArrayType(): SqType<List<OffsetTime?>, Array<Time>> =
+    this.pgTypeHolder().pgTimeTZArray
+@JvmName("pgTimeTZArrayParam__not_null")
+fun SqContext.pgTimeTZArrayParam(value: List<OffsetTime?>): SqParameter<List<OffsetTime?>, Array<Time>> =
+    this.param(this.pgTimeTZArrayType(), value)
+@JvmName("pgTimeTZArrayParam__nullable")
+fun SqContext.pgTimeTZArrayParam(value: List<OffsetTime?>?): SqParameter<List<OffsetTime?>?, Array<Time>> =
+    this.param(this.pgTimeTZArrayType().nullable(), value)
+fun SqContext.pgTimeTZArrayNull(): SqNull<List<OffsetTime?>, Array<Time>> =
+    this.nullItem(this.pgTimeTZArrayType().nullable())
+fun SqTable.pgTimeTZArrayNotNull(columnName: String): SqTableColumn<List<OffsetTime?>, Array<Time>> =
+    this.column(SqPgTypeHolderImpl.pgTimeTZArray, columnName)
+fun SqTable.pgTimeTZArrayNullable(columnName: String): SqTableColumn<List<OffsetTime?>?, Array<Time>> =
+    this.column(SqPgTypeHolderImpl.pgTimeTZArray.nullable(), columnName)
+
 fun SqContext.pgTimestampType(): SqType<LocalDateTime, Timestamp> =
     this.pgTypeHolder().pgTimestamp
 @JvmName("pgTimestampParam__not_null")
@@ -319,6 +457,21 @@ fun SqTable.pgTimestampNotNull(columnName: String): SqTableColumn<LocalDateTime,
     this.column(SqPgTypeHolderImpl.pgTimestamp, columnName)
 fun SqTable.pgTimestampNullable(columnName: String): SqTableColumn<LocalDateTime?, Timestamp> =
     this.column(SqPgTypeHolderImpl.pgTimestamp.nullable(), columnName)
+
+fun SqContext.pgTimestampArrayType(): SqType<List<LocalDateTime?>, Array<Timestamp>> =
+    this.pgTypeHolder().pgTimestampArray
+@JvmName("pgTimestampArrayParam__not_null")
+fun SqContext.pgTimestampArrayParam(value: List<LocalDateTime?>): SqParameter<List<LocalDateTime?>, Array<Timestamp>> =
+    this.param(this.pgTimestampArrayType(), value)
+@JvmName("pgTimestampArrayParam__nullable")
+fun SqContext.pgTimestampArrayParam(value: List<LocalDateTime?>?): SqParameter<List<LocalDateTime?>?, Array<Timestamp>> =
+    this.param(this.pgTimestampArrayType().nullable(), value)
+fun SqContext.pgTimestampArrayNull(): SqNull<List<LocalDateTime?>, Array<Timestamp>> =
+    this.nullItem(this.pgTimestampArrayType().nullable())
+fun SqTable.pgTimestampArrayNotNull(columnName: String): SqTableColumn<List<LocalDateTime?>, Array<Timestamp>> =
+    this.column(SqPgTypeHolderImpl.pgTimestampArray, columnName)
+fun SqTable.pgTimestampArrayNullable(columnName: String): SqTableColumn<List<LocalDateTime?>?, Array<Timestamp>> =
+    this.column(SqPgTypeHolderImpl.pgTimestampArray.nullable(), columnName)
 
 fun SqContext.pgTimestampAsTimestampType(): SqType<Timestamp, Timestamp> =
     this.pgTypeHolder().pgTimestampAsTimestamp
@@ -349,6 +502,21 @@ fun SqTable.pgTimestampTZNotNull(columnName: String): SqTableColumn<OffsetDateTi
     this.column(SqPgTypeHolderImpl.pgTimestampTZ, columnName)
 fun SqTable.pgTimestampTZNullable(columnName: String): SqTableColumn<OffsetDateTime?, Timestamp> =
     this.column(SqPgTypeHolderImpl.pgTimestampTZ.nullable(), columnName)
+
+fun SqContext.pgTimestampTZArrayType(): SqType<List<OffsetDateTime?>, Array<Timestamp>> =
+    this.pgTypeHolder().pgTimestampTZArray
+@JvmName("pgTimestampTZArrayParam__not_null")
+fun SqContext.pgTimestampTZArrayParam(value: List<OffsetDateTime?>): SqParameter<List<OffsetDateTime?>, Array<Timestamp>> =
+    this.param(this.pgTimestampTZArrayType(), value)
+@JvmName("pgTimestampTZArrayParam__nullable")
+fun SqContext.pgTimestampTZArrayParam(value: List<OffsetDateTime?>?): SqParameter<List<OffsetDateTime?>?, Array<Timestamp>> =
+    this.param(this.pgTimestampTZArrayType().nullable(), value)
+fun SqContext.pgTimestampTZArrayNull(): SqNull<List<OffsetDateTime?>, Array<Timestamp>> =
+    this.nullItem(this.pgTimestampTZArrayType().nullable())
+fun SqTable.pgTimestampTZArrayNotNull(columnName: String): SqTableColumn<List<OffsetDateTime?>, Array<Timestamp>> =
+    this.column(SqPgTypeHolderImpl.pgTimestampTZArray, columnName)
+fun SqTable.pgTimestampTZArrayNullable(columnName: String): SqTableColumn<List<OffsetDateTime?>?, Array<Timestamp>> =
+    this.column(SqPgTypeHolderImpl.pgTimestampTZArray.nullable(), columnName)
 // endregion
 
 
@@ -367,6 +535,21 @@ fun SqTable.pgBigIntNotNull(columnName: String): SqTableColumn<Long, Number> =
     this.column(SqPgTypeHolderImpl.pgBigInt, columnName)
 fun SqTable.pgBigIntNullable(columnName: String): SqTableColumn<Long?, Number> =
     this.column(SqPgTypeHolderImpl.pgBigInt.nullable(), columnName)
+
+fun SqContext.pgBigIntArrayType(): SqType<List<Long?>, Array<Number>> =
+    this.pgTypeHolder().pgBigIntArray
+@JvmName("pgBigIntArrayParam__not_null")
+fun SqContext.pgBigIntArrayParam(value: List<Long?>): SqParameter<List<Long?>, Array<Number>> =
+    this.param(this.pgBigIntArrayType(), value)
+@JvmName("pgBigIntArrayParam__nullable")
+fun SqContext.pgBigIntArrayParam(value: List<Long?>?): SqParameter<List<Long?>?, Array<Number>> =
+    this.param(this.pgBigIntArrayType().nullable(), value)
+fun SqContext.pgBigIntArrayNull(): SqNull<List<Long?>, Array<Number>> =
+    this.nullItem(this.pgBigIntArrayType().nullable())
+fun SqTable.pgBigIntArrayNotNull(columnName: String): SqTableColumn<List<Long?>, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgBigIntArray, columnName)
+fun SqTable.pgBigIntArrayNullable(columnName: String): SqTableColumn<List<Long?>?, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgBigIntArray.nullable(), columnName)
 
 fun SqContext.pgBigIntAsBigIntegerType(): SqType<BigInteger, Number> =
     this.pgTypeHolder().pgBigIntAsBigInteger
@@ -398,6 +581,21 @@ fun SqTable.pgDoubleNotNull(columnName: String): SqTableColumn<Double, Number> =
 fun SqTable.pgDoubleNullable(columnName: String): SqTableColumn<Double?, Number> =
     this.column(SqPgTypeHolderImpl.pgDouble.nullable(), columnName)
 
+fun SqContext.pgDoubleArrayType(): SqType<List<Double?>, Array<Number>> =
+    this.pgTypeHolder().pgDoubleArray
+@JvmName("pgDoubleArrayParam__not_null")
+fun SqContext.pgDoubleArrayParam(value: List<Double?>): SqParameter<List<Double?>, Array<Number>> =
+    this.param(this.pgDoubleArrayType(), value)
+@JvmName("pgDoubleArrayParam__nullable")
+fun SqContext.pgDoubleArrayParam(value: List<Double?>?): SqParameter<List<Double?>?, Array<Number>> =
+    this.param(this.pgDoubleArrayType().nullable(), value)
+fun SqContext.pgDoubleArrayNull(): SqNull<List<Double?>, Array<Number>> =
+    this.nullItem(this.pgDoubleArrayType().nullable())
+fun SqTable.pgDoubleArrayNotNull(columnName: String): SqTableColumn<List<Double?>, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgDoubleArray, columnName)
+fun SqTable.pgDoubleArrayNullable(columnName: String): SqTableColumn<List<Double?>?, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgDoubleArray.nullable(), columnName)
+
 fun SqContext.pgIntegerType(): SqType<Int, Number> =
     this.pgTypeHolder().pgInteger
 @JvmName("pgIntegerParam__not_null")
@@ -412,6 +610,21 @@ fun SqTable.pgIntegerNotNull(columnName: String): SqTableColumn<Int, Number> =
     this.column(SqPgTypeHolderImpl.pgInteger, columnName)
 fun SqTable.pgIntegerNullable(columnName: String): SqTableColumn<Int?, Number> =
     this.column(SqPgTypeHolderImpl.pgInteger.nullable(), columnName)
+
+fun SqContext.pgIntegerArrayType(): SqType<List<Int?>, Array<Number>> =
+    this.pgTypeHolder().pgIntegerArray
+@JvmName("pgIntegerArrayParam__not_null")
+fun SqContext.pgIntegerArrayParam(value: List<Int?>): SqParameter<List<Int?>, Array<Number>> =
+    this.param(this.pgIntegerArrayType(), value)
+@JvmName("pgIntegerArrayParam__nullable")
+fun SqContext.pgIntegerArrayParam(value: List<Int?>?): SqParameter<List<Int?>?, Array<Number>> =
+    this.param(this.pgIntegerArrayType().nullable(), value)
+fun SqContext.pgIntegerArrayNull(): SqNull<List<Int?>, Array<Number>> =
+    this.nullItem(this.pgIntegerArrayType().nullable())
+fun SqTable.pgIntegerArrayNotNull(columnName: String): SqTableColumn<List<Int?>, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgIntegerArray, columnName)
+fun SqTable.pgIntegerArrayNullable(columnName: String): SqTableColumn<List<Int?>?, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgIntegerArray.nullable(), columnName)
 
 fun SqContext.pgNumericType(): SqType<BigDecimal, Number> =
     this.pgTypeHolder().pgNumeric
@@ -428,6 +641,21 @@ fun SqTable.pgNumericNotNull(columnName: String): SqTableColumn<BigDecimal, Numb
 fun SqTable.pgNumericNullable(columnName: String): SqTableColumn<BigDecimal?, Number> =
     this.column(SqPgTypeHolderImpl.pgNumeric.nullable(), columnName)
 
+fun SqContext.pgNumericArrayType(): SqType<List<BigDecimal?>, Array<Number>> =
+    this.pgTypeHolder().pgNumericArray
+@JvmName("pgNumericArrayParam__not_null")
+fun SqContext.pgNumericArrayParam(value: List<BigDecimal?>): SqParameter<List<BigDecimal?>, Array<Number>> =
+    this.param(this.pgNumericArrayType(), value)
+@JvmName("pgNumericArrayParam__nullable")
+fun SqContext.pgNumericArrayParam(value: List<BigDecimal?>?): SqParameter<List<BigDecimal?>?, Array<Number>> =
+    this.param(this.pgNumericArrayType().nullable(), value)
+fun SqContext.pgNumericArrayNull(): SqNull<List<BigDecimal?>, Array<Number>> =
+    this.nullItem(this.pgNumericArrayType().nullable())
+fun SqTable.pgNumericArrayNotNull(columnName: String): SqTableColumn<List<BigDecimal?>, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgNumericArray, columnName)
+fun SqTable.pgNumericArrayNullable(columnName: String): SqTableColumn<List<BigDecimal?>?, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgNumericArray.nullable(), columnName)
+
 fun SqContext.pgRealType(): SqType<Float, Number> =
     this.pgTypeHolder().pgReal
 @JvmName("pgRealParam__not_null")
@@ -443,6 +671,21 @@ fun SqTable.pgRealNotNull(columnName: String): SqTableColumn<Float, Number> =
 fun SqTable.pgRealNullable(columnName: String): SqTableColumn<Float?, Number> =
     this.column(SqPgTypeHolderImpl.pgReal.nullable(), columnName)
 
+fun SqContext.pgRealArrayType(): SqType<List<Float?>, Array<Number>> =
+    this.pgTypeHolder().pgRealArray
+@JvmName("pgRealArrayParam__not_null")
+fun SqContext.pgRealArrayParam(value: List<Float?>): SqParameter<List<Float?>, Array<Number>> =
+    this.param(this.pgRealArrayType(), value)
+@JvmName("pgRealArrayParam__nullable")
+fun SqContext.pgRealArrayParam(value: List<Float?>?): SqParameter<List<Float?>?, Array<Number>> =
+    this.param(this.pgRealArrayType().nullable(), value)
+fun SqContext.pgRealArrayNull(): SqNull<List<Float?>, Array<Number>> =
+    this.nullItem(this.pgRealArrayType().nullable())
+fun SqTable.pgRealArrayNotNull(columnName: String): SqTableColumn<List<Float?>, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgRealArray, columnName)
+fun SqTable.pgRealArrayNullable(columnName: String): SqTableColumn<List<Float?>?, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgRealArray.nullable(), columnName)
+
 fun SqContext.pgSmallIntType(): SqType<Short, Number> =
     this.pgTypeHolder().pgSmallInt
 @JvmName("pgSmallIntParam__not_null")
@@ -457,6 +700,21 @@ fun SqTable.pgSmallIntNotNull(columnName: String): SqTableColumn<Short, Number> 
     this.column(SqPgTypeHolderImpl.pgSmallInt, columnName)
 fun SqTable.pgSmallIntNullable(columnName: String): SqTableColumn<Short?, Number> =
     this.column(SqPgTypeHolderImpl.pgSmallInt.nullable(), columnName)
+
+fun SqContext.pgSmallIntArrayType(): SqType<List<Short?>, Array<Number>> =
+    this.pgTypeHolder().pgSmallIntArray
+@JvmName("pgSmallIntArrayParam__not_null")
+fun SqContext.pgSmallIntArrayParam(value: List<Short?>): SqParameter<List<Short?>, Array<Number>> =
+    this.param(this.pgSmallIntArrayType(), value)
+@JvmName("pgSmallIntArrayParam__nullable")
+fun SqContext.pgSmallIntArrayParam(value: List<Short?>?): SqParameter<List<Short?>?, Array<Number>> =
+    this.param(this.pgSmallIntArrayType().nullable(), value)
+fun SqContext.pgSmallIntArrayNull(): SqNull<List<Short?>, Array<Number>> =
+    this.nullItem(this.pgSmallIntArrayType().nullable())
+fun SqTable.pgSmallIntArrayNotNull(columnName: String): SqTableColumn<List<Short?>, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgSmallIntArray, columnName)
+fun SqTable.pgSmallIntArrayNullable(columnName: String): SqTableColumn<List<Short?>?, Array<Number>> =
+    this.column(SqPgTypeHolderImpl.pgSmallIntArray.nullable(), columnName)
 // endregion
 
 
@@ -476,6 +734,21 @@ fun SqTable.pgCharNotNull(columnName: String): SqTableColumn<String, String> =
 fun SqTable.pgCharNullable(columnName: String): SqTableColumn<String?, String> =
     this.column(SqPgTypeHolderImpl.pgChar.nullable(), columnName)
 
+fun SqContext.pgCharArrayType(): SqType<List<String?>, Array<String>> =
+    this.pgTypeHolder().pgCharArray
+@JvmName("pgCharArrayParam__not_null")
+fun SqContext.pgCharArrayParam(value: List<String?>): SqParameter<List<String?>, Array<String>> =
+    this.param(this.pgCharArrayType(), value)
+@JvmName("pgCharArrayParam__nullable")
+fun SqContext.pgCharArrayParam(value: List<String?>?): SqParameter<List<String?>?, Array<String>> =
+    this.param(this.pgCharArrayType().nullable(), value)
+fun SqContext.pgCharArrayNull(): SqNull<List<String?>, Array<String>> =
+    this.nullItem(this.pgCharArrayType().nullable())
+fun SqTable.pgCharArrayNotNull(columnName: String): SqTableColumn<List<String?>, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgCharArray, columnName)
+fun SqTable.pgCharArrayNullable(columnName: String): SqTableColumn<List<String?>?, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgCharArray.nullable(), columnName)
+
 fun SqContext.pgCharacterType(): SqType<String, String> =
     this.pgTypeHolder().pgCharacter
 @JvmName("pgCharacterParam__not_null")
@@ -490,6 +763,21 @@ fun SqTable.pgCharacterNotNull(columnName: String): SqTableColumn<String, String
     this.column(SqPgTypeHolderImpl.pgCharacter, columnName)
 fun SqTable.pgCharacterNullable(columnName: String): SqTableColumn<String?, String> =
     this.column(SqPgTypeHolderImpl.pgCharacter.nullable(), columnName)
+
+fun SqContext.pgCharacterArrayType(): SqType<List<String?>, Array<String>> =
+    this.pgTypeHolder().pgCharacterArray
+@JvmName("pgCharacterArrayParam__not_null")
+fun SqContext.pgCharacterArrayParam(value: List<String?>): SqParameter<List<String?>, Array<String>> =
+    this.param(this.pgCharacterArrayType(), value)
+@JvmName("pgCharacterArrayParam__nullable")
+fun SqContext.pgCharacterArrayParam(value: List<String?>?): SqParameter<List<String?>?, Array<String>> =
+    this.param(this.pgCharacterArrayType().nullable(), value)
+fun SqContext.pgCharacterArrayNull(): SqNull<List<String?>, Array<String>> =
+    this.nullItem(this.pgCharacterArrayType().nullable())
+fun SqTable.pgCharacterArrayNotNull(columnName: String): SqTableColumn<List<String?>, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgCharacterArray, columnName)
+fun SqTable.pgCharacterArrayNullable(columnName: String): SqTableColumn<List<String?>?, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgCharacterArray.nullable(), columnName)
 
 fun SqContext.pgTextType(): SqType<String, String> =
     this.pgTypeHolder().pgText
@@ -506,6 +794,21 @@ fun SqTable.pgTextNotNull(columnName: String): SqTableColumn<String, String> =
 fun SqTable.pgTextNullable(columnName: String): SqTableColumn<String?, String> =
     this.column(SqPgTypeHolderImpl.pgText.nullable(), columnName)
 
+fun SqContext.pgTextArrayType(): SqType<List<String?>, Array<String>> =
+    this.pgTypeHolder().pgTextArray
+@JvmName("pgTextArrayParam__not_null")
+fun SqContext.pgTextArrayParam(value: List<String?>): SqParameter<List<String?>, Array<String>> =
+    this.param(this.pgTextArrayType(), value)
+@JvmName("pgTextArrayParam__nullable")
+fun SqContext.pgTextArrayParam(value: List<String?>?): SqParameter<List<String?>?, Array<String>> =
+    this.param(this.pgTextArrayType().nullable(), value)
+fun SqContext.pgTextArrayNull(): SqNull<List<String?>, Array<String>> =
+    this.nullItem(this.pgTextArrayType().nullable())
+fun SqTable.pgTextArrayNotNull(columnName: String): SqTableColumn<List<String?>, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgTextArray, columnName)
+fun SqTable.pgTextArrayNullable(columnName: String): SqTableColumn<List<String?>?, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgTextArray.nullable(), columnName)
+
 fun SqContext.pgVarCharType(): SqType<String, String> =
     this.pgTypeHolder().pgVarChar
 @JvmName("pgVarCharParam__not_null")
@@ -520,6 +823,21 @@ fun SqTable.pgVarCharNotNull(columnName: String): SqTableColumn<String, String> 
     this.column(SqPgTypeHolderImpl.pgVarChar, columnName)
 fun SqTable.pgVarCharNullable(columnName: String): SqTableColumn<String?, String> =
     this.column(SqPgTypeHolderImpl.pgVarChar.nullable(), columnName)
+
+fun SqContext.pgVarCharArrayType(): SqType<List<String?>, Array<String>> =
+    this.pgTypeHolder().pgVarCharArray
+@JvmName("pgVarCharArrayParam__not_null")
+fun SqContext.pgVarCharArrayParam(value: List<String?>): SqParameter<List<String?>, Array<String>> =
+    this.param(this.pgVarCharArrayType(), value)
+@JvmName("pgVarCharArrayParam__nullable")
+fun SqContext.pgVarCharArrayParam(value: List<String?>?): SqParameter<List<String?>?, Array<String>> =
+    this.param(this.pgVarCharArrayType().nullable(), value)
+fun SqContext.pgVarCharArrayNull(): SqNull<List<String?>, Array<String>> =
+    this.nullItem(this.pgVarCharArrayType().nullable())
+fun SqTable.pgVarCharArrayNotNull(columnName: String): SqTableColumn<List<String?>, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgVarCharArray, columnName)
+fun SqTable.pgVarCharArrayNullable(columnName: String): SqTableColumn<List<String?>?, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgVarCharArray.nullable(), columnName)
 // endregion
 
 
@@ -538,6 +856,21 @@ fun SqTable.pgXmlNotNull(columnName: String): SqTableColumn<SQLXML, String> =
     this.column(SqPgTypeHolderImpl.pgXml, columnName)
 fun SqTable.pgXmlNullable(columnName: String): SqTableColumn<SQLXML?, String> =
     this.column(SqPgTypeHolderImpl.pgXml.nullable(), columnName)
+
+fun SqContext.pgXmlArrayType(): SqType<List<SQLXML?>, Array<String>> =
+    this.pgTypeHolder().pgXmlArray
+@JvmName("pgXmlArrayParam__not_null")
+fun SqContext.pgXmlArrayParam(value: List<SQLXML?>): SqParameter<List<SQLXML?>, Array<String>> =
+    this.param(this.pgXmlArrayType(), value)
+@JvmName("pgXmlArrayParam__nullable")
+fun SqContext.pgXmlArrayParam(value: List<SQLXML?>?): SqParameter<List<SQLXML?>?, Array<String>> =
+    this.param(this.pgXmlArrayType().nullable(), value)
+fun SqContext.pgXmlArrayNull(): SqNull<List<SQLXML?>, Array<String>> =
+    this.nullItem(this.pgXmlArrayType().nullable())
+fun SqTable.pgXmlArrayNotNull(columnName: String): SqTableColumn<List<SQLXML?>, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgXmlArray, columnName)
+fun SqTable.pgXmlArrayNullable(columnName: String): SqTableColumn<List<SQLXML?>?, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgXmlArray.nullable(), columnName)
 // endregion
 
 
@@ -557,6 +890,21 @@ fun SqTable.pgJsonNotNull(columnName: String): SqTableColumn<String, String> =
 fun SqTable.pgJsonNullable(columnName: String): SqTableColumn<String?, String> =
     this.column(SqPgTypeHolderImpl.pgJson.nullable(), columnName)
 
+fun SqContext.pgJsonArrayType(): SqType<List<String?>, Array<String>> =
+    this.pgTypeHolder().pgJsonArray
+@JvmName("pgJsonArrayParam__not_null")
+fun SqContext.pgJsonArrayParam(value: List<String?>): SqParameter<List<String?>, Array<String>> =
+    this.param(this.pgJsonArrayType(), value)
+@JvmName("pgJsonArrayParam__nullable")
+fun SqContext.pgJsonArrayParam(value: List<String?>?): SqParameter<List<String?>?, Array<String>> =
+    this.param(this.pgJsonArrayType().nullable(), value)
+fun SqContext.pgJsonArrayNull(): SqNull<List<String?>, Array<String>> =
+    this.nullItem(this.pgJsonArrayType().nullable())
+fun SqTable.pgJsonArrayNotNull(columnName: String): SqTableColumn<List<String?>, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgJsonArray, columnName)
+fun SqTable.pgJsonArrayNullable(columnName: String): SqTableColumn<List<String?>?, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgJsonArray.nullable(), columnName)
+
 fun SqContext.pgJsonBType(): SqType<String, String> =
     this.pgTypeHolder().pgJsonB
 @JvmName("pgJsonBParam__not_null")
@@ -571,6 +919,21 @@ fun SqTable.pgJsonBNotNull(columnName: String): SqTableColumn<String, String> =
     this.column(SqPgTypeHolderImpl.pgJsonB, columnName)
 fun SqTable.pgJsonBNullable(columnName: String): SqTableColumn<String?, String> =
     this.column(SqPgTypeHolderImpl.pgJsonB.nullable(), columnName)
+
+fun SqContext.pgJsonBArrayType(): SqType<List<String?>, Array<String>> =
+    this.pgTypeHolder().pgJsonBArray
+@JvmName("pgJsonBArrayParam__not_null")
+fun SqContext.pgJsonBArrayParam(value: List<String?>): SqParameter<List<String?>, Array<String>> =
+    this.param(this.pgJsonBArrayType(), value)
+@JvmName("pgJsonBArrayParam__nullable")
+fun SqContext.pgJsonBArrayParam(value: List<String?>?): SqParameter<List<String?>?, Array<String>> =
+    this.param(this.pgJsonBArrayType().nullable(), value)
+fun SqContext.pgJsonBArrayNull(): SqNull<List<String?>, Array<String>> =
+    this.nullItem(this.pgJsonBArrayType().nullable())
+fun SqTable.pgJsonBArrayNotNull(columnName: String): SqTableColumn<List<String?>, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgJsonBArray, columnName)
+fun SqTable.pgJsonBArrayNullable(columnName: String): SqTableColumn<List<String?>?, Array<String>> =
+    this.column(SqPgTypeHolderImpl.pgJsonBArray.nullable(), columnName)
 
 fun SqContext.pgMultiBitType(): SqType<BooleanArray, SqDbTypeBit> =
     this.pgTypeHolder().pgMultiBit
@@ -587,6 +950,21 @@ fun SqTable.pgMultiBitNotNull(columnName: String): SqTableColumn<BooleanArray, S
 fun SqTable.pgMultiBitNullable(columnName: String): SqTableColumn<BooleanArray?, SqDbTypeBit> =
     this.column(SqPgTypeHolderImpl.pgMultiBit.nullable(), columnName)
 
+fun SqContext.pgMultiBitArrayType(): SqType<List<BooleanArray?>, Array<SqDbTypeBit>> =
+    this.pgTypeHolder().pgMultiBitArray
+@JvmName("pgMultiBitArrayParam__not_null")
+fun SqContext.pgMultiBitArrayParam(value: List<BooleanArray?>): SqParameter<List<BooleanArray?>, Array<SqDbTypeBit>> =
+    this.param(this.pgMultiBitArrayType(), value)
+@JvmName("pgMultiBitArrayParam__nullable")
+fun SqContext.pgMultiBitArrayParam(value: List<BooleanArray?>?): SqParameter<List<BooleanArray?>?, Array<SqDbTypeBit>> =
+    this.param(this.pgMultiBitArrayType().nullable(), value)
+fun SqContext.pgMultiBitArrayNull(): SqNull<List<BooleanArray?>, Array<SqDbTypeBit>> =
+    this.nullItem(this.pgMultiBitArrayType().nullable())
+fun SqTable.pgMultiBitArrayNotNull(columnName: String): SqTableColumn<List<BooleanArray?>, Array<SqDbTypeBit>> =
+    this.column(SqPgTypeHolderImpl.pgMultiBitArray, columnName)
+fun SqTable.pgMultiBitArrayNullable(columnName: String): SqTableColumn<List<BooleanArray?>?, Array<SqDbTypeBit>> =
+    this.column(SqPgTypeHolderImpl.pgMultiBitArray.nullable(), columnName)
+
 fun SqContext.pgVarBitType(): SqType<BooleanArray, SqDbTypeBit> =
     this.pgTypeHolder().pgVarBit
 @JvmName("pgVarBitParam__ not_null")
@@ -601,4 +979,19 @@ fun SqTable.pgVarBitNotNull(columnName: String): SqTableColumn<BooleanArray, SqD
     this.column(SqPgTypeHolderImpl.pgVarBit, columnName)
 fun SqTable.pgVarBitNullable(columnName: String): SqTableColumn<BooleanArray?, SqDbTypeBit> =
     this.column(SqPgTypeHolderImpl.pgVarBit.nullable(), columnName)
+
+fun SqContext.pgVarBitArrayType(): SqType<List<BooleanArray?>, Array<SqDbTypeBit>> =
+    this.pgTypeHolder().pgVarBitArray
+@JvmName("pgVarBitArrayParam__not_null")
+fun SqContext.pgVarBitArrayParam(value: List<BooleanArray?>): SqParameter<List<BooleanArray?>, Array<SqDbTypeBit>> =
+    this.param(this.pgVarBitArrayType(), value)
+@JvmName("pgVarBitArrayParam__nullable")
+fun SqContext.pgVarBitArrayParam(value: List<BooleanArray?>?): SqParameter<List<BooleanArray?>?, Array<SqDbTypeBit>> =
+    this.param(this.pgVarBitArrayType().nullable(), value)
+fun SqContext.pgVarBitArrayNull(): SqNull<List<BooleanArray?>, Array<SqDbTypeBit>> =
+    this.nullItem(this.pgVarBitArrayType().nullable())
+fun SqTable.pgVarBitArrayNotNull(columnName: String): SqTableColumn<List<BooleanArray?>, Array<SqDbTypeBit>> =
+    this.column(SqPgTypeHolderImpl.pgVarBitArray, columnName)
+fun SqTable.pgVarBitArrayNullable(columnName: String): SqTableColumn<List<BooleanArray?>?, Array<SqDbTypeBit>> =
+    this.column(SqPgTypeHolderImpl.pgVarBitArray.nullable(), columnName)
 // endregion
