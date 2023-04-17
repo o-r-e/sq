@@ -4,6 +4,7 @@ import me.ore.sq.generic.*
 import me.ore.sq.util.SqUtil
 import java.sql.Connection
 import java.sql.PreparedStatement
+import java.sql.ResultSet
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
@@ -85,6 +86,12 @@ fun <T: PreparedStatement> Iterable<SqParameter<*, *>>?.setTo(target: T): T {
         parameter.write(target, index + 1)
     }
     return target
+}
+
+
+fun <JAVA: Any?> SqColSet.read(source: ResultSet, column: SqColumn<JAVA, *>): JAVA {
+    val index = this.requireColumnIndex(column) + 1
+    return column.read(source, index)
 }
 
 
@@ -835,6 +842,95 @@ fun <T: SqReadStatement> T.limits(resultCount: SqParameter<Long, Number>?, first
     this.resultCount(resultCount).firstResultIndex(firstResultIndex)
 fun <T: SqReadStatement> T.limits(resultCount: Long?, firstResultIndex: Long? = null): T =
     this.resultCount(resultCount).firstResultIndex(firstResultIndex)
+
+
+inline fun <RS: SqReadStatement> RS.load(
+    connection: Connection,
+    initStatement: (RS.(statement: PreparedStatement) -> Any?) = {},
+    block: RS.(reader: SqReader) -> Unit,
+) {
+    contract {
+        callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.UNKNOWN)
+    }
+
+    this.prepareStatement(connection).use { statement ->
+        initStatement.invoke(this, statement)
+        statement.executeQuery().use { resultSet ->
+            val reader = SqReader(this, resultSet)
+            while (reader.next()) {
+                block.invoke(this, reader)
+            }
+        }
+    }
+}
+
+inline fun <RS: SqReadStatement, T: Any?> RS.loadAndMap(
+    connection: Connection,
+    initStatement: (RS.(statement: PreparedStatement) -> Any?) = {},
+    block: RS.(reader: SqReader) -> T,
+): List<T> {
+    contract {
+        callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.UNKNOWN)
+    }
+
+    return this.prepareStatement(connection).use { statement ->
+        initStatement.invoke(this, statement)
+        statement.executeQuery().use { resultSet ->
+            buildList {
+                val reader = SqReader(this@loadAndMap, resultSet)
+                while (reader.next()) {
+                    val item = block.invoke(this@loadAndMap, reader)
+                    this.add(item)
+                }
+            }
+        }
+    }
+}
+
+inline fun <RS: SqConnReadStatement> RS.load(
+    initStatement: (RS.(statement: PreparedStatement) -> Any?) = {},
+    block: RS.(reader: SqReader) -> Unit,
+) {
+    contract {
+        callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+
+    this.prepareStatement().use { statement ->
+        initStatement.invoke(this, statement)
+        statement.executeQuery().use { resultSet ->
+            val reader = SqReader(this, resultSet)
+            while (reader.next()) {
+                block.invoke(this, reader)
+            }
+        }
+    }
+}
+
+inline fun <RS: SqConnReadStatement, T: Any?> RS.loadAndMap(
+    initStatement: (RS.(statement: PreparedStatement) -> Any?) = {},
+    block: RS.(reader: SqReader) -> T,
+): List<T> {
+    contract {
+        callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(block, InvocationKind.UNKNOWN)
+    }
+
+    return this.prepareStatement().use { statement ->
+        initStatement.invoke(this, statement)
+        statement.executeQuery().use { resultSet ->
+            val reader = SqReader(this, resultSet)
+            buildList {
+                while (reader.next()) {
+                    val item = block.invoke(this@loadAndMap, reader)
+                    this.add(item)
+                }
+            }
+        }
+    }
+}
 
 
 inline fun <T: SqTable, S: SqTableWriteStatement<T>> S.set(block: (mapping: SqColumnValueMapping<T>) -> Unit): S {
