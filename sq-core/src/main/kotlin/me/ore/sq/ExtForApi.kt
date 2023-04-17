@@ -844,10 +844,10 @@ fun <T: SqReadStatement> T.limits(resultCount: Long?, firstResultIndex: Long? = 
     this.resultCount(resultCount).firstResultIndex(firstResultIndex)
 
 
-inline fun <RS: SqReadStatement> RS.load(
+inline fun <ST: SqReadStatement> ST.load(
     connection: Connection,
-    initStatement: (RS.(statement: PreparedStatement) -> Any?) = {},
-    block: RS.(reader: SqReader) -> Unit,
+    initStatement: (ST.(statement: PreparedStatement) -> Unit) = {},
+    block: ST.(reader: SqReader) -> Unit,
 ) {
     contract {
         callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE)
@@ -865,10 +865,10 @@ inline fun <RS: SqReadStatement> RS.load(
     }
 }
 
-inline fun <RS: SqReadStatement, T: Any?> RS.loadAndMap(
+inline fun <ST: SqReadStatement, T: Any?> ST.loadAndMap(
     connection: Connection,
-    initStatement: (RS.(statement: PreparedStatement) -> Any?) = {},
-    block: RS.(reader: SqReader) -> T,
+    initStatement: (ST.(statement: PreparedStatement) -> Unit) = {},
+    block: ST.(reader: SqReader) -> T,
 ): List<T> {
     contract {
         callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE)
@@ -889,9 +889,9 @@ inline fun <RS: SqReadStatement, T: Any?> RS.loadAndMap(
     }
 }
 
-inline fun <RS: SqConnReadStatement> RS.load(
-    initStatement: (RS.(statement: PreparedStatement) -> Any?) = {},
-    block: RS.(reader: SqReader) -> Unit,
+inline fun <ST: SqConnReadStatement> ST.load(
+    initStatement: (ST.(statement: PreparedStatement) -> Unit) = {},
+    block: ST.(reader: SqReader) -> Unit,
 ) {
     contract {
         callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE)
@@ -909,9 +909,9 @@ inline fun <RS: SqConnReadStatement> RS.load(
     }
 }
 
-inline fun <RS: SqConnReadStatement, T: Any?> RS.loadAndMap(
-    initStatement: (RS.(statement: PreparedStatement) -> Any?) = {},
-    block: RS.(reader: SqReader) -> T,
+inline fun <ST: SqConnReadStatement, T: Any?> ST.loadAndMap(
+    initStatement: (ST.(statement: PreparedStatement) -> Unit) = {},
+    block: ST.(reader: SqReader) -> T,
 ): List<T> {
     contract {
         callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE)
@@ -929,6 +929,36 @@ inline fun <RS: SqConnReadStatement, T: Any?> RS.loadAndMap(
                 }
             }
         }
+    }
+}
+
+
+fun SqTableEditStatement<*>.execute(connection: Connection): Int {
+    return this.prepareStatement(connection).use { statement ->
+        statement.executeUpdate()
+    }
+}
+
+fun SqConnTableEditStatement<*>.execute(): Int {
+    return this.prepareStatement().use { statement ->
+        statement.executeUpdate()
+    }
+}
+
+inline fun <ST: SqTableEditStatement<*>> ST.execute(connection: Connection, initStatement: ST.(statement: PreparedStatement) -> Unit): Int {
+    contract { callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE) }
+    return this.prepareStatement(connection).use { statement ->
+        initStatement.invoke(this, statement)
+        statement.executeUpdate()
+    }
+}
+
+inline fun <ST: SqConnTableEditStatement<*>> ST.execute(initStatement: ST.(statement: PreparedStatement) -> Unit): Int {
+    contract { callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE) }
+
+    return this.prepareStatement().use { statement ->
+        initStatement.invoke(this, statement)
+        statement.executeUpdate()
     }
 }
 
@@ -1111,6 +1141,86 @@ fun <T: SqInsert<*>> T.columns(first: SqTableColumn<*, *>, vararg more: SqTableC
 fun <T: SqInsert<*>> T.values(values: List<SqExpression<*, *>>?): T = this.apply { this.values = values }
 fun <T: SqInsert<*>> T.values(first: SqExpression<*, *>, vararg more: SqExpression<*, *>): T = this.values(listOf(first, *more))
 fun <T: SqInsert<*>> T.select(select: SqReadStatement?): T = this.apply { this.select = select }
+
+fun <JAVA: Any?> SqInsert<*>.executeReturningId(connection: Connection, idType: SqType<JAVA, *>): JAVA {
+    val list =  this.prepareStatement(connection, returnGeneratedKeys = true).use { statement ->
+        statement.executeUpdate()
+        statement.generatedKeys.use { generatedKeys ->
+            buildList(1) {
+                while (generatedKeys.next()) {
+                    val id = idType.read(generatedKeys, 1)
+                    this.add(id)
+                }
+            }
+        }
+    }
+
+    if (list.isEmpty()) error("Insert didn't return generated ID")
+    return list.first()
+}
+
+inline fun <ST: SqInsert<*>, JAVA: Any?> ST.executeReturningId(
+    connection: Connection,
+    idType: SqType<JAVA, *>,
+    initStatement: (ST.(statement: PreparedStatement) -> Unit) = {},
+): JAVA {
+    contract { callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE) }
+
+    val list = this.prepareStatement(connection, returnGeneratedKeys = true).use { statement ->
+        initStatement.invoke(this, statement)
+        statement.executeUpdate()
+        statement.generatedKeys.use { generatedKeys ->
+            buildList(1) {
+                while (generatedKeys.next()) {
+                    val id = idType.read(generatedKeys, 1)
+                    this.add(id)
+                }
+            }
+        }
+    }
+
+    if (list.isEmpty()) error("Insert didn't return generated ID")
+    return list.first()
+}
+
+fun <JAVA: Any?> SqConnInsert<*>.executeReturningId(idType: SqType<JAVA, *>): JAVA {
+    val list = this.prepareStatement(returnGeneratedKeys = true).use { statement ->
+        statement.executeUpdate()
+        statement.generatedKeys.use { generatedKeys ->
+            buildList(1) {
+                while (generatedKeys.next()) {
+                    val id = idType.read(generatedKeys, 1)
+                    this.add(id)
+                }
+            }
+        }
+    }
+
+    if (list.isEmpty()) error("Insert didn't return generated ID")
+    return list.first()
+}
+
+inline fun <ST: SqConnInsert<*>, JAVA: Any?> ST.executeReturningId(
+    idType: SqType<JAVA, *>,
+    initStatement: (ST.(statement: PreparedStatement) -> Unit) = {},
+): JAVA {
+    contract { callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE) }
+
+    val list = this.prepareStatement(returnGeneratedKeys = true).use { statement ->
+        statement.executeUpdate()
+        statement.generatedKeys.use { generatedKeys ->
+            buildList(1) {
+                while (generatedKeys.next()) {
+                    val id = idType.read(generatedKeys, 1)
+                    this.add(id)
+                }
+            }
+        }
+    }
+
+    if (list.isEmpty()) error("Insert didn't return generated ID")
+    return list.first()
+}
 
 
 fun <T: SqTable> SqContext.update(table: T): SqUpdate<T> {
