@@ -28,7 +28,7 @@ abstract class SqValueReaderBase<JAVA: Any>: SqValueReader<JAVA> {
                 this.complexRead(expectedClassException, source, columnIndex, value)
             }
         } catch (e: Exception) {
-            expectedClassException?.let { e.addSuppressed(e) }
+            expectedClassException?.let { e.addSuppressed(it) }
             throw e
         }
     }

@@ -1,6 +1,5 @@
 package me.ore.sq.pg
 
-import me.ore.sq.SqDbTypeBit
 import me.ore.sq.SqType
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -21,26 +20,6 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
 
 
     // region Boolean types
-    override val pgSingleBit: SqType<Boolean, SqDbTypeBit> = run {
-        SqType.notNull(
-            Boolean::class.java,
-            SqDbTypeBit::class.java,
-            SqPgSingleBitReader(),
-            SqPgSingleBitWriter(),
-        )
-    }
-
-    override val pgSingleBitArray: SqType<List<Boolean?>, Array<SqDbTypeBit>> = run {
-        SqType.notNull(
-            emptyList<Boolean?>().javaClass,
-            emptyArray<SqDbTypeBit>().javaClass,
-            SqPgSingleBitArrayReader(),
-            SqPgSingleBitArrayWriter(),
-            valueClassText = "List<Boolean?>",
-            dbTypeText = "Array<${SqDbTypeBit::class.java.name}>",
-        )
-    }
-
     override val pgBoolean: SqType<Boolean, Boolean> = run {
         SqType.notNull(
             Boolean::class.java,
@@ -513,49 +492,69 @@ object SqPgTypeHolderImpl: SqPgTypeHolder {
         )
     }
 
-    override val pgMultiBit: SqType<BooleanArray, SqDbTypeBit> = run {
+    override val pgMultiBit: SqType<BooleanArray, SqPgDbTypeBit> = run {
         SqType.notNull(
             BooleanArray::class.java,
-            SqDbTypeBit::class.java,
+            SqPgDbTypeBit::class.java,
             this.multiBitReader,
             SqPgMultiBitWriter(SqPgTypes.BIT, SqPgTypes.BIT__TYPE_NAME),
         )
     }
 
-    override val pgMultiBitArray: SqType<List<BooleanArray?>, Array<SqDbTypeBit>> = run {
+    override val pgMultiBitArray: SqType<List<BooleanArray?>, Array<SqPgDbTypeBit>> = run {
         SqType.notNull(
             emptyList<BooleanArray?>().javaClass,
-            emptyArray<SqDbTypeBit>().javaClass,
+            emptyArray<SqPgDbTypeBit>().javaClass,
             SqPgMultiBitArrayReader(),
             SqPgMultiBitArrayWriter(
                 SqPgTypes.BIT_ARRAY__TYPE_NAME,
                 SqPgTypes.BIT__TYPE_NAME,
             ),
             valueClassText = "List<BooleanArray?>",
-            dbTypeText = "Array<${SqDbTypeBit::class.java.name}>",
+            dbTypeText = "Array<${SqPgDbTypeBit::class.java.name}>",
         )
     }
 
-    override val pgVarBit: SqType<BooleanArray, SqDbTypeBit> = run {
+    override val pgSingleBit: SqType<Boolean, SqPgDbTypeBit> = run {
+        SqType.notNull(
+            Boolean::class.java,
+            SqPgDbTypeBit::class.java,
+            SqPgSingleBitReader(),
+            SqPgSingleBitWriter(),
+        )
+    }
+
+    override val pgSingleBitArray: SqType<List<Boolean?>, Array<SqPgDbTypeBit>> = run {
+        SqType.notNull(
+            emptyList<Boolean?>().javaClass,
+            emptyArray<SqPgDbTypeBit>().javaClass,
+            SqPgSingleBitArrayReader(),
+            SqPgSingleBitArrayWriter(),
+            valueClassText = "List<Boolean?>",
+            dbTypeText = "Array<${SqPgDbTypeBit::class.java.name}>",
+        )
+    }
+
+    override val pgVarBit: SqType<BooleanArray, SqPgDbTypeBit> = run {
         SqType.notNull(
             BooleanArray::class.java,
-            SqDbTypeBit::class.java,
+            SqPgDbTypeBit::class.java,
             this.multiBitReader,
             SqPgMultiBitWriter(SqPgTypes.VAR_BIT, SqPgTypes.VAR_BIT__TYPE_NAME),
         )
     }
 
-    override val pgVarBitArray: SqType<List<BooleanArray?>, Array<SqDbTypeBit>> = run {
+    override val pgVarBitArray: SqType<List<BooleanArray?>, Array<SqPgDbTypeBit>> = run {
         SqType.notNull(
             emptyList<BooleanArray?>().javaClass,
-            emptyArray<SqDbTypeBit>().javaClass,
+            emptyArray<SqPgDbTypeBit>().javaClass,
             SqPgMultiBitArrayReader(),
             SqPgMultiBitArrayWriter(
                 SqPgTypes.VAR_BIT_ARRAY__TYPE_NAME,
                 SqPgTypes.VAR_BIT__TYPE_NAME,
             ),
             valueClassText = "List<BooleanArray?>",
-            dbTypeText = "Array<${SqDbTypeBit::class.java.name}>",
+            dbTypeText = "Array<${SqPgDbTypeBit::class.java.name}>",
         )
     }
     // endregion

@@ -137,8 +137,7 @@ open class SqGenericLocalDateWriter(
     override fun notNullValueToComment(value: LocalDate): String = value.toString()
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: LocalDate) {
-        val date = Date(value.atTime(OffsetTime.now()).toEpochSecond() * 1000)
-        target.setDate(parameterIndex, date)
+        target.setObject(parameterIndex, value)
     }
 }
 
@@ -170,8 +169,7 @@ open class SqGenericLocalDateTimeWriter(
     override fun notNullValueToComment(value: LocalDateTime): String = value.toString()
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: LocalDateTime) {
-        val timestamp = Timestamp(value.toInstant(OffsetTime.now().offset).toEpochMilli())
-        target.setTimestamp(parameterIndex, timestamp)
+        target.setObject(parameterIndex, value)
     }
 }
 
@@ -203,10 +201,7 @@ open class SqGenericLocalTimeWriter(
     override fun notNullValueToComment(value: LocalTime): String = value.toString()
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: LocalTime) {
-        val time = OffsetDateTime
-            .of(LocalDate.now(), value, OffsetTime.now().offset)
-            .let { Time(it.toEpochSecond() * 1000) }
-        target.setTime(parameterIndex, time)
+        target.setObject(parameterIndex, value)
     }
 }
 
@@ -238,8 +233,7 @@ open class SqGenericOffsetDateTimeWriter(
     override fun notNullValueToComment(value: OffsetDateTime): String = value.toString()
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: OffsetDateTime) {
-        val timestamp = Timestamp(value.toInstant().toEpochMilli())
-        target.setTimestamp(parameterIndex, timestamp)
+        target.setObject(parameterIndex, value)
     }
 }
 
@@ -271,8 +265,7 @@ open class SqGenericOffsetTimeWriter(
     override fun notNullValueToComment(value: OffsetTime): String = value.toString()
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: OffsetTime) {
-        val time = Time(value.atDate(LocalDate.now()).toInstant().toEpochMilli())
-        target.setTime(parameterIndex, time)
+        target.setObject(parameterIndex, value)
     }
 }
 

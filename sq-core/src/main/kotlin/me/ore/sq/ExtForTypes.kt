@@ -22,14 +22,8 @@ import java.time.OffsetDateTime
 import java.time.OffsetTime
 
 
-// region DB types-placeholders
-interface SqDbTypeBit
-// endregion
-
-
 interface SqTypeHolder {
     // region Boolean types
-    val bit: SqType<Boolean, SqDbTypeBit>
     val boolean: SqType<Boolean, Boolean>
 
     val javaBoolean: SqType<Boolean, Boolean>
@@ -186,21 +180,6 @@ fun SqTable.booleanNotNull(columnName: String): SqTableColumn<Boolean, Boolean> 
 fun SqTable.booleanNullable(columnName: String): SqTableColumn<Boolean?, Boolean> =
     this.column(SqGenericTypeHolder.boolean.nullable(), columnName)
 
-fun SqContext.bitType(): SqType<Boolean, SqDbTypeBit> =
-    this.typeHolder().bit
-@JvmName("bitParam__not_null")
-fun SqContext.bitParam(value: Boolean): SqParameter<Boolean, SqDbTypeBit> =
-    this.param(this.bitType(), value)
-@JvmName("bitParam__nullable")
-fun SqContext.bitParam(value: Boolean?): SqParameter<Boolean?, SqDbTypeBit> =
-    this.param(this.bitType().nullable(), value)
-fun SqContext.bitNull(): SqNull<Boolean, SqDbTypeBit> =
-    this.nullItem(this.bitType().nullable())
-fun SqTable.bitNotNull(columnName: String): SqTableColumn<Boolean, SqDbTypeBit> =
-    this.column(SqGenericTypeHolder.bit, columnName)
-fun SqTable.bitNullable(columnName: String): SqTableColumn<Boolean?, SqDbTypeBit> =
-    this.column(SqGenericTypeHolder.bit.nullable(), columnName)
-
 
 fun SqContext.javaBooleanType(): SqType<Boolean, Boolean> =
     this.typeHolder().javaBoolean
@@ -336,19 +315,19 @@ fun SqTable.timeAsTimeNotNull(columnName: String): SqTableColumn<Time, Time> =
 fun SqTable.timeAsTimeNullable(columnName: String): SqTableColumn<Time?, Time> =
     this.column(SqGenericTypeHolder.timeAsTime.nullable(), columnName)
 
-fun SqContext.timeWithTimeZoneType(): SqType<OffsetTime, Time> =
+fun SqContext.timeTZType(): SqType<OffsetTime, Time> =
     this.typeHolder().timeWithTimeZone
-@JvmName("timeWithTimeZoneParam__not_null")
-fun SqContext.timeWithTimeZoneParam(value: OffsetTime): SqParameter<OffsetTime, Time> =
-    this.param(this.timeWithTimeZoneType(), value)
-@JvmName("timeWithTimeZoneParam__nullable")
-fun SqContext.timeWithTimeZoneParam(value: OffsetTime?): SqParameter<OffsetTime?, Time> =
-    this.param(this.timeWithTimeZoneType().nullable(), value)
-fun SqContext.timeWithTimeZoneNull(): SqNull<OffsetTime, Time> =
-    this.nullItem(this.timeWithTimeZoneType().nullable())
-fun SqTable.timeWithTimeZoneNotNull(columnName: String): SqTableColumn<OffsetTime, Time> =
+@JvmName("timeTZParam__not_null")
+fun SqContext.timeTZParam(value: OffsetTime): SqParameter<OffsetTime, Time> =
+    this.param(this.timeTZType(), value)
+@JvmName("timeTZParam__nullable")
+fun SqContext.timeTZParam(value: OffsetTime?): SqParameter<OffsetTime?, Time> =
+    this.param(this.timeTZType().nullable(), value)
+fun SqContext.timeTZNull(): SqNull<OffsetTime, Time> =
+    this.nullItem(this.timeTZType().nullable())
+fun SqTable.timeTZNotNull(columnName: String): SqTableColumn<OffsetTime, Time> =
     this.column(SqGenericTypeHolder.timeWithTimeZone, columnName)
-fun SqTable.timeWithTimeZoneNullable(columnName: String): SqTableColumn<OffsetTime?, Time> =
+fun SqTable.timeTZNullable(columnName: String): SqTableColumn<OffsetTime?, Time> =
     this.column(SqGenericTypeHolder.timeWithTimeZone.nullable(), columnName)
 
 fun SqContext.timestampType(): SqType<LocalDateTime, Timestamp> =
@@ -381,19 +360,19 @@ fun SqTable.timestampAsTimestampNotNull(columnName: String): SqTableColumn<Times
 fun SqTable.timestampAsTimestampNullable(columnName: String): SqTableColumn<Timestamp?, Timestamp> =
     this.column(SqGenericTypeHolder.timestampAsTimestamp.nullable(), columnName)
 
-fun SqContext.timestampWithTimeZoneType(): SqType<OffsetDateTime, Timestamp> =
+fun SqContext.timestampTZType(): SqType<OffsetDateTime, Timestamp> =
     this.typeHolder().timestampWithTimeZone
-@JvmName("timestampWithTimeZoneParam__not_null")
-fun SqContext.timestampWithTimeZoneParam(value: OffsetDateTime): SqParameter<OffsetDateTime, Timestamp> =
-    this.param(this.timestampWithTimeZoneType(), value)
-@JvmName("timestampWithTimeZoneParam__nullable")
-fun SqContext.timestampWithTimeZoneParam(value: OffsetDateTime?): SqParameter<OffsetDateTime?, Timestamp> =
-    this.param(this.timestampWithTimeZoneType().nullable(), value)
-fun SqContext.timestampWithTimeZoneNull(): SqNull<OffsetDateTime, Timestamp> =
-    this.nullItem(this.timestampWithTimeZoneType().nullable())
-fun SqTable.timestampWithTimeZoneNotNull(columnName: String): SqTableColumn<OffsetDateTime, Timestamp> =
+@JvmName("timestampTZParam__not_null")
+fun SqContext.timestampTZParam(value: OffsetDateTime): SqParameter<OffsetDateTime, Timestamp> =
+    this.param(this.timestampTZType(), value)
+@JvmName("timestampTZParam__nullable")
+fun SqContext.timestampTZParam(value: OffsetDateTime?): SqParameter<OffsetDateTime?, Timestamp> =
+    this.param(this.timestampTZType().nullable(), value)
+fun SqContext.timestampTZNull(): SqNull<OffsetDateTime, Timestamp> =
+    this.nullItem(this.timestampTZType().nullable())
+fun SqTable.timestampTZNotNull(columnName: String): SqTableColumn<OffsetDateTime, Timestamp> =
     this.column(SqGenericTypeHolder.timestampWithTimeZone, columnName)
-fun SqTable.timestampWithTimeZoneNullable(columnName: String): SqTableColumn<OffsetDateTime?, Timestamp> =
+fun SqTable.timestampTZNullable(columnName: String): SqTableColumn<OffsetDateTime?, Timestamp> =
     this.column(SqGenericTypeHolder.timestampWithTimeZone.nullable(), columnName)
 
 

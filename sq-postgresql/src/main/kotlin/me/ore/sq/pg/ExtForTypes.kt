@@ -9,14 +9,13 @@ import java.sql.*
 import java.time.*
 
 
+// region DB types-placeholders
+interface SqPgDbTypeBit
+// endregion
+
+
 interface SqPgTypeHolder: SqTypeHolder {
     // region Boolean types
-    val pgSingleBit: SqType<Boolean, SqDbTypeBit>
-    override val bit: SqType<Boolean, SqDbTypeBit>
-        get() = this.pgSingleBit
-
-    val pgSingleBitArray: SqType<List<Boolean?>, Array<SqDbTypeBit>>
-
     val pgBoolean: SqType<Boolean, Boolean>
     override val boolean: SqType<Boolean, Boolean>
         get() = this.pgBoolean
@@ -207,17 +206,23 @@ interface SqPgTypeHolder: SqTypeHolder {
 
     val pgJsonBArray: SqType<List<String?>, Array<String>>
 
-    /** bit(x), where x >= 2 */
-    val pgMultiBit: SqType<BooleanArray, SqDbTypeBit>
+    /** bit(x), where x unlimited */
+    val pgMultiBit: SqType<BooleanArray, SqPgDbTypeBit>
 
-    /** bit(x), where x >= 2 */
-    val pgMultiBitArray: SqType<List<BooleanArray?>, Array<SqDbTypeBit>>
+    /** bit(x), where x unlimited */
+    val pgMultiBitArray: SqType<List<BooleanArray?>, Array<SqPgDbTypeBit>>
+
+    /** bit(x), where x = 1 */
+    val pgSingleBit: SqType<Boolean, SqPgDbTypeBit>
+
+    /** bit(x), where x = 1 */
+    val pgSingleBitArray: SqType<List<Boolean?>, Array<SqPgDbTypeBit>>
 
     /** bit varying */
-    val pgVarBit: SqType<BooleanArray, SqDbTypeBit>
+    val pgVarBit: SqType<BooleanArray, SqPgDbTypeBit>
 
     /** bit varying */
-    val pgVarBitArray: SqType<List<BooleanArray?>, Array<SqDbTypeBit>>
+    val pgVarBitArray: SqType<List<BooleanArray?>, Array<SqPgDbTypeBit>>
     // endregion
 }
 
@@ -227,36 +232,6 @@ fun SqContext.pgTypeHolder(): SqPgTypeHolder =
 
 
 // region Boolean types
-fun SqContext.pgSingleBitType(): SqType<Boolean, SqDbTypeBit> =
-    this.pgTypeHolder().pgSingleBit
-@JvmName("pgSingleBitParam__not_null")
-fun SqContext.pgSingleBitParam(value: Boolean): SqParameter<Boolean, SqDbTypeBit> =
-    this.param(this.pgSingleBitType(), value)
-@JvmName("pgSingleBitParam__nullable")
-fun SqContext.pgSingleBitParam(value: Boolean?): SqParameter<Boolean?, SqDbTypeBit> =
-    this.param(this.pgSingleBitType().nullable(), value)
-fun SqContext.pgSingleBitNull(): SqNull<Boolean, SqDbTypeBit> =
-    this.nullItem(this.pgSingleBitType().nullable())
-fun SqTable.pgSingleBitNotNull(columnName: String): SqTableColumn<Boolean, SqDbTypeBit> =
-    this.column(SqPgTypeHolderImpl.pgSingleBit, columnName)
-fun SqTable.pgSingleBitNullable(columnName: String): SqTableColumn<Boolean?, SqDbTypeBit> =
-    this.column(SqPgTypeHolderImpl.pgSingleBit.nullable(), columnName)
-
-fun SqContext.pgSingleBitArrayType(): SqType<List<Boolean?>, Array<SqDbTypeBit>> =
-    this.pgTypeHolder().pgSingleBitArray
-@JvmName("pgSingleBitArrayParam__not_null")
-fun SqContext.pgSingleBitArrayParam(value: List<Boolean?>): SqParameter<List<Boolean?>, Array<SqDbTypeBit>> =
-    this.param(this.pgSingleBitArrayType(), value)
-@JvmName("pgSingleBitArrayParam__nullable")
-fun SqContext.pgSingleBitArrayParam(value: List<Boolean?>?): SqParameter<List<Boolean?>?, Array<SqDbTypeBit>> =
-    this.param(this.pgSingleBitArrayType().nullable(), value)
-fun SqContext.pgSingleBitArrayNull(): SqNull<List<Boolean?>, Array<SqDbTypeBit>> =
-    this.nullItem(this.pgSingleBitArrayType().nullable())
-fun SqTable.pgSingleBitArrayNotNull(columnName: String): SqTableColumn<List<Boolean?>, Array<SqDbTypeBit>> =
-    this.column(SqPgTypeHolderImpl.pgSingleBitArray, columnName)
-fun SqTable.pgSingleBitArrayNullable(columnName: String): SqTableColumn<List<Boolean?>?, Array<SqDbTypeBit>> =
-    this.column(SqPgTypeHolderImpl.pgSingleBitArray.nullable(), columnName)
-
 fun SqContext.pgBooleanType(): SqType<Boolean, Boolean> =
     this.pgTypeHolder().pgBoolean
 @JvmName("pgBooleanParam__not_null")
@@ -935,63 +910,93 @@ fun SqTable.pgJsonBArrayNotNull(columnName: String): SqTableColumn<List<String?>
 fun SqTable.pgJsonBArrayNullable(columnName: String): SqTableColumn<List<String?>?, Array<String>> =
     this.column(SqPgTypeHolderImpl.pgJsonBArray.nullable(), columnName)
 
-fun SqContext.pgMultiBitType(): SqType<BooleanArray, SqDbTypeBit> =
+fun SqContext.pgMultiBitType(): SqType<BooleanArray, SqPgDbTypeBit> =
     this.pgTypeHolder().pgMultiBit
 @JvmName("pgMultiBitParam__not_null")
-fun SqContext.pgMultiBitParam(value: BooleanArray): SqParameter<BooleanArray, SqDbTypeBit> =
+fun SqContext.pgMultiBitParam(value: BooleanArray): SqParameter<BooleanArray, SqPgDbTypeBit> =
     this.param(this.pgMultiBitType(), value)
 @JvmName("pgMultiBitParam__nullable")
-fun SqContext.pgMultiBitParam(value: BooleanArray?): SqParameter<BooleanArray?, SqDbTypeBit> =
+fun SqContext.pgMultiBitParam(value: BooleanArray?): SqParameter<BooleanArray?, SqPgDbTypeBit> =
     this.param(this.pgMultiBitType().nullable(), value)
-fun SqContext.pgMultiBitNull(): SqNull<BooleanArray, SqDbTypeBit> =
+fun SqContext.pgMultiBitNull(): SqNull<BooleanArray, SqPgDbTypeBit> =
     this.nullItem(this.pgMultiBitType().nullable())
-fun SqTable.pgMultiBitNotNull(columnName: String): SqTableColumn<BooleanArray, SqDbTypeBit> =
+fun SqTable.pgMultiBitNotNull(columnName: String): SqTableColumn<BooleanArray, SqPgDbTypeBit> =
     this.column(SqPgTypeHolderImpl.pgMultiBit, columnName)
-fun SqTable.pgMultiBitNullable(columnName: String): SqTableColumn<BooleanArray?, SqDbTypeBit> =
+fun SqTable.pgMultiBitNullable(columnName: String): SqTableColumn<BooleanArray?, SqPgDbTypeBit> =
     this.column(SqPgTypeHolderImpl.pgMultiBit.nullable(), columnName)
 
-fun SqContext.pgMultiBitArrayType(): SqType<List<BooleanArray?>, Array<SqDbTypeBit>> =
+fun SqContext.pgMultiBitArrayType(): SqType<List<BooleanArray?>, Array<SqPgDbTypeBit>> =
     this.pgTypeHolder().pgMultiBitArray
 @JvmName("pgMultiBitArrayParam__not_null")
-fun SqContext.pgMultiBitArrayParam(value: List<BooleanArray?>): SqParameter<List<BooleanArray?>, Array<SqDbTypeBit>> =
+fun SqContext.pgMultiBitArrayParam(value: List<BooleanArray?>): SqParameter<List<BooleanArray?>, Array<SqPgDbTypeBit>> =
     this.param(this.pgMultiBitArrayType(), value)
 @JvmName("pgMultiBitArrayParam__nullable")
-fun SqContext.pgMultiBitArrayParam(value: List<BooleanArray?>?): SqParameter<List<BooleanArray?>?, Array<SqDbTypeBit>> =
+fun SqContext.pgMultiBitArrayParam(value: List<BooleanArray?>?): SqParameter<List<BooleanArray?>?, Array<SqPgDbTypeBit>> =
     this.param(this.pgMultiBitArrayType().nullable(), value)
-fun SqContext.pgMultiBitArrayNull(): SqNull<List<BooleanArray?>, Array<SqDbTypeBit>> =
+fun SqContext.pgMultiBitArrayNull(): SqNull<List<BooleanArray?>, Array<SqPgDbTypeBit>> =
     this.nullItem(this.pgMultiBitArrayType().nullable())
-fun SqTable.pgMultiBitArrayNotNull(columnName: String): SqTableColumn<List<BooleanArray?>, Array<SqDbTypeBit>> =
+fun SqTable.pgMultiBitArrayNotNull(columnName: String): SqTableColumn<List<BooleanArray?>, Array<SqPgDbTypeBit>> =
     this.column(SqPgTypeHolderImpl.pgMultiBitArray, columnName)
-fun SqTable.pgMultiBitArrayNullable(columnName: String): SqTableColumn<List<BooleanArray?>?, Array<SqDbTypeBit>> =
+fun SqTable.pgMultiBitArrayNullable(columnName: String): SqTableColumn<List<BooleanArray?>?, Array<SqPgDbTypeBit>> =
     this.column(SqPgTypeHolderImpl.pgMultiBitArray.nullable(), columnName)
 
-fun SqContext.pgVarBitType(): SqType<BooleanArray, SqDbTypeBit> =
+fun SqContext.pgSingleBitType(): SqType<Boolean, SqPgDbTypeBit> =
+    this.pgTypeHolder().pgSingleBit
+@JvmName("pgSingleBitParam__not_null")
+fun SqContext.pgSingleBitParam(value: Boolean): SqParameter<Boolean, SqPgDbTypeBit> =
+    this.param(this.pgSingleBitType(), value)
+@JvmName("pgSingleBitParam__nullable")
+fun SqContext.pgSingleBitParam(value: Boolean?): SqParameter<Boolean?, SqPgDbTypeBit> =
+    this.param(this.pgSingleBitType().nullable(), value)
+fun SqContext.pgSingleBitNull(): SqNull<Boolean, SqPgDbTypeBit> =
+    this.nullItem(this.pgSingleBitType().nullable())
+fun SqTable.pgSingleBitNotNull(columnName: String): SqTableColumn<Boolean, SqPgDbTypeBit> =
+    this.column(SqPgTypeHolderImpl.pgSingleBit, columnName)
+fun SqTable.pgSingleBitNullable(columnName: String): SqTableColumn<Boolean?, SqPgDbTypeBit> =
+    this.column(SqPgTypeHolderImpl.pgSingleBit.nullable(), columnName)
+
+fun SqContext.pgSingleBitArrayType(): SqType<List<Boolean?>, Array<SqPgDbTypeBit>> =
+    this.pgTypeHolder().pgSingleBitArray
+@JvmName("pgSingleBitArrayParam__not_null")
+fun SqContext.pgSingleBitArrayParam(value: List<Boolean?>): SqParameter<List<Boolean?>, Array<SqPgDbTypeBit>> =
+    this.param(this.pgSingleBitArrayType(), value)
+@JvmName("pgSingleBitArrayParam__nullable")
+fun SqContext.pgSingleBitArrayParam(value: List<Boolean?>?): SqParameter<List<Boolean?>?, Array<SqPgDbTypeBit>> =
+    this.param(this.pgSingleBitArrayType().nullable(), value)
+fun SqContext.pgSingleBitArrayNull(): SqNull<List<Boolean?>, Array<SqPgDbTypeBit>> =
+    this.nullItem(this.pgSingleBitArrayType().nullable())
+fun SqTable.pgSingleBitArrayNotNull(columnName: String): SqTableColumn<List<Boolean?>, Array<SqPgDbTypeBit>> =
+    this.column(SqPgTypeHolderImpl.pgSingleBitArray, columnName)
+fun SqTable.pgSingleBitArrayNullable(columnName: String): SqTableColumn<List<Boolean?>?, Array<SqPgDbTypeBit>> =
+    this.column(SqPgTypeHolderImpl.pgSingleBitArray.nullable(), columnName)
+
+fun SqContext.pgVarBitType(): SqType<BooleanArray, SqPgDbTypeBit> =
     this.pgTypeHolder().pgVarBit
 @JvmName("pgVarBitParam__ not_null")
-fun SqContext.pgVarBitParam(value: BooleanArray): SqParameter<BooleanArray, SqDbTypeBit> =
+fun SqContext.pgVarBitParam(value: BooleanArray): SqParameter<BooleanArray, SqPgDbTypeBit> =
     this.param(this.pgVarBitType(), value)
 @JvmName("pgVarBitParam__nullable")
-fun SqContext.pgVarBitParam(value: BooleanArray?): SqParameter<BooleanArray?, SqDbTypeBit> =
+fun SqContext.pgVarBitParam(value: BooleanArray?): SqParameter<BooleanArray?, SqPgDbTypeBit> =
     this.param(this.pgVarBitType().nullable(), value)
-fun SqContext.pgVarBitNull(): SqNull<BooleanArray, SqDbTypeBit> =
+fun SqContext.pgVarBitNull(): SqNull<BooleanArray, SqPgDbTypeBit> =
     this.nullItem(this.pgVarBitType().nullable())
-fun SqTable.pgVarBitNotNull(columnName: String): SqTableColumn<BooleanArray, SqDbTypeBit> =
+fun SqTable.pgVarBitNotNull(columnName: String): SqTableColumn<BooleanArray, SqPgDbTypeBit> =
     this.column(SqPgTypeHolderImpl.pgVarBit, columnName)
-fun SqTable.pgVarBitNullable(columnName: String): SqTableColumn<BooleanArray?, SqDbTypeBit> =
+fun SqTable.pgVarBitNullable(columnName: String): SqTableColumn<BooleanArray?, SqPgDbTypeBit> =
     this.column(SqPgTypeHolderImpl.pgVarBit.nullable(), columnName)
 
-fun SqContext.pgVarBitArrayType(): SqType<List<BooleanArray?>, Array<SqDbTypeBit>> =
+fun SqContext.pgVarBitArrayType(): SqType<List<BooleanArray?>, Array<SqPgDbTypeBit>> =
     this.pgTypeHolder().pgVarBitArray
 @JvmName("pgVarBitArrayParam__not_null")
-fun SqContext.pgVarBitArrayParam(value: List<BooleanArray?>): SqParameter<List<BooleanArray?>, Array<SqDbTypeBit>> =
+fun SqContext.pgVarBitArrayParam(value: List<BooleanArray?>): SqParameter<List<BooleanArray?>, Array<SqPgDbTypeBit>> =
     this.param(this.pgVarBitArrayType(), value)
 @JvmName("pgVarBitArrayParam__nullable")
-fun SqContext.pgVarBitArrayParam(value: List<BooleanArray?>?): SqParameter<List<BooleanArray?>?, Array<SqDbTypeBit>> =
+fun SqContext.pgVarBitArrayParam(value: List<BooleanArray?>?): SqParameter<List<BooleanArray?>?, Array<SqPgDbTypeBit>> =
     this.param(this.pgVarBitArrayType().nullable(), value)
-fun SqContext.pgVarBitArrayNull(): SqNull<List<BooleanArray?>, Array<SqDbTypeBit>> =
+fun SqContext.pgVarBitArrayNull(): SqNull<List<BooleanArray?>, Array<SqPgDbTypeBit>> =
     this.nullItem(this.pgVarBitArrayType().nullable())
-fun SqTable.pgVarBitArrayNotNull(columnName: String): SqTableColumn<List<BooleanArray?>, Array<SqDbTypeBit>> =
+fun SqTable.pgVarBitArrayNotNull(columnName: String): SqTableColumn<List<BooleanArray?>, Array<SqPgDbTypeBit>> =
     this.column(SqPgTypeHolderImpl.pgVarBitArray, columnName)
-fun SqTable.pgVarBitArrayNullable(columnName: String): SqTableColumn<List<BooleanArray?>?, Array<SqDbTypeBit>> =
+fun SqTable.pgVarBitArrayNullable(columnName: String): SqTableColumn<List<BooleanArray?>?, Array<SqPgDbTypeBit>> =
     this.column(SqPgTypeHolderImpl.pgVarBitArray.nullable(), columnName)
 // endregion
