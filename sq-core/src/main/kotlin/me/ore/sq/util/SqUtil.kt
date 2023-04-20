@@ -129,5 +129,32 @@ object SqUtil {
             value.toString()
         }
     }
+
+    fun escapeCommentContent(content: String): String {
+        if (content.length < 2) return content
+
+        return buildString(content.length) {
+            for (i in 0 until content.lastIndex) {
+                when (val char = content[i]) {
+                    '/' -> {
+                        if (content[i + 1] == '*') {
+                            this.append("/ ")
+                        } else {
+                            this.append('/')
+                        }
+                    }
+                    '*' -> {
+                        if (content[i + 1] == '/') {
+                            this.append("* ")
+                        } else {
+                            this.append('*')
+                        }
+                    }
+                    else -> this.append(char)
+                }
+            }
+            this.append(content.last())
+        }
+    }
     // endregion
 }

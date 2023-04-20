@@ -138,22 +138,9 @@ abstract class SqPgArrayWriterBase<E: Any>: SqValueWriterBase<List<E?>>() {
     override val sqlType: Int
         get() = SqPgTypes.ARRAY
 
-    protected abstract val arrayItemClass: Class<out Any>
     protected abstract val arrayItemTypeName: String
 
-    protected abstract fun convertItem(item: E?): Any?
-
-    protected open fun convertValue(value: List<E?>): Array<Any?> {
-        val result: Array<Any?> = run {
-            @Suppress("UNCHECKED_CAST")
-            java.lang.reflect.Array.newInstance(this.arrayItemClass, value.size) as Array<Any?>
-        }
-        value.forEachIndexed { index, valueItem ->
-            val jdbcArrayItem = this.convertItem(valueItem)
-            result[index] = jdbcArrayItem
-        }
-        return result
-    }
+    protected abstract fun convertValue(value: List<E?>): Array<*>
 
     override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: List<E?>) {
         val jdbcArrayItems = this.convertValue(value)
@@ -193,70 +180,14 @@ open class SqPgBooleanArrayReader: SqPgArrayReaderBase<Boolean>() {
 open class SqPgBooleanArrayWriter: SqPgArrayWriterBase<Boolean>() {
     override val typeName: String?
         get() = SqPgTypes.BOOLEAN_ARRAY__TYPE_NAME
+    override val arrayItemTypeName: String
+        get() = SqPgTypes.BOOLEAN__TYPE_NAME
 
     override fun notNullValueToComment(value: List<Boolean?>): String {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = Boolean::class.java
-    override val arrayItemTypeName: String
-        get() = SqPgTypes.BOOLEAN__TYPE_NAME
-
-    override fun convertItem(item: Boolean?): Any? = item
-}
-
-open class SqPgSingleBitReader: SqValueReader<Boolean> {
-    override fun readNullable(source: ResultSet, columnIndex: Int): Boolean? {
-        return source.getBoolean(columnIndex).takeUnless { source.wasNull() }
-    }
-}
-
-open class SqPgSingleBitWriter: SqValueWriterBase<Boolean>() {
-    override val sqlType: Int
-        get() = SqPgTypes.BIT
-    override val typeName: String?
-        get() = SqPgTypes.BIT__TYPE_NAME
-
-    override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Boolean) {
-        target.setObject(
-            parameterIndex,
-            PGobject().apply {
-                this.type = this@SqPgSingleBitWriter.typeName
-                this.value = if (value) "1" else "0"
-            }
-        )
-    }
-
-    override fun notNullValueToComment(value: Boolean): String = value.toString()
-}
-
-open class SqPgSingleBitArrayReader: SqPgArrayReaderBase<Boolean>() {
-    override fun readItem(itemSource: ResultSet, columnIndex: Int): Boolean? {
-        return itemSource.getBoolean(columnIndex).takeUnless { itemSource.wasNull() }
-    }
-}
-
-open class SqPgSingleBitArrayWriter: SqPgArrayWriterBase<Boolean>() {
-    override val typeName: String?
-        get() = SqPgTypes.BIT_ARRAY__TYPE_NAME
-
-    override fun notNullValueToComment(value: List<Boolean?>): String {
-        return SqUtil.prepareCollectionValueForComment(value.map {
-            when (it) {
-                true -> "1"
-                false -> "0"
-                null -> "NULL"
-            }
-        })
-    }
-
-    override val arrayItemClass: Class<out Any>
-        get() = Boolean::class.java
-    override val arrayItemTypeName: String
-        get() = SqPgTypes.BIT__TYPE_NAME
-
-    override fun convertItem(item: Boolean?): Any? = item
+    override fun convertValue(value: List<Boolean?>): Array<*> = value.toTypedArray()
 }
 // endregion
 
@@ -290,6 +221,8 @@ open class SqPgByteaArrayReader: SqPgArrayReaderBase<ByteArray>() {
 open class SqPgByteaArrayWriter: SqPgArrayWriterBase<ByteArray>() {
     override val typeName: String?
         get() = SqPgTypes.BYTEA_ARRAY__TYPE_NAME
+    override val arrayItemTypeName: String
+        get() = SqPgTypes.BYTEA__TYPE_NAME
 
     override fun notNullValueToComment(value: List<ByteArray?>): String {
         return SqUtil.prepareCollectionValueForComment(value.map {
@@ -301,12 +234,7 @@ open class SqPgByteaArrayWriter: SqPgArrayWriterBase<ByteArray>() {
         })
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = ByteArray::class.java
-    override val arrayItemTypeName: String
-        get() = SqPgTypes.BYTEA__TYPE_NAME
-
-    override fun convertItem(item: ByteArray?): Any? = item
+    override fun convertValue(value: List<ByteArray?>): Array<*> = value.toTypedArray()
 }
 // endregion
 
@@ -359,17 +287,14 @@ open class SqPgDateArrayReader: SqPgArrayReaderBase<LocalDate>() {
 open class SqPgDateArrayWriter: SqPgArrayWriterBase<LocalDate>() {
     override val typeName: String?
         get() = SqPgTypes.DATE_ARRAY__TYPE_NAME
+    override val arrayItemTypeName: String
+        get() = SqPgTypes.DATE__TYPE_NAME
 
     override fun notNullValueToComment(value: List<LocalDate?>): String {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = LocalDate::class.java
-    override val arrayItemTypeName: String
-        get() = SqPgTypes.DATE__TYPE_NAME
-
-    override fun convertItem(item: LocalDate?): Any? = item
+    override fun convertValue(value: List<LocalDate?>): Array<*> = value.toTypedArray()
 }
 
 
@@ -427,10 +352,7 @@ open class SqPgTimeArrayWriter: SqPgArrayWriterBase<LocalTime>() {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = LocalTime::class.java
-
-    override fun convertItem(item: LocalTime?): Any? = item
+    override fun convertValue(value: List<LocalTime?>): Array<*> = value.toTypedArray()
 }
 
 
@@ -469,10 +391,7 @@ open class SqPgTimeTZArrayWriter: SqPgArrayWriterBase<OffsetTime>() {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = OffsetTime::class.java
-
-    override fun convertItem(item: OffsetTime?): Any? = item
+    override fun convertValue(value: List<OffsetTime?>): Array<*> = value.toTypedArray()
 }
 
 
@@ -523,17 +442,14 @@ open class SqPgTimestampArrayReader: SqPgArrayReaderBase<LocalDateTime>() {
 open class SqPgTimestampArrayWriter: SqPgArrayWriterBase<LocalDateTime>() {
     override val typeName: String?
         get() = SqPgTypes.TIMESTAMP_ARRAY__TYPE_NAME
+    override val arrayItemTypeName: String
+        get() = SqPgTypes.TIMESTAMP__TYPE_NAME
 
     override fun notNullValueToComment(value: List<LocalDateTime?>): String {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = LocalDateTime::class.java
-    override val arrayItemTypeName: String
-        get() = SqPgTypes.TIMESTAMP__TYPE_NAME
-
-    override fun convertItem(item: LocalDateTime?): Any? = item
+    override fun convertValue(value: List<LocalDateTime?>): Array<*> = value.toTypedArray()
 }
 
 
@@ -572,10 +488,7 @@ open class SqPgTimestampTZArrayWriter: SqPgArrayWriterBase<OffsetDateTime>() {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = OffsetDateTime::class.java
-
-    override fun convertItem(item: OffsetDateTime?): Any? = item
+    override fun convertValue(value: List<OffsetDateTime?>): Array<*> = value.toTypedArray()
 }
 // endregion
 
@@ -590,15 +503,12 @@ open class SqPgBigIntArrayReader: SqPgArrayReaderBase<Long>() {
 open class SqPgBigIntArrayWriter: SqPgArrayWriterBase<Long>() {
     override val typeName: String?
         get() = SqPgTypes.BIG_INT_ARRAY__TYPE_NAME
-
-    override fun notNullValueToComment(value: List<Long?>): String = SqUtil.prepareCollectionValueForComment(value)
-
-    override val arrayItemClass: Class<out Any>
-        get() = Long::class.java
     override val arrayItemTypeName: String
         get() = SqPgTypes.BIG_INT__TYPE_NAME
 
-    override fun convertItem(item: Long?): Any? = item
+    override fun notNullValueToComment(value: List<Long?>): String = SqUtil.prepareCollectionValueForComment(value)
+
+    override fun convertValue(value: List<Long?>): Array<*> = value.toTypedArray()
 }
 
 open class SqPgBigIntReader: SqValueReader<Long> {
@@ -636,10 +546,7 @@ open class SqPgDoubleArrayWriter: SqPgArrayWriterBase<Double>() {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = Double::class.java
-
-    override fun convertItem(item: Double?): Any? = item
+    override fun convertValue(value: List<Double?>): Array<*> = value.toTypedArray()
 }
 
 open class SqPgDoubleReader: SqValueReader<Double> {
@@ -677,10 +584,7 @@ open class SqPgIntegerArrayWriter: SqPgArrayWriterBase<Int>() {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = Int::class.java
-
-    override fun convertItem(item: Int?): Any? = item
+    override fun convertValue(value: List<Int?>): Array<*> = value.toTypedArray()
 }
 
 open class SqPgIntegerReader: SqValueReader<Int> {
@@ -737,10 +641,7 @@ open class SqPgNumericArrayWriter: SqPgArrayWriterBase<BigDecimal>() {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = BigDecimal::class.java
-
-    override fun convertItem(item: BigDecimal?): Any? = item
+    override fun convertValue(value: List<BigDecimal?>): Array<*> = value.toTypedArray()
 }
 
 open class SqPgNumericReader: SqValueReader<BigDecimal> {
@@ -778,10 +679,7 @@ open class SqPgRealArrayWriter: SqPgArrayWriterBase<Float>() {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = Float::class.java
-
-    override fun convertItem(item: Float?): Any? = item
+    override fun convertValue(value: List<Float?>): Array<*> = value.toTypedArray()
 }
 
 open class SqPgRealReader: SqValueReader<Float> {
@@ -819,10 +717,7 @@ open class SqPgSmallIntArrayWriter: SqPgArrayWriterBase<Short>() {
         return SqUtil.prepareCollectionValueForComment(value)
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = Short::class.java
-
-    override fun convertItem(item: Short?): Any? = item
+    override fun convertValue(value: List<Short?>): Array<*> = value.toTypedArray()
 }
 
 open class SqPgSmallIntReader: SqValueReader<Short> {
@@ -884,10 +779,7 @@ open class SqPgJavaStringListWriter(
         })
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = String::class.java
-
-    override fun convertItem(item: String?): Any? = item
+    override fun convertValue(value: List<String?>): Array<*> = value.toTypedArray()
 }
 // endregion
 
@@ -909,12 +801,7 @@ open class SqPgXmlArrayWriter: SqPgArrayWriterBase<SQLXML>() {
         return SqUtil.prepareStringValueForComment(value.toString())
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = String::class.java
-
-    override fun convertItem(item: SQLXML?): Any? {
-        return item?.string
-    }
+    override fun convertValue(value: List<SQLXML?>): Array<*> = value.map { it?.string }.toTypedArray()
 }
 
 open class SqPgXmlReader: SqValueReader<SQLXML> {
@@ -1027,17 +914,68 @@ open class SqPgMultiBitArrayWriter(
         })
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = PGobject::class.java
-
-    override fun convertItem(item: BooleanArray?): Any? {
-        return item?.let {
-            PGobject().apply {
-                this.type = this@SqPgMultiBitArrayWriter.arrayItemTypeName
-                this.value = SqPgUtil.bitsToString(item)
+    override fun convertValue(value: List<BooleanArray?>): Array<*> {
+        return value
+            .map { valueItem ->
+                valueItem?.let {
+                    PGobject().also {
+                        it.type = this.arrayItemTypeName
+                        it.value = SqPgUtil.bitsToString(valueItem)
+                    }
+                }
             }
-        }
+            .toTypedArray()
     }
+}
+
+open class SqPgSingleBitReader: SqValueReader<Boolean> {
+    override fun readNullable(source: ResultSet, columnIndex: Int): Boolean? {
+        return source.getBoolean(columnIndex).takeUnless { source.wasNull() }
+    }
+}
+
+open class SqPgSingleBitWriter: SqValueWriterBase<Boolean>() {
+    override val sqlType: Int
+        get() = SqPgTypes.BIT
+    override val typeName: String?
+        get() = SqPgTypes.BIT__TYPE_NAME
+
+    override fun writeNotNull(target: PreparedStatement, parameterIndex: Int, value: Boolean) {
+        target.setObject(
+            parameterIndex,
+            PGobject().apply {
+                this.type = this@SqPgSingleBitWriter.typeName
+                this.value = if (value) "1" else "0"
+            }
+        )
+    }
+
+    override fun notNullValueToComment(value: Boolean): String = value.toString()
+}
+
+open class SqPgSingleBitArrayReader: SqPgArrayReaderBase<Boolean>() {
+    override fun readItem(itemSource: ResultSet, columnIndex: Int): Boolean? {
+        return itemSource.getBoolean(columnIndex).takeUnless { itemSource.wasNull() }
+    }
+}
+
+open class SqPgSingleBitArrayWriter: SqPgArrayWriterBase<Boolean>() {
+    override val typeName: String?
+        get() = SqPgTypes.BIT_ARRAY__TYPE_NAME
+    override val arrayItemTypeName: String
+        get() = SqPgTypes.BIT__TYPE_NAME
+
+    override fun notNullValueToComment(value: List<Boolean?>): String {
+        return SqUtil.prepareCollectionValueForComment(value.map {
+            when (it) {
+                true -> "1"
+                false -> "0"
+                null -> "NULL"
+            }
+        })
+    }
+
+    override fun convertValue(value: List<Boolean?>): Array<*> = value.toTypedArray()
 }
 
 open class SqPgPGObjectWriter(
@@ -1063,16 +1001,6 @@ open class SqPgPGObjectArrayWriter(
         return SqUtil.prepareStringValueForComment(value.toString())
     }
 
-    override val arrayItemClass: Class<out Any>
-        get() = PGobject::class.java
-
-    override fun convertItem(item: String?): Any? {
-        return item?.let {
-            PGobject().also {
-                it.type = this.arrayItemTypeName
-                it.value = item
-            }
-        }
-    }
+    override fun convertValue(value: List<String?>): Array<*> = value.toTypedArray()
 }
 // endregion

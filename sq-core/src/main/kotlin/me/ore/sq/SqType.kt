@@ -136,6 +136,7 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
 
     fun write(target: PreparedStatement, parameterIndex: Int, value: JAVA) { this.writer.write(target, parameterIndex, value) }
 
-    fun valueToComment(value: JAVA?): String = this.writer.valueToComment(value).replace("*/", "* /")
-
+    fun valueToComment(value: JAVA?): String {
+        return SqUtil.escapeCommentContent(this.writer.valueToComment(value))
+    }
 }
