@@ -6,7 +6,7 @@ import me.ore.sq.*
 open class SqGenericBetweenTest<JAVA: Boolean?>(
     override val context: SqContext,
     override val type: SqType<JAVA, Boolean>,
-    override val negation: Boolean,
+    override val negative: Boolean,
     override val testedValue: SqExpression<*, *>,
     override val firstRangeValue: SqExpression<*, *>,
     override val secondRangeValue: SqExpression<*, *>,
@@ -16,12 +16,12 @@ open class SqGenericBetweenTest<JAVA: Boolean?>(
             override fun <JAVA : Boolean?> createBetweenTest(
                 context: SqContext,
                 type: SqType<JAVA, Boolean>,
-                negation: Boolean,
+                negative: Boolean,
                 testedValue: SqExpression<*, *>,
                 firstRangeValue: SqExpression<*, *>,
                 secondRangeValue: SqExpression<*, *>
             ): SqBetweenTest<JAVA> {
-                return SqGenericBetweenTest(context, type, negation, testedValue, firstRangeValue, secondRangeValue)
+                return SqGenericBetweenTest(context, type, negative, testedValue, firstRangeValue, secondRangeValue)
             }
         }
     }

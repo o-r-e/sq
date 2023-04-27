@@ -12,11 +12,11 @@ abstract class SqPgReadStatementBase: SqReadStatement {
         }
     }
 
-    override fun setResultCountValue(value: Long?) {
-        this.resultCountParam = if (value == null) {
+    override fun setResultCountValue(resultCount: Long?) {
+        this.resultCountParam = if (resultCount == null) {
             null
         } else {
-            this.context.bigIntParam(value)
+            this.context.bigIntParam(resultCount)
         }
     }
 }

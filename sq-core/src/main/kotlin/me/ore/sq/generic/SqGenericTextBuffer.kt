@@ -1,21 +1,21 @@
 package me.ore.sq.generic
 
 import me.ore.sq.SqContext
-import me.ore.sq.SqWriter
-import me.ore.sq.SqWriterConstructor
+import me.ore.sq.SqTextBuffer
+import me.ore.sq.SqTextBufferConstructor
 
 
-open class SqGenericWriter(
+open class SqGenericTextBuffer(
     open val lineSeparator: String = DEFAULT_LINE_SEPARATOR,
     open val space: String = DEFAULT_SPACE,
-): SqWriter {
+): SqTextBuffer {
     companion object {
         const val DEFAULT_LINE_SEPARATOR = "\r\n"
         const val DEFAULT_SPACE = " "
 
-        val CONSTRUCTOR: SqWriterConstructor = object : SqWriterConstructor {
-            override fun createWriter(context: SqContext): SqWriter {
-                return SqGenericWriter()
+        val CONSTRUCTOR: SqTextBufferConstructor = object : SqTextBufferConstructor {
+            override fun createTextBuffer(context: SqContext): SqTextBuffer {
+                return SqGenericTextBuffer()
             }
         }
     }

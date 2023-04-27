@@ -17,7 +17,7 @@ sealed class SqContext(data: SqContextData): AutoCloseable {
     private var _data: SqContextData? = data
     val data: SqContextData
         get() = this._data ?: this.throwClosedError()
-    operator fun <JAVA: Any> get(objectClass: Class<JAVA>): JAVA? = this.data.objectMap[objectClass]
+    operator fun <JAVA: Any> get(objectClass: Class<JAVA>): JAVA? = this.data.objectHolder[objectClass]
     operator fun <JAVA: Any> get(objectClass: Class<JAVA>, defaultValue: JAVA): JAVA = this[objectClass] ?: defaultValue
 
     private var _columnIndexCache: MutableMap<SqColSet, MutableMap<SqColumn<*, *>, Int?>>? = null

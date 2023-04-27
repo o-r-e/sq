@@ -12,15 +12,15 @@ abstract class SqGenericReadStatementBase: SqReadStatement {
 
     override var firstResultIndexParam: SqParameter<Long, Number>?
         get() = null
-        set(value) { this.throwLimitsUnsupportedException() }
+        set(@Suppress("UNUSED_PARAMETER") value) { this.throwLimitsUnsupportedException() }
 
     override fun setFirstResultIndexValue(firstResultIndex: Long?) { this.throwLimitsUnsupportedException() }
 
 
     override var resultCountParam: SqParameter<Long, Number>?
         get() = null
-        set(value) { this.throwLimitsUnsupportedException() }
+        set(@Suppress("UNUSED_PARAMETER") value) { this.throwLimitsUnsupportedException() }
 
-    override fun setResultCountValue(value: Long?) { this.throwLimitsUnsupportedException() }
+    override fun setResultCountValue(resultCount: Long?) { this.throwLimitsUnsupportedException() }
     // endregion
 }

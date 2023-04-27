@@ -5,12 +5,12 @@ import me.ore.sq.*
 
 abstract class SqPgSelectBase: SqPgReadStatementBase(), SqSelect {
     @Suppress("DuplicatedCode")
-    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+    override fun appendSqlTo(target: SqTextBuffer, asPart: Boolean, spaced: Boolean) {
         val internalSpaceAllowed = if (asPart) {
-            target.add("(", spaced = spaceAllowed)
+            target.add("(", spaced = spaced)
             false
         } else {
-            spaceAllowed
+            spaced
         }
 
         target.add("SELECT ", spaced = internalSpaceAllowed)
@@ -18,51 +18,51 @@ abstract class SqPgSelectBase: SqPgReadStatementBase(), SqSelect {
 
         this.columns.forEachIndexed { index, column ->
             if (index > 0) target.add(", ")
-            column.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            column.definitionItem.appendSqlTo(target, asPart = true, spaced = false)
         }
 
         this.from?.takeIf { it.isNotEmpty() }?.let { from ->
             target.ls().add("FROM ")
             from.forEachIndexed { index, fromItem ->
                 if (index > 0) target.add(", ")
-                fromItem.definitionItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+                fromItem.definitionItem.appendSqlTo(target, asPart = true, spaced = false)
             }
         }
 
         this.where?.let { where ->
             target.ls().add("WHERE ")
-            where.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            where.appendSqlTo(target, asPart = true, spaced = false)
         }
 
         this.groupBy?.takeIf { it.isNotEmpty() }?.let { groupBy ->
             target.ls().add("GROUP BY ")
             groupBy.forEachIndexed { index, groupByItem ->
                 if (index > 0) target.add(", ")
-                groupByItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+                groupByItem.appendSqlTo(target, asPart = true, spaced = false)
             }
         }
 
         this.having?.let { having ->
             target.ls().add("HAVING ")
-            having.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            having.appendSqlTo(target, asPart = true, spaced = false)
         }
 
         this.orderBy?.takeIf { it.isNotEmpty() }?.let { orderBy ->
             target.ls().add("ORDER BY ")
             orderBy.forEachIndexed { index, orderByItem ->
                 if (index > 0) target.add(", ")
-                orderByItem.appendSqlTo(target, asPart = true, spaceAllowed = false)
+                orderByItem.appendSqlTo(target, asPart = true, spaced = false)
             }
         }
 
         this.resultCountParam?.let { resultCountParam ->
             target.ls().add("LIMIT ")
-            resultCountParam.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            resultCountParam.appendSqlTo(target, asPart = true, spaced = false)
         }
 
         this.firstResultIndexParam?.let { firstResultIndexParam ->
             target.ls().add("OFFSET ")
-            firstResultIndexParam.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            firstResultIndexParam.appendSqlTo(target, asPart = true, spaced = false)
         }
 
         if (asPart) target.add(")")

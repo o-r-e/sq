@@ -3,13 +3,13 @@ package me.ore.sq
 
 data class SqContextData(
     val printParameterValues: Boolean,
-    val objectMap: SqObjectMap,
+    val objectHolder: SqObjectHolder,
 ) {
     companion object {
         val EMPTY: SqContextData = run {
             SqContextData(
                 printParameterValues = false,
-                objectMap = SqObjectMap.EMPTY,
+                objectHolder = SqObjectHolder.EMPTY,
             )
         }
     }

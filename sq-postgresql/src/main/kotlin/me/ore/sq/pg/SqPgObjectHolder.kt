@@ -3,7 +3,7 @@ package me.ore.sq.pg
 import me.ore.sq.*
 
 
-data class SqPgObjectMap(
+data class SqPgObjectHolder(
     val multiColSelectConstructor: SqMultiColSelectConstructor = SqPgMultiColSelect.CONSTRUCTOR,
     val singleColSelectConstructor: SqSingleColSelectConstructor = SqPgSingleColSelect.CONSTRUCTOR,
     val connMultiColSelectConstructor: SqConnMultiColSelectConstructor = SqPgConnMultiColSelect.CONSTRUCTOR,
@@ -13,14 +13,14 @@ data class SqPgObjectMap(
     val singleColUnionConstructor: SqSingleColUnionConstructor = SqPgSingleColUnion.CONSTRUCTOR,
     val connMultiColUnionConstructor: SqConnMultiColUnionConstructor = SqPgConnMultiColUnion.CONSTRUCTOR,
     val connSingleColUnionConstructor: SqConnSingleColUnionConstructor = SqPgConnSingleColUnion.CONSTRUCTOR
-): SqObjectMap {
+): SqObjectHolder {
     companion object {
-        val INSTANCE: SqPgObjectMap = SqPgObjectMap()
+        val INSTANCE: SqPgObjectHolder = SqPgObjectHolder()
     }
 
 
-    override fun <T : Any> get(key: Class<T>): T? {
-        val result: Any? = when (key) {
+    override fun <T : Any> get(requiredClass: Class<T>): T? {
+        val result: Any? = when (requiredClass) {
             SqTypeHolder::class.java -> SqPgTypeHolderImpl
             SqPgTypeHolder::class.java -> SqPgTypeHolderImpl
 

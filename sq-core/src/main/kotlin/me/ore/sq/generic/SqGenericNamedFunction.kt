@@ -9,7 +9,7 @@ open class SqGenericNamedFunction<JAVA: Any?, DB: Any>(
     override val type: SqType<JAVA, DB>,
     override val name: String,
     override val nameSpaced: Boolean,
-    override val values: List<SqItem>,
+    override val params: List<SqItem>,
 ) : SqNamedFunction<JAVA, DB> {
     companion object {
         protected val SPACED_FUNCTION_NAMES: Set<String> = setOf(
@@ -23,10 +23,10 @@ open class SqGenericNamedFunction<JAVA: Any?, DB: Any>(
                 type: SqType<JAVA, DB>,
                 name: String,
                 nameSpaced: Boolean?,
-                values: List<SqItem>
+                params: List<SqItem>
             ): SqNamedFunction<JAVA, DB> {
                 val actualNameSpaced = nameSpaced ?: SPACED_FUNCTION_NAMES.contains(name.uppercase())
-                return SqGenericNamedFunction(context, type, name, actualNameSpaced, values)
+                return SqGenericNamedFunction(context, type, name, actualNameSpaced, params)
             }
         }
     }

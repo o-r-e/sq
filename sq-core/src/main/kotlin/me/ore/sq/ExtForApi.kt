@@ -10,12 +10,12 @@ import kotlin.contracts.contract
 
 
 // region Utils
-fun SqContext.writer(): SqWriter = this[SqWriterConstructor::class.java, SqGenericWriter.CONSTRUCTOR].createWriter(this)
+fun SqContext.writer(): SqTextBuffer = this[SqTextBufferConstructor::class.java, SqGenericTextBuffer.CONSTRUCTOR].createTextBuffer(this)
 
-fun <T: SqWriter> T.ls(): T = this.apply { this.addLineSeparator() }
-fun <T: SqWriter> T.add(text: String, spaced: Boolean = false): T = this.apply { this.addText(text, spaced) }
-fun <T: SqWriter> T.addSpaced(text: String): T = this.apply { this.addText(text, spaced = true) }
-fun <T: SqWriter> T.clear(): T = this.apply { this.clearData() }
+fun <T: SqTextBuffer> T.ls(): T = this.apply { this.addLineSeparator() }
+fun <T: SqTextBuffer> T.add(text: String, spaced: Boolean = false): T = this.apply { this.addText(text, spaced) }
+fun <T: SqTextBuffer> T.addSpaced(text: String): T = this.apply { this.addText(text, spaced = true) }
+fun <T: SqTextBuffer> T.clear(): T = this.apply { this.clearData() }
 
 fun <T: SqColumnValueMapping<*>> T.clear(): T = this.apply { this.clearData() }
 // endregion
@@ -72,8 +72,8 @@ fun <JAVA: Any, DB: Any> SqContext.nullItem(type: SqType<JAVA?, DB>): SqNull<JAV
         .createNull(this, type)
 }
 fun <JAVA: Any, DB: Any> SqContext.nullItem(): SqNull<JAVA, DB> {
-    return this[SqUntypedNullConstructor::class.java, SqGenericUntypedNull.CONSTRUCTOR]
-        .createUntypedNull(this)
+    return this[SqUnsafeNullConstructor::class.java, SqGenericUntypedNull.CONSTRUCTOR]
+        .createUnsafeNull(this)
 }
 
 
@@ -117,7 +117,7 @@ operator fun <JAVA: Any?, DB: Any> SqMultiColSetAlias<*>.get(originalColumn: SqC
 // endregion
 
 
-// region Boolean groups, "single value" tests
+// region Boolean groups, "single value" tests, comparisons
 fun <JAVA: Boolean?> SqContext.booleanGroup(type: SqType<JAVA, Boolean>, groupType: SqBooleanGroupType, items: List<SqExpression<*, Boolean>>): SqBooleanGroup<JAVA> {
     return this[SqBooleanGroupConstructor::class.java, SqGenericBooleanGroup.CONSTRUCTOR]
         .createBooleanGroup(this, type, groupType, items)
@@ -182,10 +182,9 @@ fun SqExpression<*, *>.nullTest(type: SqType<Boolean, Boolean>, negation: Boolea
     this.context.nullTest(type, negation, this)
 fun SqExpression<*, *>.isNull(type: SqType<Boolean, Boolean> = this.context.nullTestType()): SqNullTest = this.nullTest(type, negation = false)
 fun SqExpression<*, *>.isNotNull(type: SqType<Boolean, Boolean> = this.context.nullTestType()): SqNullTest = this.nullTest(type, negation = true)
-// endregion
 
 
-// region Comparisons
+
 fun <JAVA: Boolean?, DB: Any> SqContext.comparison(
     type: SqType<JAVA, Boolean>,
     firstOperand: SqExpression<*, DB>,
@@ -465,10 +464,10 @@ infix fun <JAVA: Any?, DB: Any> SqExpression<JAVA, DB>.notBetween(firstRangeValu
     this.notBetween(this.context.param(this.type.nullable(), firstRangeValue))
 @JvmName("and__not_null")
 infix fun <JAVA: Any, DB: Any> SqBetweenTestStart<JAVA, DB>.and(secondRangeValue: SqExpression<out Any, DB>): SqBetweenTest<Boolean> =
-    this.context.between(this.context.comparisonType(), this.negation, this.testedValue, this.firstRangeValue, secondRangeValue)
+    this.context.between(this.context.comparisonType(), this.negative, this.testedValue, this.firstRangeValue, secondRangeValue)
 @JvmName("and__nullable")
 infix fun <JAVA: Any?, DB: Any> SqBetweenTestStart<JAVA, DB>.and(secondRangeValue: SqExpression<out Any?, DB>): SqBetweenTest<Boolean?> =
-    this.context.between(this.context.comparisonType().nullable(), this.negation, this.testedValue, this.firstRangeValue, secondRangeValue)
+    this.context.between(this.context.comparisonType().nullable(), this.negative, this.testedValue, this.firstRangeValue, secondRangeValue)
 @JvmName("and__not_null")
 infix fun <JAVA: Any, DB: Any> SqBetweenTestStart<JAVA, DB>.and(secondRangeValue: JAVA): SqBetweenTest<Boolean> =
     this.and(this.context.param(this.type, secondRangeValue))
@@ -860,16 +859,16 @@ infix fun <JAVA: Any?, DB: Any> SqCaseBuildMiddle<JAVA, DB>.`else`(value: SqExpr
     this.startElseNullable(value)
 @JvmName("startElse__not_null")
 infix fun <JAVA: Any?, DB: Any> SqCaseBuildMiddle<JAVA, DB>.startElse(value: JAVA): SqCaseBuildEnd<JAVA, DB> =
-    this.startElse(this.context.param(this.types, value))
+    this.startElse(this.context.param(this.type, value))
 @JvmName("startElse__nullable")
 infix fun <JAVA: Any?, DB: Any> SqCaseBuildMiddle<JAVA, DB>.startElse(value: JAVA?): SqCaseBuildEnd<JAVA?, DB> =
-    this.startElse(this.context.param(this.types.nullable(), value))
+    this.startElse(this.context.param(this.type.nullable(), value))
 @JvmName("else__not_null")
 infix fun <JAVA: Any?, DB: Any> SqCaseBuildMiddle<JAVA, DB>.`else`(value: JAVA): SqCaseBuildEnd<JAVA, DB> =
-    this.`else`(this.context.param(this.types, value))
+    this.`else`(this.context.param(this.type, value))
 @JvmName("else__nullable")
 infix fun <JAVA: Any?, DB: Any> SqCaseBuildMiddle<JAVA, DB>.`else`(value: JAVA?): SqCaseBuildEnd<JAVA?, DB> =
-    this.`else`(this.context.param(this.types.nullable(), value))
+    this.`else`(this.context.param(this.type.nullable(), value))
 // endregion
 
 
@@ -973,19 +972,19 @@ inline fun <ST: SqConnReadStatement, T: Any?> ST.loadAndMap(
 }
 
 
-fun SqTableEditStatement<*>.execute(connection: Connection): Int {
+fun SqTableDataEditStatement<*>.execute(connection: Connection): Int {
     return this.prepareStatement(connection).use { statement ->
         statement.executeUpdate()
     }
 }
 
-fun SqConnTableEditStatement<*>.execute(): Int {
+fun SqConnTableDataEditStatement<*>.execute(): Int {
     return this.prepareStatement().use { statement ->
         statement.executeUpdate()
     }
 }
 
-inline fun <ST: SqTableEditStatement<*>> ST.execute(connection: Connection, initStatement: ST.(statement: PreparedStatement) -> Unit): Int {
+inline fun <ST: SqTableDataEditStatement<*>> ST.execute(connection: Connection, initStatement: ST.(statement: PreparedStatement) -> Unit): Int {
     contract { callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE) }
     return this.prepareStatement(connection).use { statement ->
         initStatement.invoke(this, statement)
@@ -993,7 +992,7 @@ inline fun <ST: SqTableEditStatement<*>> ST.execute(connection: Connection, init
     }
 }
 
-inline fun <ST: SqConnTableEditStatement<*>> ST.execute(initStatement: ST.(statement: PreparedStatement) -> Unit): Int {
+inline fun <ST: SqConnTableDataEditStatement<*>> ST.execute(initStatement: ST.(statement: PreparedStatement) -> Unit): Int {
     contract { callsInPlace(initStatement, InvocationKind.EXACTLY_ONCE) }
 
     return this.prepareStatement().use { statement ->
@@ -1003,7 +1002,7 @@ inline fun <ST: SqConnTableEditStatement<*>> ST.execute(initStatement: ST.(state
 }
 
 
-inline fun <T: SqTable, S: SqTableWriteStatement<T>> S.set(block: (mapping: SqColumnValueMapping<T>) -> Unit): S {
+inline fun <T: SqTable, S: SqTableDataWriteStatement<T>> S.set(block: (mapping: SqColumnValueMapping<T>) -> Unit): S {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
 
     val mapping = this.createValueMapping()

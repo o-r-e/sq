@@ -8,13 +8,13 @@ abstract class SqGenericUnionBase: SqGenericReadStatementBase(), SqUnion {
         get() = this
 
     @Suppress("DuplicatedCode")
-    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
-        if (asPart) target.add("(", spaced = spaceAllowed).ls()
+    override fun appendSqlTo(target: SqTextBuffer, asPart: Boolean, spaced: Boolean) {
+        if (asPart) target.add("(", spaced = spaced).ls()
 
         val unionSeparator = if (this.unionAll) "UNION ALL" else "UNION"
         this.selects.forEachIndexed { index, select ->
             if (index > 0) target.ls().add(unionSeparator).ls()
-            select.appendSqlTo(target, asPart = true, spaceAllowed = false)
+            select.appendSqlTo(target, asPart = true, spaced = false)
         }
 
         if (asPart) target.ls().add(")")

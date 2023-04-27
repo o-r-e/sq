@@ -6,7 +6,7 @@ import me.ore.sq.*
 open class SqGenericBetweenTestStart<JAVA: Any?, DB: Any>(
     override val context: SqContext,
     override val type: SqType<JAVA, DB>,
-    override val negation: Boolean,
+    override val negative: Boolean,
     override val testedValue: SqExpression<*, DB>,
     override val firstRangeValue: SqExpression<*, DB>
 ) : SqBetweenTestStart<JAVA, DB> {
@@ -15,11 +15,11 @@ open class SqGenericBetweenTestStart<JAVA: Any?, DB: Any>(
             override fun <JAVA, DB : Any> createBetweenTestStart(
                 context: SqContext,
                 type: SqType<JAVA, DB>,
-                negation: Boolean,
+                negative: Boolean,
                 testedValue: SqExpression<*, DB>,
                 firstRangeValue: SqExpression<*, DB>
             ): SqBetweenTestStart<JAVA, DB> {
-                return SqGenericBetweenTestStart(context, type, negation, testedValue, firstRangeValue)
+                return SqGenericBetweenTestStart(context, type, negative, testedValue, firstRangeValue)
             }
         }
     }

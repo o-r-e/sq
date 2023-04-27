@@ -26,7 +26,7 @@ open class SqTable(
     override val definitionItem: SqItem
         get() = this
 
-    override fun appendSqlTo(target: SqWriter, asPart: Boolean, spaceAllowed: Boolean) {
+    override fun appendSqlTo(target: SqTextBuffer, asPart: Boolean, spaced: Boolean) {
         val schemeName = this.schemeName
         val tableName = this.tableName
 
@@ -49,7 +49,7 @@ open class SqTable(
             SqUtil.makeIdentifierSafe(completeTableName)
         }
 
-        target.add(preparedTableName, spaced = spaceAllowed)
+        target.add(preparedTableName, spaced = spaced)
     }
 
     override fun appendParametersTo(target: MutableCollection<SqParameter<*, *>>) {}

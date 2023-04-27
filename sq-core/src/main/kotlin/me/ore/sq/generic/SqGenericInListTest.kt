@@ -6,7 +6,7 @@ import me.ore.sq.*
 open class SqGenericInListTest<JAVA: Boolean?>(
     override val context: SqContext,
     override val type: SqType<JAVA, Boolean>,
-    override val negation: Boolean,
+    override val negative: Boolean,
     override val testedValue: SqExpression<*, *>,
     override val listValues: List<SqExpression<*, *>>,
 ): SqInListTest<JAVA> {
@@ -15,11 +15,11 @@ open class SqGenericInListTest<JAVA: Boolean?>(
             override fun <JAVA : Boolean?> createInListTest(
                 context: SqContext,
                 type: SqType<JAVA, Boolean>,
-                negation: Boolean,
+                negative: Boolean,
                 testedValue: SqExpression<*, *>,
                 listValues: List<SqExpression<*, *>>
             ): SqInListTest<JAVA> {
-                return SqGenericInListTest(context, type, negation, testedValue, listValues)
+                return SqGenericInListTest(context, type, negative, testedValue, listValues)
             }
         }
     }

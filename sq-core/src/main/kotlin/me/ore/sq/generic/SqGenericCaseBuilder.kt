@@ -83,7 +83,7 @@ open class SqGenericCaseBuilder<JAVA: Any?, DB: Any>(
     ): SqCaseBuildMiddle<JAVA, DB> {
         override val context: SqContext
             get() = this.owner.context
-        override val types: SqType<JAVA, DB>
+        override val type: SqType<JAVA, DB>
             get() = this.owner.type
 
         override fun startWhen(condition: SqExpression<*, Boolean>): SqCaseBuildItemStartTyped<JAVA, DB> =

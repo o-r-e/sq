@@ -7,8 +7,8 @@ open class SqGenericUntypedNull<JAVA: Any, DB: Any>(
     override val context: SqContext,
 ): SqNull<JAVA, DB> {
     companion object {
-        val CONSTRUCTOR: SqUntypedNullConstructor = object : SqUntypedNullConstructor {
-            override fun <JAVA : Any, DB : Any> createUntypedNull(context: SqContext): SqNull<JAVA, DB> {
+        val CONSTRUCTOR: SqUnsafeNullConstructor = object : SqUnsafeNullConstructor {
+            override fun <JAVA : Any, DB : Any> createUnsafeNull(context: SqContext): SqNull<JAVA, DB> {
                 return SqGenericUntypedNull(context)
             }
         }

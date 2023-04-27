@@ -7,7 +7,7 @@ import kotlin.contracts.contract
 
 
 // region Context data / context start
-private val DATA: SqContextData = SqContextData(printParameterValues = false, SqPgObjectMap.INSTANCE)
+private val DATA: SqContextData = SqContextData(printParameterValues = false, SqPgObjectHolder.INSTANCE)
 val SqContextData.Companion.POSTGRESQL: SqContextData
     get() = DATA
 
