@@ -1,6 +1,6 @@
 package me.ore.sq.generic
 
-import me.ore.sq.SqValueReaderBase
+import me.ore.sq.SqValueReader
 import me.ore.sq.SqValueWriterBase
 import me.ore.sq.util.SqUtil
 import java.math.BigDecimal
@@ -10,8 +10,45 @@ import java.sql.*
 import java.time.*
 
 
+abstract class SqGenericValueReaderBase<JAVA: Any>: SqValueReader<JAVA> {
+    protected abstract fun simpleRead(source: ResultSet, columnIndex: Int): JAVA?
+    protected abstract val expectedClass: Class<JAVA>?
+    protected abstract fun complexRead(expectedClassException: Exception?, source: ResultSet, columnIndex: Int, value: Any): JAVA?
+
+    override fun readNullable(source: ResultSet, columnIndex: Int): JAVA? {
+        val simpleReadResult = this.simpleRead(source, columnIndex)
+        if (simpleReadResult != null) return simpleReadResult
+
+        var expectedClassException: Exception? = null
+        val expectedClass = this.expectedClass
+        if (expectedClass != null) {
+            try {
+                val result = source.getObject(columnIndex, expectedClass)
+                return if (source.wasNull()) {
+                    null
+                } else {
+                    result
+                        ?: error("Read by expected class - got NULL for column index $columnIndex and class ${expectedClass.name}")
+                }
+            } catch (e: Exception) {
+                expectedClassException = e
+            }
+        }
+
+        return try {
+            source.getObject(columnIndex)?.let { value ->
+                this.complexRead(expectedClassException, source, columnIndex, value)
+            }
+        } catch (e: Exception) {
+            expectedClassException?.let { e.addSuppressed(it) }
+            throw e
+        }
+    }
+}
+
+
 // region Boolean types
-open class SqGenericBooleanReader: SqValueReaderBase<Boolean>() {
+open class SqGenericBooleanReader: SqGenericValueReaderBase<Boolean>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Boolean? {
         return source.getBoolean(columnIndex).takeUnless { source.wasNull() }
     }
@@ -42,7 +79,7 @@ open class SqGenericBooleanWriter(
 
 
 // region Byte array types
-open class SqGenericByteArrayReader: SqValueReaderBase<ByteArray>() {
+open class SqGenericByteArrayReader: SqGenericValueReaderBase<ByteArray>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): ByteArray? {
         return source.getBytes(columnIndex)
     }
@@ -77,7 +114,7 @@ open class SqGenericByteArrayWriter(
 
 
 // region Date/time types
-open class SqGenericDateReader: SqValueReaderBase<Date>() {
+open class SqGenericDateReader: SqGenericValueReaderBase<Date>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Date? {
         return source.getDate(columnIndex)
     }
@@ -110,7 +147,7 @@ open class SqGenericDateWriter(
 }
 
 
-open class SqGenericLocalDateReader: SqValueReaderBase<LocalDate>() {
+open class SqGenericLocalDateReader: SqGenericValueReaderBase<LocalDate>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): LocalDate? = null
 
     override val expectedClass: Class<LocalDate>
@@ -142,7 +179,7 @@ open class SqGenericLocalDateWriter(
 }
 
 
-open class SqGenericLocalDateTimeReader: SqValueReaderBase<LocalDateTime>() {
+open class SqGenericLocalDateTimeReader: SqGenericValueReaderBase<LocalDateTime>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): LocalDateTime? = null
 
     override val expectedClass: Class<LocalDateTime>
@@ -174,7 +211,7 @@ open class SqGenericLocalDateTimeWriter(
 }
 
 
-open class SqGenericLocalTimeReader: SqValueReaderBase<LocalTime>() {
+open class SqGenericLocalTimeReader: SqGenericValueReaderBase<LocalTime>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): LocalTime? = null
 
     override val expectedClass: Class<LocalTime>
@@ -206,7 +243,7 @@ open class SqGenericLocalTimeWriter(
 }
 
 
-open class SqGenericOffsetDateTimeReader: SqValueReaderBase<OffsetDateTime>() {
+open class SqGenericOffsetDateTimeReader: SqGenericValueReaderBase<OffsetDateTime>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): OffsetDateTime? = null
 
     override val expectedClass: Class<OffsetDateTime>
@@ -238,7 +275,7 @@ open class SqGenericOffsetDateTimeWriter(
 }
 
 
-open class SqGenericOffsetTimeReader: SqValueReaderBase<OffsetTime>() {
+open class SqGenericOffsetTimeReader: SqGenericValueReaderBase<OffsetTime>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): OffsetTime? = null
 
     override val expectedClass: Class<OffsetTime>
@@ -270,7 +307,7 @@ open class SqGenericOffsetTimeWriter(
 }
 
 
-open class SqGenericTimeReader: SqValueReaderBase<Time>() {
+open class SqGenericTimeReader: SqGenericValueReaderBase<Time>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Time? {
         return source.getTime(columnIndex)
     }
@@ -303,7 +340,7 @@ open class SqGenericTimeWriter(
 }
 
 
-open class SqGenericTimestampReader: SqValueReaderBase<Timestamp>() {
+open class SqGenericTimestampReader: SqGenericValueReaderBase<Timestamp>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Timestamp? {
         return source.getTimestamp(columnIndex)
     }
@@ -338,7 +375,7 @@ open class SqGenericTimestampWriter(
 
 
 // region Number types
-open class SqGenericBigDecimalReader: SqValueReaderBase<BigDecimal>() {
+open class SqGenericBigDecimalReader: SqGenericValueReaderBase<BigDecimal>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): BigDecimal? = source.getBigDecimal(columnIndex)
 
     override val expectedClass: Class<BigDecimal>
@@ -372,7 +409,7 @@ open class SqGenericBigDecimalWriter(
 }
 
 
-open class SqGenericBigIntegerReader: SqValueReaderBase<BigInteger>() {
+open class SqGenericBigIntegerReader: SqGenericValueReaderBase<BigInteger>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): BigInteger? = null
 
     override val expectedClass: Class<BigInteger>?
@@ -405,7 +442,7 @@ open class SqGenericBigIntegerWriter(
 }
 
 
-open class SqGenericByteReader: SqValueReaderBase<Byte>() {
+open class SqGenericByteReader: SqGenericValueReaderBase<Byte>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Byte? {
         return source.getByte(columnIndex).takeUnless { source.wasNull() }
     }
@@ -439,7 +476,7 @@ open class SqGenericByteWriter(
 }
 
 
-open class SqGenericDoubleReader: SqValueReaderBase<Double>() {
+open class SqGenericDoubleReader: SqGenericValueReaderBase<Double>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Double? {
         return source.getDouble(columnIndex).takeUnless { source.wasNull() }
     }
@@ -473,7 +510,7 @@ open class SqGenericDoubleWriter(
 }
 
 
-open class SqGenericFloatReader: SqValueReaderBase<Float>() {
+open class SqGenericFloatReader: SqGenericValueReaderBase<Float>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Float? {
         return source.getFloat(columnIndex).takeUnless { source.wasNull() }
     }
@@ -507,7 +544,7 @@ open class SqGenericFloatWriter(
 }
 
 
-open class SqGenericIntReader: SqValueReaderBase<Int>() {
+open class SqGenericIntReader: SqGenericValueReaderBase<Int>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Int? {
         return source.getInt(columnIndex).takeUnless { source.wasNull() }
     }
@@ -541,7 +578,7 @@ open class SqGenericIntWriter(
 }
 
 
-open class SqGenericLongReader: SqValueReaderBase<Long>() {
+open class SqGenericLongReader: SqGenericValueReaderBase<Long>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Long? {
         return source.getLong(columnIndex).takeUnless { source.wasNull() }
     }
@@ -575,7 +612,7 @@ open class SqGenericLongWriter(
 }
 
 
-open class SqGenericNumberReader: SqValueReaderBase<Number>() {
+open class SqGenericNumberReader: SqGenericValueReaderBase<Number>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Number? = null
 
     override val expectedClass: Class<Number>
@@ -607,7 +644,7 @@ open class SqGenericNumberWriter(
 }
 
 
-open class SqGenericShortReader: SqValueReaderBase<Short>() {
+open class SqGenericShortReader: SqGenericValueReaderBase<Short>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Short? {
         return source.getShort(columnIndex).takeUnless { source.wasNull() }
     }
@@ -643,7 +680,7 @@ open class SqGenericShortWriter(
 
 
 // region Text types
-open class SqGenericNStringValueReader: SqValueReaderBase<String>() {
+open class SqGenericNStringValueReader: SqGenericValueReaderBase<String>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): String? = source.getNString(columnIndex)
 
     override val expectedClass: Class<String>
@@ -669,7 +706,7 @@ open class SqGenericNStringValueWriter(
 }
 
 
-open class SqGenericStringValueReader: SqValueReaderBase<String>() {
+open class SqGenericStringValueReader: SqGenericValueReaderBase<String>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): String? = source.getString(columnIndex)
 
     override val expectedClass: Class<String>
@@ -697,7 +734,7 @@ open class SqGenericStringValueWriter(
 
 
 // region Blob/Clob types
-open class SqGenericBlobReader: SqValueReaderBase<Blob>() {
+open class SqGenericBlobReader: SqGenericValueReaderBase<Blob>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Blob? {
         return source.getBlob(columnIndex).takeUnless { source.wasNull() }
     }
@@ -731,7 +768,7 @@ open class SqGenericBlobWriter(
 }
 
 
-open class SqGenericClobReader: SqValueReaderBase<Clob>() {
+open class SqGenericClobReader: SqGenericValueReaderBase<Clob>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Clob? {
         return source.getClob(columnIndex).takeUnless { source.wasNull() }
     }
@@ -765,7 +802,7 @@ open class SqGenericClobWriter(
 }
 
 
-open class SqGenericNClobReader: SqValueReaderBase<NClob>() {
+open class SqGenericNClobReader: SqGenericValueReaderBase<NClob>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): NClob? {
         return source.getNClob(columnIndex).takeUnless { source.wasNull() }
     }
@@ -801,7 +838,7 @@ open class SqGenericNClobWriter(
 
 
 // region Other JDBC types
-open class SqGenericRefReader: SqValueReaderBase<Ref>() {
+open class SqGenericRefReader: SqGenericValueReaderBase<Ref>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): Ref? {
         return source.getRef(columnIndex).takeUnless { source.wasNull() }
     }
@@ -837,7 +874,7 @@ open class SqGenericRefWriter(
 }
 
 
-open class SqGenericRowIdReader: SqValueReaderBase<RowId>() {
+open class SqGenericRowIdReader: SqGenericValueReaderBase<RowId>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): RowId? {
         return source.getRowId(columnIndex)
     }
@@ -873,7 +910,7 @@ open class SqGenericRowIdWriter(
 }
 
 
-open class SqGenericSqlXmlReader: SqValueReaderBase<SQLXML>() {
+open class SqGenericSqlXmlReader: SqGenericValueReaderBase<SQLXML>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): SQLXML? {
         return source.getSQLXML(columnIndex).takeUnless { source.wasNull() }
     }
@@ -909,7 +946,7 @@ open class SqGenericSqlXmlWriter(
 }
 
 
-open class SqGenericUrlReader: SqValueReaderBase<URL>() {
+open class SqGenericUrlReader: SqGenericValueReaderBase<URL>() {
     override fun simpleRead(source: ResultSet, columnIndex: Int): URL? {
         return source.getURL(columnIndex)
     }

@@ -1,20 +1,49 @@
 package me.ore.sq
 
+import me.ore.sq.SqType.Companion.toString
 import me.ore.sq.util.SqUtil
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
 
+/** Type object used to specify a database data type, to read and write values of that type */
 class SqType<JAVA: Any?, DB: Any> private constructor(
+    /** If `true`, then the current type object allows working with "NULLABLE" values */
     val nullable: Boolean,
+
+    /** "Data type in kotlin"; parameter values and data read from the database will have this type */
     val valueClass: Class<JAVA & Any>,
+
+    /** "Data type in DB"; used when creating comparison operations - so that DB then compares values of suitable types */
     val dbType: Class<DB>,
+
+    /** Reader of data from columns in [ResultSet] */
     val reader: SqValueReader<JAVA & Any>,
+
+    /** Writer which fills in the parameters in the [PreparedStatement] */
     val writer: SqValueWriter<JAVA & Any>,
+
+    /** Text for "data type in kotlin", only used in [toString] */
     val valueClassText: String = SqUtil.readableClassName(valueClass),
+
+    /** Text for "data type in DB", only used in [toString] */
     val dbTypeText: String = SqUtil.readableClassName(dbType),
 ) {
     companion object {
+        /**
+         * Creating a pair of objects of type - "NULLABLE" and "NOT NULL"
+         *
+         * @param valueClass "data type in kotlin";
+         * parameter values and data read from the database will have this type
+         * @param dbType "data type in DB";
+         * used when creating comparison operations - so that DB then compares values of suitable types
+         * @param reader reader of data from columns in [ResultSet]
+         * @param writer writer which fills in the parameters in the [PreparedStatement]
+         * @param valueClassText text for "data type in kotlin"
+         * @param dbTypeText text for "data type in DB"
+         *
+         * @return "NULLABLE" and "NOT NULL" type object pair
+         */
         private fun <JAVA: Any, DB: Any> createTypePair(
             valueClass: Class<JAVA>,
             dbType: Class<DB>,
@@ -33,6 +62,22 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
             return nullable to notNull
         }
 
+        /**
+         * Creating a "NULLABLE" type object
+         *
+         * @param valueClass "data type in kotlin";
+         * parameter values and data read from the database will have this type
+         * @param dbType "data type in DB";
+         * used when creating comparison operations - so that DB then compares values of suitable types
+         * @param reader reader of data from columns in [ResultSet]
+         * @param writer writer which fills in the parameters in the [PreparedStatement]
+         * @param valueClassText text for "data type in kotlin"
+         * @param dbTypeText text for "data type in DB"
+         *
+         * @return "NULLABLE" type object
+         *
+         * @see notNull
+         */
         fun <JAVA: Any, DB: Any> nullable(
             valueClass: Class<JAVA>,
             dbType: Class<DB>,
@@ -44,6 +89,22 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
             return this.createTypePair(valueClass, dbType, reader, writer, valueClassText, dbTypeText).first
         }
 
+        /**
+         * Creating a "NOT NULL" type object
+         *
+         * @param valueClass "data type in kotlin";
+         * parameter values and data read from the database will have this type
+         * @param dbType "data type in DB";
+         * used when creating comparison operations - so that DB then compares values of suitable types
+         * @param reader reader of data from columns in [ResultSet]
+         * @param writer writer which fills in the parameters in the [PreparedStatement]
+         * @param valueClassText text for "data type in kotlin"
+         * @param dbTypeText text for "data type in DB"
+         *
+         * @return "NOT NULL" type object
+         *
+         * @see nullable
+         */
         fun <JAVA: Any, DB: Any> notNull(
             valueClass: Class<JAVA>,
             dbType: Class<DB>,
@@ -101,8 +162,20 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
     }
 
 
+    /**
+     * "Opposite type"
+     *
+     * In "NOT NULL" type object this property contains "NULLABLE" type object and vice versa
+     */
     private lateinit var oppositeType: SqType<JAVA?, DB>
 
+    /**
+     * Returns the "NULLABLE" variant of the current type object
+     *
+     * @return "NULLABLE" type object; will return the current object if [nullable] is `true`
+     *
+     * @see notNull
+     */
     fun nullable(): SqType<JAVA?, DB> {
         return if (this.nullable) {
             @Suppress("UNCHECKED_CAST")
@@ -112,6 +185,13 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
         }
     }
 
+    /**
+     * Returns the "NOT NULL" variant of the current type object
+     *
+     * @return "NOT NULL" type object; will return the current object if [nullable] is `false`
+     *
+     * @see nullable
+     */
     fun notNull(): SqType<JAVA & Any, DB> {
         val result = if (this.nullable) {
             this.oppositeType
@@ -124,6 +204,14 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
     }
 
 
+    /**
+     * Reading data
+     *
+     * @param source query result, source of data
+     * @param columnIndex the index of the column whose data is to be read; index of first column is 1
+     *
+     * @return data read and converted to [JAVA] type
+     */
     fun read(source: ResultSet, columnIndex: Int): JAVA {
         val result = if (this.nullable) {
             this.reader.readNullable(source, columnIndex)
@@ -134,8 +222,23 @@ class SqType<JAVA: Any?, DB: Any> private constructor(
         return (result as JAVA)
     }
 
+    /**
+     * Converting [value] and storing it as a parameter in [target]
+     *
+     * @param target statement in which the parameter will be stored
+     * @param parameterIndex index of the saved parameter; the index of the first parameter is 1
+     * @param value the value to be stored as a parameter
+     */
     fun write(target: PreparedStatement, parameterIndex: Int, value: JAVA) { this.writer.write(target, parameterIndex, value) }
 
+    /**
+     * Convert value to comment content to be added to SQL text
+     * (usually called if [SqContextConfig.printParameterValues] is `true`)
+     *
+     * @param value value to be converted
+     *
+     * @return [value] as comment content
+     */
     fun valueToComment(value: JAVA?): String {
         return SqUtil.escapeCommentContent(this.writer.valueToComment(value))
     }

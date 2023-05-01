@@ -4,10 +4,14 @@ import me.ore.sq.util.SqUtil
 import java.util.*
 
 
+/**
+ * Table in the database
+ *
+ * @param tableName table name
+ * @param schemeName schema name
+ */
 open class SqTable(
-    @Suppress("MemberVisibilityCanBePrivate")
     val tableName: String,
-    @Suppress("MemberVisibilityCanBePrivate")
     val schemeName: String? = null,
 ): SqMultiColSet {
     override fun toString(): String = buildString {
@@ -60,13 +64,23 @@ open class SqTable(
     }
 
 
+    /**
+     * @return mutable column list, value for [_columns] property
+     */
     protected open fun createColumnList(): MutableList<SqColumn<*, *>> = ArrayList()
 
-    @Suppress("MemberVisibilityCanBePrivate", "PropertyName")
+    /** Mutable column list, backing field for [columns] */
     protected val _columns: MutableList<SqColumn<*, *>> = this.createColumnList()
 
     override val columns: List<SqColumn<*, *>> = Collections.unmodifiableList(this._columns)
 
+    /**
+     * Adds column to current table object
+     *
+     * @param column column to add
+     *
+     * @return passed [column]
+     */
     fun <T: SqColumn<*, *>> addColumn(column: T): T {
         this._columns.add(column)
         return column

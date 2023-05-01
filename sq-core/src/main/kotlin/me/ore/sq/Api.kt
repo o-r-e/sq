@@ -74,7 +74,7 @@ interface SqValueWriter<JAVA: Any> {
 
     /**
      * Convert value to comment content to be added to SQL text
-     * (usually called if [SqContextData.printParameterValues] is `true`)
+     * (usually called if [SqContextConfig.printParameterValues] is `true`)
      *
      * @param value value to be converted
      *
@@ -294,6 +294,11 @@ interface SqExpression<JAVA: Any?, DB: Any>: SqItem {
      * @param columnIndex the index of the column to get the value from; first column index is 1
      *
      * @return read value
+     *
+     * @throws Exception various errors, for example:
+     * [source] is closed,
+     * [source] has no columns for [columnIndex],
+     * error reading data from column
      */
     fun read(source: ResultSet, columnIndex: Int): JAVA = this.type.read(source, columnIndex)
 }
@@ -339,7 +344,7 @@ interface SqUnsafeNullConstructor {
 /**
  * Query parameter, usually printed as "?"
  *
- * If the [context] contains a [data][SqContext.data] whose [SqContextData.printParameterValues] property is `true`,
+ * If the [context] contains a [data][SqContext.config] whose [SqContextConfig.printParameterValues] property is `true`,
  * then after the "?" the value of the parameter will be printed in the comment;
  * some restrictions may apply, e.g. strings may be truncated, and for some other types only the size of the data may be printed
  *
@@ -362,7 +367,7 @@ interface SqParameter<JAVA: Any?, DB: Any>: SqExpression<JAVA, DB> {
     override fun appendSqlTo(target: SqTextBuffer, asPart: Boolean, spaced: Boolean) {
         target.add("?", spaced = spaced)
 
-        if (this.context.data.printParameterValues) {
+        if (this.context.config.printParameterValues) {
             target.add(" /* ", spaced = false)
             target.add(this.type.valueToComment(this.value), spaced = false)
             target.add(" */", spaced = false)

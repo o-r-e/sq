@@ -27,34 +27,24 @@ inline fun <T, C: SqContext> sq(context: C, block: C.() -> T): T {
     return block.invoke(context)
 }
 
-inline fun <T> sq(data: SqContextData, block: SqContext.Context.() -> T): T {
+inline fun <T> sq(data: SqContextConfig, block: SqContext.Context.() -> T): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     return SqContext.Context(data).start().use(block)
 }
 
-inline fun <T> sq(data: SqContextData, connection: Connection, block: SqContext.ConnContext.() -> T): T {
+inline fun <T> sq(data: SqContextConfig, connection: Connection, block: SqContext.ConnContext.() -> T): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     return SqContext.ConnContext(data, connection).start().use(block)
 }
 
-inline fun <T> sq(template: SqContextTemplate, block: SqContext.Context.() -> T): T {
-    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-    return template.create().start().use(block)
-}
-
-inline fun <T> sq(template: SqContextTemplate, connection: Connection, block: SqContext.ConnContext.() -> T): T {
-    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-    return template.create(connection).start().use(block)
-}
-
 inline fun <T> sq(block: SqContext.Context.() -> T): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-    return SqContextTemplate.defaultTemplate.create().start().use(block)
+    return SqContext.Context(SqContextConfig.defaultConfig).start().use(block)
 }
 
 inline fun <T> sq(connection: Connection, block: SqContext.ConnContext.() -> T): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-    return SqContextTemplate.defaultTemplate.create(connection).start().use(block)
+    return SqContext.ConnContext(SqContextConfig.defaultConfig, connection).start().use(block)
 }
 // endregion
 
