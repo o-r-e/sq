@@ -117,10 +117,10 @@ fun <JAVA: Boolean?> SqContext.and(type: SqType<JAVA, Boolean>, items: List<SqEx
     this.booleanGroup(type, SqBooleanGroupType.AND, items)
 @JvmName("and__not_null")
 fun SqContext.and(items: List<SqExpression<out Any, Boolean>>): SqBooleanGroup<Boolean> =
-    this.and(this.booleanGroupType(), items)
+    this.and(this.sqBooleanGroupType(), items)
 @JvmName("and__nullable")
 fun SqContext.and(items: List<SqExpression<out Any?, Boolean>>): SqBooleanGroup<Boolean?> =
-    this.and(this.booleanGroupType().nullable(), items)
+    this.and(this.sqBooleanGroupType().nullable(), items)
 @JvmName("and__not_null")
 fun SqContext.and(firstItem: SqExpression<out Any, Boolean>, vararg moreItems: SqExpression<out Any, Boolean>): SqBooleanGroup<Boolean> =
     this.and(listOf(firstItem, *moreItems))
@@ -132,10 +132,10 @@ fun <JAVA: Boolean?> SqContext.or(type: SqType<JAVA, Boolean>, items: List<SqExp
     this.booleanGroup(type, SqBooleanGroupType.OR, items)
 @JvmName("or__not_null")
 fun SqContext.or(items: List<SqExpression<out Any, Boolean>>): SqBooleanGroup<Boolean> =
-    this.or(this.booleanGroupType(), items)
+    this.or(this.sqBooleanGroupType(), items)
 @JvmName("or__nullable")
 fun SqContext.or(items: List<SqExpression<out Any?, Boolean>>): SqBooleanGroup<Boolean?> =
-    this.or(this.booleanGroupType().nullable(), items)
+    this.or(this.sqBooleanGroupType().nullable(), items)
 @JvmName("or__not_null")
 fun SqContext.or(firstItem: SqExpression<out Any, Boolean>, vararg moreItems: SqExpression<out Any, Boolean>): SqBooleanGroup<Boolean> =
     this.or(listOf(firstItem, *moreItems))
@@ -150,18 +150,18 @@ fun <JAVA: Boolean?> SqContext.not(type: SqType<JAVA, Boolean>, expression: SqEx
 }
 @JvmName("not__not_null")
 infix fun SqContext.not(expression: SqExpression<out Any, Boolean>): SqNot<Boolean> =
-    this.not(this.comparisonType(), expression)
+    this.not(this.sqComparisonType(), expression)
 @JvmName("not__nullable")
 infix fun SqContext.not(expression: SqExpression<out Any?, Boolean>): SqNot<Boolean?> =
-    this.not(this.comparisonType().nullable(), expression)
+    this.not(this.sqComparisonType().nullable(), expression)
 fun <JAVA: Boolean?> SqExpression<*, Boolean>.not(type: SqType<JAVA, Boolean>): SqNot<JAVA> =
     this.context.not(type, this)
 @JvmName("not__not_null")
 fun SqExpression<out Any, Boolean>.not(): SqNot<Boolean> =
-    this.not(this.context.notType())
+    this.not(this.context.sqNotType())
 @JvmName("not__nullable")
 fun SqExpression<out Any?, Boolean>.not(): SqNot<Boolean?> =
-    this.not(this.context.notType().nullable())
+    this.not(this.context.sqNotType().nullable())
 
 
 fun SqContext.nullTest(type: SqType<Boolean, Boolean>, negation: Boolean, expression: SqExpression<*, *>): SqNullTest {
@@ -170,8 +170,8 @@ fun SqContext.nullTest(type: SqType<Boolean, Boolean>, negation: Boolean, expres
 }
 fun SqExpression<*, *>.nullTest(type: SqType<Boolean, Boolean>, negation: Boolean): SqNullTest =
     this.context.nullTest(type, negation, this)
-fun SqExpression<*, *>.isNull(type: SqType<Boolean, Boolean> = this.context.nullTestType()): SqNullTest = this.nullTest(type, negation = false)
-fun SqExpression<*, *>.isNotNull(type: SqType<Boolean, Boolean> = this.context.nullTestType()): SqNullTest = this.nullTest(type, negation = true)
+fun SqExpression<*, *>.isNull(type: SqType<Boolean, Boolean> = this.context.sqNullTestType()): SqNullTest = this.nullTest(type, negation = false)
+fun SqExpression<*, *>.isNotNull(type: SqType<Boolean, Boolean> = this.context.sqNullTestType()): SqNullTest = this.nullTest(type, negation = true)
 
 
 
@@ -191,10 +191,10 @@ fun <JAVA: Boolean?, DB: Any> SqExpression<*, DB>.eq(type: SqType<JAVA, Boolean>
     this.context.eq(type, this, other)
 @JvmName("eq__not_null")
 infix fun <DB: Any> SqExpression<out Any, DB>.eq(other: SqExpression<out Any, DB>): SqComparison<Boolean> =
-    this.eq(this.context.comparisonType(), other)
+    this.eq(this.context.sqComparisonType(), other)
 @JvmName("eq__nullable")
 infix fun <DB: Any> SqExpression<out Any?, DB>.eq(other: SqExpression<out Any?, DB>): SqComparison<Boolean?> =
-    this.eq(this.context.comparisonType().nullable(), other)
+    this.eq(this.context.sqComparisonType().nullable(), other)
 @JvmName("eq__not_null")
 infix fun <JAVA: Any, DB: Any> SqExpression<JAVA, DB>.eq(value: JAVA): SqComparison<Boolean> =
     this.eq(this.context.param(this.type, value))
@@ -214,10 +214,10 @@ fun <JAVA: Boolean?, DB: Any> SqExpression<*, DB>.neq(type: SqType<JAVA, Boolean
     this.context.neq(type, this, other)
 @JvmName("neq__not_null")
 infix fun <DB: Any> SqExpression<out Any, DB>.neq(other: SqExpression<out Any, DB>): SqComparison<Boolean> =
-    this.neq(this.context.comparisonType(), other)
+    this.neq(this.context.sqComparisonType(), other)
 @JvmName("neq__nullable")
 infix fun <DB: Any> SqExpression<out Any?, DB>.neq(other: SqExpression<out Any?, DB>): SqComparison<Boolean?> =
-    this.neq(this.context.comparisonType().nullable(), other)
+    this.neq(this.context.sqComparisonType().nullable(), other)
 @JvmName("neq__not_null")
 infix fun <JAVA: Any, DB: Any> SqExpression<JAVA, DB>.neq(value: JAVA): SqComparison<Boolean> =
     this.neq(this.context.param(this.type, value))
@@ -237,10 +237,10 @@ fun <JAVA: Boolean?, DB: Any> SqExpression<*, DB>.gt(type: SqType<JAVA, Boolean>
     this.context.gt(type, this, other)
 @JvmName("gt__not_null")
 infix fun <DB: Any> SqExpression<out Any, DB>.gt(other: SqExpression<out Any, DB>): SqComparison<Boolean> =
-    this.gt(this.context.comparisonType(), other)
+    this.gt(this.context.sqComparisonType(), other)
 @JvmName("gt__nullable")
 infix fun <DB: Any> SqExpression<out Any?, DB>.gt(other: SqExpression<out Any?, DB>): SqComparison<Boolean?> =
-    this.gt(this.context.comparisonType().nullable(), other)
+    this.gt(this.context.sqComparisonType().nullable(), other)
 @JvmName("gt__not_null")
 infix fun <JAVA: Any, DB: Any> SqExpression<JAVA, DB>.gt(value: JAVA): SqComparison<Boolean> =
     this.gt(this.context.param(this.type, value))
@@ -260,10 +260,10 @@ fun <JAVA: Boolean?, DB: Any> SqExpression<*, DB>.gte(type: SqType<JAVA, Boolean
     this.context.gte(type, this, other)
 @JvmName("gte__not_null")
 infix fun <DB: Any> SqExpression<out Any, DB>.gte(other: SqExpression<out Any, DB>): SqComparison<Boolean> =
-    this.gte(this.context.comparisonType(), other)
+    this.gte(this.context.sqComparisonType(), other)
 @JvmName("gte__nullable")
 infix fun <DB: Any> SqExpression<out Any?, DB>.gte(other: SqExpression<out Any?, DB>): SqComparison<Boolean?> =
-    this.gte(this.context.comparisonType().nullable(), other)
+    this.gte(this.context.sqComparisonType().nullable(), other)
 @JvmName("gte__not_null")
 infix fun <JAVA: Any, DB: Any> SqExpression<JAVA, DB>.gte(value: JAVA): SqComparison<Boolean> =
     this.gte(this.context.param(this.type, value))
@@ -283,10 +283,10 @@ fun <JAVA: Boolean?, DB: Any> SqExpression<*, DB>.lt(type: SqType<JAVA, Boolean>
     this.context.lt(type, this, other)
 @JvmName("lt__not_null")
 infix fun <DB: Any> SqExpression<out Any, DB>.lt(other: SqExpression<out Any, DB>): SqComparison<Boolean> =
-    this.lt(this.context.comparisonType(), other)
+    this.lt(this.context.sqComparisonType(), other)
 @JvmName("lt__nullable")
 infix fun <DB: Any> SqExpression<out Any?, DB>.lt(other: SqExpression<out Any?, DB>): SqComparison<Boolean?> =
-    this.lt(this.context.comparisonType().nullable(), other)
+    this.lt(this.context.sqComparisonType().nullable(), other)
 @JvmName("lt__not_null")
 infix fun <JAVA: Any, DB: Any> SqExpression<JAVA, DB>.lt(value: JAVA): SqComparison<Boolean> =
     this.lt(this.context.param(this.type, value))
@@ -306,10 +306,10 @@ fun <JAVA: Boolean?, DB: Any> SqExpression<*, DB>.lte(type: SqType<JAVA, Boolean
     this.context.lte(type, this, other)
 @JvmName("lte__not_null")
 infix fun <DB: Any> SqExpression<out Any, DB>.lte(other: SqExpression<out Any, DB>): SqComparison<Boolean> =
-    this.lte(this.context.comparisonType(), other)
+    this.lte(this.context.sqComparisonType(), other)
 @JvmName("lte__nullable")
 infix fun <DB: Any> SqExpression<out Any?, DB>.lte(other: SqExpression<out Any?, DB>): SqComparison<Boolean?> =
-    this.lte(this.context.comparisonType().nullable(), other)
+    this.lte(this.context.sqComparisonType().nullable(), other)
 @JvmName("lte__not_null")
 infix fun <JAVA: Any, DB: Any> SqExpression<JAVA, DB>.lte(value: JAVA): SqComparison<Boolean> =
     this.lte(this.context.param(this.type, value))
@@ -329,10 +329,10 @@ fun <JAVA: Boolean?> SqExpression<*, String>.like(type: SqType<JAVA, Boolean>, o
     this.context.like(type, this, other)
 @JvmName("like__not_null")
 infix fun SqExpression<out Any, String>.like(other: SqExpression<out Any, String>): SqComparison<Boolean> =
-    this.like(this.context.comparisonType(), other)
+    this.like(this.context.sqComparisonType(), other)
 @JvmName("like__nullable")
 infix fun SqExpression<out Any?, String>.like(other: SqExpression<out Any?, String>): SqComparison<Boolean?> =
-    this.like(this.context.comparisonType().nullable(), other)
+    this.like(this.context.sqComparisonType().nullable(), other)
 @JvmName("like__not_null")
 infix fun SqExpression<String, String>.like(value: String): SqComparison<Boolean> =
     this.like(this.context.param(this.type, value))
@@ -346,10 +346,10 @@ fun <JAVA: Boolean?> SqExpression<*, String>.notLike(type: SqType<JAVA, Boolean>
     this.context.notLike(type, this, other)
 @JvmName("notLike__not_null")
 infix fun SqExpression<out Any, String>.notLike(other: SqExpression<out Any, String>): SqComparison<Boolean> =
-    this.notLike(this.context.comparisonType(), other)
+    this.notLike(this.context.sqComparisonType(), other)
 @JvmName("notLike__nullable")
 infix fun SqExpression<out Any?, String>.notLike(other: SqExpression<out Any?, String>): SqComparison<Boolean?> =
-    this.notLike(this.context.comparisonType().nullable(), other)
+    this.notLike(this.context.sqComparisonType().nullable(), other)
 @JvmName("notLike__not_null")
 infix fun SqExpression<String, String>.notLike(value: String): SqComparison<Boolean> =
     this.notLike(this.context.param(this.type, value))
@@ -382,28 +382,28 @@ fun <DB: Any> SqExpression<out Any, DB>.between(
     firstRangeValue: SqExpression<out Any, DB>,
     secondRangeValue: SqExpression<out Any, DB>,
 ): SqBetweenTest<Boolean> =
-    this.between(this.context.comparisonType(), negation = false, firstRangeValue, secondRangeValue)
+    this.between(this.context.sqComparisonType(), negation = false, firstRangeValue, secondRangeValue)
 
 @JvmName("between__nullable")
 fun <DB: Any> SqExpression<out Any?, DB>.between(
     firstRangeValue: SqExpression<out Any?, DB>,
     secondRangeValue: SqExpression<out Any?, DB>,
 ): SqBetweenTest<Boolean?> =
-    this.between(this.context.comparisonType().nullable(), negation = false, firstRangeValue, secondRangeValue)
+    this.between(this.context.sqComparisonType().nullable(), negation = false, firstRangeValue, secondRangeValue)
 
 @JvmName("notBetween__not_null")
 fun <DB: Any> SqExpression<out Any, DB>.notBetween(
     firstRangeValue: SqExpression<out Any, DB>,
     secondRangeValue: SqExpression<out Any, DB>,
 ): SqBetweenTest<Boolean> =
-    this.between(this.context.comparisonType(), negation = true, firstRangeValue, secondRangeValue)
+    this.between(this.context.sqComparisonType(), negation = true, firstRangeValue, secondRangeValue)
 
 @JvmName("notBetween__nullable")
 fun <DB: Any> SqExpression<out Any?, DB>.notBetween(
     firstRangeValue: SqExpression<out Any?, DB>,
     secondRangeValue: SqExpression<out Any?, DB>,
 ): SqBetweenTest<Boolean?> =
-    this.between(this.context.comparisonType().nullable(), negation = true, firstRangeValue, secondRangeValue)
+    this.between(this.context.sqComparisonType().nullable(), negation = true, firstRangeValue, secondRangeValue)
 
 @JvmName("between__not_null")
 fun <JAVA: Any, DB: Any> SqExpression<JAVA, DB>.between(firstRangeValue: JAVA, secondRangeValue: JAVA): SqBetweenTest<Boolean> =
@@ -454,10 +454,10 @@ infix fun <JAVA: Any?, DB: Any> SqExpression<JAVA, DB>.notBetween(firstRangeValu
     this.notBetween(this.context.param(this.type.nullable(), firstRangeValue))
 @JvmName("and__not_null")
 infix fun <JAVA: Any, DB: Any> SqBetweenTestStart<JAVA, DB>.and(secondRangeValue: SqExpression<out Any, DB>): SqBetweenTest<Boolean> =
-    this.context.between(this.context.comparisonType(), this.negative, this.testedValue, this.firstRangeValue, secondRangeValue)
+    this.context.between(this.context.sqComparisonType(), this.negative, this.testedValue, this.firstRangeValue, secondRangeValue)
 @JvmName("and__nullable")
 infix fun <JAVA: Any?, DB: Any> SqBetweenTestStart<JAVA, DB>.and(secondRangeValue: SqExpression<out Any?, DB>): SqBetweenTest<Boolean?> =
-    this.context.between(this.context.comparisonType().nullable(), this.negative, this.testedValue, this.firstRangeValue, secondRangeValue)
+    this.context.between(this.context.sqComparisonType().nullable(), this.negative, this.testedValue, this.firstRangeValue, secondRangeValue)
 @JvmName("and__not_null")
 infix fun <JAVA: Any, DB: Any> SqBetweenTestStart<JAVA, DB>.and(secondRangeValue: JAVA): SqBetweenTest<Boolean> =
     this.and(this.context.param(this.type, secondRangeValue))
@@ -478,16 +478,16 @@ fun <JAVA: Boolean?> SqContext.inList(
 
 @JvmName("inList__expressions__not_null")
 infix fun <DB: Any> SqExpression<out Any, DB>.inList(listValues: List<SqExpression<out Any, DB>>): SqInListTest<Boolean> =
-    this.context.inList(this.context.comparisonType(), negation = false, this, listValues)
+    this.context.inList(this.context.sqComparisonType(), negation = false, this, listValues)
 @JvmName("inList__expressions__nullable")
 infix fun <DB: Any> SqExpression<out Any?, DB>.inList(listValues: List<SqExpression<out Any?, DB>>):SqInListTest<Boolean?> =
-    this.context.inList(this.context.comparisonType().nullable(), negation = false, this, listValues)
+    this.context.inList(this.context.sqComparisonType().nullable(), negation = false, this, listValues)
 @JvmName("notInList__expressions__not_null")
 infix fun <DB: Any> SqExpression<out Any, DB>.notInList(listValues: List<SqExpression<out Any, DB>>): SqInListTest<Boolean> =
-    this.context.inList(this.context.comparisonType(), negation = true, this, listValues)
+    this.context.inList(this.context.sqComparisonType(), negation = true, this, listValues)
 @JvmName("notInList__expressions__nullable")
 infix fun <DB: Any> SqExpression<out Any?, DB>.notInList(listValues: List<SqExpression<out Any?, DB>>): SqInListTest<Boolean?> =
-    this.context.inList(this.context.comparisonType().nullable(), negation = true, this, listValues)
+    this.context.inList(this.context.sqComparisonType().nullable(), negation = true, this, listValues)
 @JvmName("inList__not_null")
 fun <DB: Any> SqExpression<out Any, DB>.inList(listValue: SqExpression<out Any, DB>, vararg moreListValues: SqExpression<out Any, DB>): SqInListTest<Boolean> =
     this.inList(listOf(listValue, *moreListValues))
@@ -594,10 +594,10 @@ fun <JAVA: Number?> SqContext.add(type: SqType<JAVA, Number>, firstOperand: SqEx
     this.mathOperation(type, firstOperand, SqUtil.MATH_OPERATION__ADD, secondOperand)
 @JvmName("add__not_null")
 infix fun SqExpression<out Any, Number>.add(other: SqExpression<out Any, Number>): SqTwoOperandMathOperation<Number> =
-    this.context.add(this.context.mathOperationType(), this, other)
+    this.context.add(this.context.sqMathOperationType(), this, other)
 @JvmName("add__nullable")
 infix fun SqExpression<out Any?, Number>.add(other: SqExpression<out Any?, Number>): SqTwoOperandMathOperation<Number?> =
-    this.context.add(this.context.mathOperationType().nullable(), this, other)
+    this.context.add(this.context.sqMathOperationType().nullable(), this, other)
 @JvmName("add__not_null__typed")
 infix fun <JAVA: Number> SqExpression<JAVA, Number>.add(other: SqExpression<JAVA, Number>): SqTwoOperandMathOperation<JAVA> =
     this.context.add(this.type, this, other)
@@ -615,10 +615,10 @@ fun <JAVA: Number?> SqContext.sub(type: SqType<JAVA, Number>, firstOperand: SqEx
     this.mathOperation(type, firstOperand, SqUtil.MATH_OPERATION__SUBTRACT, secondOperand)
 @JvmName("sub__not_null")
 infix fun SqExpression<out Any, Number>.sub(other: SqExpression<out Any, Number>): SqTwoOperandMathOperation<Number> =
-    this.context.sub(this.context.mathOperationType(), this, other)
+    this.context.sub(this.context.sqMathOperationType(), this, other)
 @JvmName("sub__nullable")
 infix fun SqExpression<out Any?, Number>.sub(other: SqExpression<out Any?, Number>): SqTwoOperandMathOperation<Number?> =
-    this.context.sub(this.context.mathOperationType().nullable(), this, other)
+    this.context.sub(this.context.sqMathOperationType().nullable(), this, other)
 @JvmName("sub__not_null__typed")
 infix fun <JAVA: Number> SqExpression<JAVA, Number>.sub(other: SqExpression<JAVA, Number>): SqTwoOperandMathOperation<JAVA> =
     this.context.sub(this.type, this, other)
@@ -636,10 +636,10 @@ fun <JAVA: Number?> SqContext.mult(type: SqType<JAVA, Number>, firstOperand: SqE
     this.mathOperation(type, firstOperand, SqUtil.MATH_OPERATION__MULTIPLY, secondOperand)
 @JvmName("mult__not_null")
 infix fun SqExpression<out Any, Number>.mult(other: SqExpression<out Any, Number>): SqTwoOperandMathOperation<Number> =
-    this.context.mult(this.context.mathOperationType(), this, other)
+    this.context.mult(this.context.sqMathOperationType(), this, other)
 @JvmName("mult__nullable")
 infix fun SqExpression<out Any?, Number>.mult(other: SqExpression<out Any?, Number>): SqTwoOperandMathOperation<Number?> =
-    this.context.mult(this.context.mathOperationType().nullable(), this, other)
+    this.context.mult(this.context.sqMathOperationType().nullable(), this, other)
 @JvmName("mult__not_null__typed")
 infix fun <JAVA: Number> SqExpression<JAVA, Number>.mult(other: SqExpression<JAVA, Number>): SqTwoOperandMathOperation<JAVA> =
     this.context.mult(this.type, this, other)
@@ -657,10 +657,10 @@ fun <JAVA: Number?> SqContext.div(type: SqType<JAVA, Number>, firstOperand: SqEx
     this.mathOperation(type, firstOperand, SqUtil.MATH_OPERATION__DIVIDE, secondOperand)
 @JvmName("div__not_null")
 infix fun SqExpression<out Any, Number>.div(other: SqExpression<out Any, Number>): SqTwoOperandMathOperation<Number> =
-    this.context.div(this.context.mathOperationType(), this, other)
+    this.context.div(this.context.sqMathOperationType(), this, other)
 @JvmName("div__nullable")
 infix fun SqExpression<out Any?, Number>.div(other: SqExpression<out Any?, Number>): SqTwoOperandMathOperation<Number?> =
-    this.context.div(this.context.mathOperationType().nullable(), this, other)
+    this.context.div(this.context.sqMathOperationType().nullable(), this, other)
 @JvmName("div__not_null__typed")
 infix fun <JAVA: Number> SqExpression<JAVA, Number>.div(other: SqExpression<JAVA, Number>): SqTwoOperandMathOperation<JAVA> =
     this.context.div(this.type, this, other)
@@ -678,10 +678,10 @@ fun <JAVA: Number?> SqContext.mod(type: SqType<JAVA, Number>, firstOperand: SqEx
     this.mathOperation(type, firstOperand, SqUtil.MATH_OPERATION__MODULO, secondOperand)
 @JvmName("mod__not_null")
 infix fun SqExpression<out Any, Number>.mod(other: SqExpression<out Any, Number>): SqTwoOperandMathOperation<Number> =
-    this.context.mod(this.context.mathOperationType(), this, other)
+    this.context.mod(this.context.sqMathOperationType(), this, other)
 @JvmName("mod__nullable")
 infix fun SqExpression<out Any?, Number>.mod(other: SqExpression<out Any?, Number>): SqTwoOperandMathOperation<Number?> =
-    this.context.mod(this.context.mathOperationType().nullable(), this, other)
+    this.context.mod(this.context.sqMathOperationType().nullable(), this, other)
 @JvmName("mod__not_null__typed")
 infix fun <JAVA: Number> SqExpression<JAVA, Number>.mod(other: SqExpression<JAVA, Number>): SqTwoOperandMathOperation<JAVA> =
     this.context.mod(this.type, this, other)
@@ -699,10 +699,10 @@ fun <JAVA: Number?> SqContext.bitwiseAnd(type: SqType<JAVA, Number>, firstOperan
     this.mathOperation(type, firstOperand, SqUtil.MATH_OPERATION__BITWISE_AND, secondOperand)
 @JvmName("bitwiseAnd__not_null")
 infix fun SqExpression<out Any, Number>.bitwiseAnd(other: SqExpression<out Any, Number>): SqTwoOperandMathOperation<Number> =
-    this.context.bitwiseAnd(this.context.mathOperationType(), this, other)
+    this.context.bitwiseAnd(this.context.sqMathOperationType(), this, other)
 @JvmName("bitwiseAnd__nullable")
 infix fun SqExpression<out Any?, Number>.bitwiseAnd(other: SqExpression<out Any?, Number>): SqTwoOperandMathOperation<Number?> =
-    this.context.bitwiseAnd(this.context.mathOperationType().nullable(), this, other)
+    this.context.bitwiseAnd(this.context.sqMathOperationType().nullable(), this, other)
 @JvmName("bitwiseAnd__not_null__typed")
 infix fun <JAVA: Number> SqExpression<JAVA, Number>.bitwiseAnd(other: SqExpression<JAVA, Number>): SqTwoOperandMathOperation<JAVA> =
     this.context.bitwiseAnd(this.type, this, other)
@@ -720,10 +720,10 @@ fun <JAVA: Number?> SqContext.bitwiseOr(type: SqType<JAVA, Number>, firstOperand
     this.mathOperation(type, firstOperand, SqUtil.MATH_OPERATION__BITWISE_OR, secondOperand)
 @JvmName("bitwiseOr__not_null")
 infix fun SqExpression<out Any, Number>.bitwiseOr(other: SqExpression<out Any, Number>): SqTwoOperandMathOperation<Number> =
-    this.context.bitwiseOr(this.context.mathOperationType(), this, other)
+    this.context.bitwiseOr(this.context.sqMathOperationType(), this, other)
 @JvmName("bitwiseOr__nullable")
 infix fun SqExpression<out Any?, Number>.bitwiseOr(other: SqExpression<out Any?, Number>): SqTwoOperandMathOperation<Number?> =
-    this.context.bitwiseOr(this.context.mathOperationType().nullable(), this, other)
+    this.context.bitwiseOr(this.context.sqMathOperationType().nullable(), this, other)
 @JvmName("bitwiseOr__not_null__typed")
 infix fun <JAVA: Number> SqExpression<JAVA, Number>.bitwiseOr(other: SqExpression<JAVA, Number>): SqTwoOperandMathOperation<JAVA> =
     this.context.bitwiseOr(this.type, this, other)
@@ -741,10 +741,10 @@ fun <JAVA: Number?> SqContext.bitwiseXor(type: SqType<JAVA, Number>, firstOperan
     this.mathOperation(type, firstOperand, SqUtil.MATH_OPERATION__BITWISE_XOR, secondOperand)
 @JvmName("bitwiseXor__not_null")
 infix fun SqExpression<out Any, Number>.bitwiseXor(other: SqExpression<out Any, Number>): SqTwoOperandMathOperation<Number> =
-    this.context.bitwiseXor(this.context.mathOperationType(), this, other)
+    this.context.bitwiseXor(this.context.sqMathOperationType(), this, other)
 @JvmName("bitwiseXor__nullable")
 infix fun SqExpression<out Any?, Number>.bitwiseXor(other: SqExpression<out Any?, Number>): SqTwoOperandMathOperation<Number?> =
-    this.context.bitwiseXor(this.context.mathOperationType().nullable(), this, other)
+    this.context.bitwiseXor(this.context.sqMathOperationType().nullable(), this, other)
 @JvmName("bitwiseXor__not_null__typed")
 infix fun <JAVA: Number> SqExpression<JAVA, Number>.bitwiseXor(other: SqExpression<JAVA, Number>): SqTwoOperandMathOperation<JAVA> =
     this.context.bitwiseXor(this.type, this, other)
