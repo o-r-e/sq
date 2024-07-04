@@ -1,0 +1,11 @@
+# Intellij IDEA project files
+.idea
+
+# Gradle project-specific cache directory
+.gradle
+
+# Gradle build output directory
+build
+
+# Who knows? May be private developer's files of project
+local
