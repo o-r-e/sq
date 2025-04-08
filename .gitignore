@@ -9,3 +9,6 @@ build
 
 # Who knows? May be private developer's files of project
 local
+
+# Kotlin util files
+.kotlin
