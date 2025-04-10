@@ -1,14 +1,40 @@
-# Intellij IDEA project files
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
 .idea
+*.iws
+*.iml
+*.ipr
 
-# Gradle project-specific cache directory
-.gradle
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
 
-# Gradle build output directory
-build
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+#----
 
 # Who knows? May be private developer's files of project
 local
-
-# Kotlin util files
-.kotlin

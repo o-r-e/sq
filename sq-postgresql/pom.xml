@@ -1,0 +1,48 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.o-r-e</groupId>
+        <artifactId>sq</artifactId>
+        <version>0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>sq-postgresql</artifactId>
+    <packaging>jar</packaging>
+
+    <name>sq-postgresql</name>
+    <description>SQL builder for Kotlin, for PostgreSQL</description>
+    <url>https://github.com/o-r-e/sq</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/license/mit/</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>o-r-e</id>
+            <name>Roman Obuhov</name>
+            <email>obuhov.r@gmail.com</email>
+            <organization>Roman Obuhov @ Github</organization>
+            <organizationUrl>https://github.com/o-r-e</organizationUrl>
+        </developer>
+    </developers>
+
+    <dependencies>
+        <!-- [current project] : sq-core -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>sq-core</artifactId>
+        </dependency>
+
+        <!-- org.postgresql : postgresql -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.5</version>
+        </dependency>
+    </dependencies>
+</project>
