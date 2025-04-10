@@ -299,7 +299,7 @@ operator fun <T: SqInsertColumnValueMapper> T.set(rowIndex: Int, record: SqRecor
 inline fun <T: SqInsert> T.columnValues(context: SqContext = SqContext.last, block: (mapper: SqInsertColumnValueMapper) -> Unit): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
 
-    val columns: List<SqItem>
+    val columns: List<SqColumn<*, *>>
     val valueRows: List<List<SqItem>>
 
     val mapper = context.settings.insertColumnValueMapperFactory.invoke(context)

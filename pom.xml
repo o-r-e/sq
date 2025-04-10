@@ -4,7 +4,7 @@
 
     <groupId>io.github.o-r-e</groupId>
     <artifactId>sq</artifactId>
-    <version>0.0-SNAPSHOT</version>
+    <version>0.0-k1.9.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>sq</name>
@@ -47,7 +47,8 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <dependency.kotlin.version>2.1.20</dependency.kotlin.version>
+        <!-- <dependency.kotlin.version>2.1.20</dependency.kotlin.version> -->
+        <dependency.kotlin.version>1.9.0</dependency.kotlin.version>
     </properties>
 
     <dependencyManagement>
