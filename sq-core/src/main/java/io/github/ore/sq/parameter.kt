@@ -45,7 +45,7 @@ val SqSettings.parameterFactory: SqParameterFactory
 
 
 fun <T: SqParameter<*, *>> T.write(target: PreparedStatement, index: Int): T = this.apply {
-    this.writer[target, index] = this.value
+    (this.writer as SqDataTypeWriter<Any, Any>)[target, index] = this.value
 }
 
 private fun prepareComment(value: Any?, requestedMaxLength: Int): String {
