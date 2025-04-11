@@ -1,9 +1,7 @@
 package io.github.ore.sq.test
 
 import io.github.ore.sq.*
-import io.github.ore.sq.impl.SqDataTypesImpl
 import io.github.ore.sq.impl.jdbcRequestDataBuilderFactory
-import io.github.ore.sq.util.SqItemPartConfig
 import org.postgresql.util.PGobject
 import java.sql.*
 import java.sql.Array
@@ -130,23 +128,19 @@ private fun scan(resultSet: ResultSet) {
 }
 
 
-object TstTable: SqPgTable("tst") {
+object TstTable: SqPgTable("tst") { /* io.github.ore.sq.SqPgTable */
     val ID = this.columnHolder.pgBigInt("id", 0)
     val F = this.columnHolder.pgCharacterVarying("f", null)
 }
 
-open class TstRecord(): SqRecord() {
+open class TstRecord(): SqRecord() { /* io.github.ore.sq.SqRecord */
     companion object: SqRecordClass<TstRecord>()
 
-    open var id by TstTable.ID.primaryKeyField()
+    open var id: Long by TstTable.ID.primaryKeyField()
     open var f: String? by TstTable.F.commonField()
 
     constructor(f: String?): this() {
         this.f = f
-    }
-
-    public override fun dropPrimaryKeys() {
-        super.dropPrimaryKeys()
     }
 
     public override fun hasAnyPrimaryKeySet(): Boolean {
@@ -157,70 +151,52 @@ open class TstRecord(): SqRecord() {
 
 private fun runTmp() {}
 
-fun SqContext.myFunc(): SqExpression<String, String> {
-    return object : SqExpression<String, String> {
-        override val reader: SqDataTypeReader<String, String>
-            get() = SqDataTypesImpl.INSTANCE.varChar.notNullReader
-        override val isMultiline: Boolean
-            get() = false
-        override var commentAtStart: String? = null
-        override var commentAtEnd: String? = null
-
-        override fun addToBuilderWithoutComments(
-            context: SqContext,
-            target: SqJdbcRequestDataBuilder,
-            partConfig: SqItemPartConfig?
-        ) {
-            target.keyword("my_func").brackets {
-                target.text("':)'")
-            }
-        }
-    }
-}
-
 private fun runMain() {
-    SqPg.defaultSettings {
+    SqPg.defaultSettings { /* this: io.github.ore.sq.SqSettingsBuilder */
         this.jdbcRequestDataBuilderFactory(
             pretty = true,
             allowComments = true,
         )
     }
 
-    sqPg {
-        connect().use { connection ->
-            if (true) {
-                val record = TstRecord("my text")
-                println("Record created: $record")
-            }
-
+    sqPg { /* this: io.github.ore.sq.SqPgContext */
+        connect().use { connection: java.sql.Connection ->
             // Insert
-            if (false) {
+            run {
                 val record = TstRecord("my text")
-                println("Record created: $record")
+                println("Record before INSERT: $record")
 
                 insertInto(TstTable)
                     .useAndReloadRecords(record)
+                    .also { /* it: io.github.ore.sq.SqRecordReloadRequest<TstRecord> */
+                        println("-- SQL: INSERT --")
+                        println(it.wrappedRequest.createJdbcRequestData().sql)
+                        println("-----------------")
+                    }
                     .execute(connection)
-                println("Record: $record")
+                println("Record after INSERT: $record")
             }
 
-            // Select
-            if (false) {
-                val limit = 2
-                val page = 1
+            println()
+            println("----")
+            println()
 
-                // 652 - 656
-                val offset = limit * page
+            // Select
+            run {
                 select(TstTable.ID, TstTable.F, TstTable.ID)
                     .from(TstTable)
+                    .where(TstTable.ID gt parameters.parameter(5))
                     .orderBy(TstTable.ID.asc())
-                    .limit(parameters.parameter(limit))
-                    .offset(parameters.parameter(offset))
-                    .also {
+                    .limit(parameters.parameter(10).commentValueAtEnd())
+                    .offset(parameters.parameter(10).commentValueAtEnd())
+                    .also { /* it: io.github.ore.sq.SqPgSelect */
+                        println("-- SQL: SELECT --")
                         println(it.createJdbcRequestData().sql)
-                        println()
+                        println("-----------------")
                     }
-                    .execute(connection, TstRecord.mapper()) { it.readAllAsObjects() }
+                    .execute(connection, TstRecord.mapper()) { /* it: List<TstRecord> */
+                        it.readAllAsObjects()
+                    }
                     .forEach { println(it) }
             }
         }
