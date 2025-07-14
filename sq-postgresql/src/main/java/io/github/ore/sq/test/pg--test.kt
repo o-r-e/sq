@@ -183,12 +183,13 @@ private fun runMain() {
 
             // Select
             run {
+                @Suppress("USELESS_CAST")
                 select(TstTable.ID, TstTable.F, TstTable.ID)
                     .from(TstTable)
-                    .where(TstTable.ID gt parameters.parameter(5))
+                    .where(TstTable.ID gt parameters.parameter(5 as Int))
                     .orderBy(TstTable.ID.asc())
-                    .limit(parameters.parameter(10).commentValueAtEnd())
-                    .offset(parameters.parameter(10).commentValueAtEnd())
+                    .limit(parameters.parameter(10 as Int).commentValueAtEnd())
+                    .offset(parameters.parameter(10 as Int).commentValueAtEnd())
                     .also { /* it: io.github.ore.sq.SqPgSelect */
                         println("-- SQL: SELECT --")
                         println(it.createJdbcRequestData().sql)
